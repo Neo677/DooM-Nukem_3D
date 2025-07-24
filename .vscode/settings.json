@@ -1,5 +1,11 @@
 {
     "files.associations": {
-        "doom_nukem.h": "c"
+        "doom_nukem.h": "c",
+        "typedefs.h": "c",
+        "util.h": "c",
+        "ios": "c",
+        "keyboard.h": "c",
+        "game_state.h": "c",
+        "renderer.h": "c"
     }
 }
