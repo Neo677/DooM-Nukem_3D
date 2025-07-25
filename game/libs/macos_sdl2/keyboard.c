@@ -2,9 +2,9 @@
 
 keymap_t  keymap;
 key_states_t  keystates;
-const double MOV_SPEED = 150.0;
-const double ELEVATION_SPEED = 500 * 100;
-const double ROT_SPEED = 4;
+const double MOV_SPEED = 50.0;
+const double ELEVATION_SPEED = 200;
+const double ROT_SPEED = 2;
 
 void init_keymap()
 {
@@ -15,8 +15,8 @@ void init_keymap()
     keymap.quit = SDL_SCANCODE_ESCAPE;
     keymap.starfe_left = SDL_SCANCODE_Q;
     keymap.starfe_right = SDL_SCANCODE_E;
-    keymap.up = SDL_SCANCODE_SPACE;
-    keymap.down = SDL_SCANCODE_LCTRL;
+    keymap.up = SDL_SCANCODE_UP;
+    keymap.down = SDL_SCANCODE_DOWN;
     keymap.toggle_map = SDL_SCANCODE_M;
     keymap.debug_mode = SDL_SCANCODE_O;
 
@@ -65,7 +65,7 @@ void processKeyStates(player_t *player, double deltatime)
 {
     if (keystates.forward)
     {
-        player->position.x += MOV_SPEED * cos(player->dir_angles) * deltatime;
+        player->position.x += MOV_SPEED * cos(player->dir_angles) * deltatime;  
         player->position.y += MOV_SPEED * sin(player->dir_angles) * deltatime;
     }
     else if (keystates.backward)
@@ -90,11 +90,15 @@ void processKeyStates(player_t *player, double deltatime)
     }
     if (keystates.up)
     {
+        double old_z = player->z;
         player->z += ELEVATION_SPEED * deltatime;
+        printf("Moving UP - Z: %.2f -> %.2f (delta: %.4f)\n", old_z, player->z, deltatime);
     }
     else if (keystates.down)
     {
+        double old_z = player->z;
         player->z -= ELEVATION_SPEED * deltatime;
+        printf("Moving DOWN - Z: %.2f -> %.2f (delta: %.4f)\n", old_z, player->z, deltatime);
     }
 }
 
@@ -116,9 +120,17 @@ void handleRealTimeKeys(SDL_Scancode key_scancode, enum KBD_KEY_STATE state)
         keystates.starfe_right = state;
 
     if (key_scancode == keymap.up)
+    {
         keystates.up = state;
+        if (state == KEY_STATE_DOWN)
+            printf("UP key pressed\n");
+    }
     else if (key_scancode == keymap.down)
+    {
         keystates.down = state;
+        if (state == KEY_STATE_DOWN)
+            printf("DOWN key pressed\n");
+    }
 
     if (key_scancode == keymap.toggle_map && state == true)
         keystates.map_state = !keystates.map_state;

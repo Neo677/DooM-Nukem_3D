@@ -1,7 +1,7 @@
 #ifndef RENDERER_H
 # define RENDERER_H
 
-# define SDL_MAIN_HANDLELD
+# define SDL_MAIN_HANDLED
 
 # ifdef _WIN64
     #include "libs/win_sdl2/include/SDL2/SDL.h"
