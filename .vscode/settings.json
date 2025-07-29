@@ -6,6 +6,10 @@
         "ios": "c",
         "keyboard.h": "c",
         "game_state.h": "c",
-        "renderer.h": "c"
+        "renderer.h": "c",
+        "stdbool.h": "c",
+        "k_keyboard.h": "c",
+        "c_collision.h": "c",
+        "r_renderer.h": "c"
     }
 }

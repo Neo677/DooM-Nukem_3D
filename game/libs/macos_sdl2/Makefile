@@ -19,7 +19,7 @@ INCLUDE=./include
 LIB=./lib
 
 all:
-	gcc $(SRC) -I$(INCLUDE) -L$(LIB) -lSDL2 -o $(OUTPUT) -arch arm64
+	gcc $(SRC) -I$(INCLUDE) -L./lib -lSDL2 -lSDL2main -o $(OUTPUT) -framework Cocoa -framework IOKit -framework CoreVideo -arch x86_64
 
 clean: 
 	rm $(OUTPUT)
