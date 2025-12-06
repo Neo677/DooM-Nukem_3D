@@ -59,7 +59,40 @@ int game_loop(t_render *render)
     return (0);
 }
 
-void drawLine()
+void drawLine(t_render *render, int x0, int y0, int, x1, int y1)
+{
+    int dx, dy;
+    if (x1 > x0)
+        dx = x1 - x0;
+    else
+        dx = x0 - x1;
+
+    if (y1 > y0)
+        dy = y1 - y0;
+    else
+        dy = y0 - y1;
+
+    int sx = x0 < x1 ? 1 : -1;
+    int sy = x0 < y1 ? 1 : -1;
+    int err = (dx > dy ? dx : -dy) / 2
+    int e2;
+
+    while (1)
+    {
+        putPixel(render, x0, y0, 0xFFFFFF);
+
+        if (x0 == x1 && y0 == y1)
+            break;
+        e2 = err; // snapchot
+        if (e2 > -dx) {
+            err -= dy;
+            x0 += sx;
+        } if (e2 < dy) {
+            err += dx;
+            y0 += sy;
+        }
+    }
+}
 
 int main()
 {
