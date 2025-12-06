@@ -4,7 +4,7 @@
 #ifdef _WIN64
 #include "libs/win_sdl2/include/SDL2/SDL.h"
 #elif __APPLE__
-#include "include/SDL2/SDL.h"
+#include <SDL2/SDL.h>
 #endif
 
 #include "g_game_state.h"

@@ -1,60 +1,156 @@
 #include "r_renderer.h"
 
-#define IS_CEIL 1
-#define IS_FLOOR 2
-#define IS_WALL 0
-
-#define CEIL_CLR 0x3ac960
-#define FLOOR_CLR 0x1a572a
-
 SDL_Window* window;
 SDL_Renderer* sdl_renderer;
 SDL_Texture* screen_texture;
 unsigned int scrnw, scrnh;
-
-bool is_debug_mode = false;
 unsigned int *screen_buffer = NULL;
 int screen_buffer_size = 0;
+sectors_store_t map_sectors = {0};
+render_queue_t render_queue = {0};
 
+// Forward declarations
+static void R_DrawVerticalWall(rquad_t *quad, unsigned int color);
+static void UpdateLookupTables(rquad_t *quad, sector_t *sector);
+static void R_RenderFlatsForSector(sector_t *s, player_t *player, double fov, double dist_factor);
 
-typedef struct _rquad
+static unsigned int R_ApplyFog(unsigned int color, double dist_factor)
 {
-    int ax, bx; // X coordinates of points A & B
-    int at, ab; // A top & B bottom coordinates
-    int bt, bb; // B top & B bottom coordinates
-} rquad_t;
+    dist_factor = fmax(0.0, fmin(1.0, dist_factor));
+    
+    unsigned char r = (color >> 16) & 0xFF;
+    unsigned char g = (color >> 8) & 0xFF;
+    unsigned char b = color & 0xFF;
 
-void R_ShutdownScreen()
-{
-    if (screen_texture)
-        SDL_DestroyTexture(screen_texture);
+    r = (unsigned char)(r * dist_factor);
+    g = (unsigned char)(g * dist_factor);
+    b = (unsigned char)(b * dist_factor);
 
-    if (screen_buffer != NULL)
-        free(screen_buffer);
+    return (r << 16) | (g << 8) | b;
 }
 
-void R_Shutdown()
+void R_DrawVerticalLine(int x, int y1, int y2, unsigned int color)
 {
-    R_ShutdownScreen();
-    SDL_DestroyRenderer(sdl_renderer);
+    if (x < 0 || x >= scrnw)
+        return;
+
+    y1 = fmax(0, fmin(y1, scrnh - 1));
+    y2 = fmax(0, fmin(y2, scrnh - 1));
+
+    for (int y = y1; y <= y2; y++)
+    {
+        screen_buffer[scrnw * y + x] = color;
+    }
 }
 
-void R_UpdateScreen()
+static void R_ClipBehindPlayer(double *ax, double *ay, double bx, double by)
 {
-    SDL_UpdateTexture(screen_texture, NULL, screen_buffer, scrnw * sizeof(unsigned int));
-    SDL_RenderCopy(sdl_renderer, screen_texture, NULL, NULL);
-    SDL_RenderPresent(sdl_renderer);
+    double denom = (*ay - by);
+    if (fabs(denom) > 0.0001)
+    {
+        double t = *ay / denom;
+        *ax = *ax + t * (bx - *ax);
+        *ay = *ay + t * (by - *ay);
+    }
+}
+
+// Helper functions from r_renderer_utils.c
+static void R_DrawVerticalWall(rquad_t *quad, unsigned int color)
+{
+    if (quad->ax > quad->bx)
+        return;  // Mur dos à la caméra
+
+    for (int x = quad->ax; x <= quad->bx; x++)
+    {
+        if (x < 0 || x >= scrnw)
+            continue;
+
+        // Interpolation des hauteurs
+        float t = (float)(x - quad->ax) / (quad->bx - quad->ax);
+        int y1 = quad->at + t * (quad->bt - quad->at);
+        int y2 = quad->ab + t * (quad->bb - quad->ab);
+
+        R_DrawVerticalLine(x, y1, y2, color);
+    }
+}
+
+static void UpdateLookupTables(rquad_t *quad, sector_t *sector)
+{
+    if (quad->ax > quad->bx)
+        return;
+
+    for (int x = quad->ax; x <= quad->bx; x++)
+    {
+        if (x < 0 || x >= scrnw)
+            continue;
+
+        float t = (float)(x - quad->ax) / (quad->bx - quad->ax);
+        int ceiling_y = quad->at + t * (quad->bt - quad->at);
+        int floor_y = quad->ab + t * (quad->bb - quad->ab);
+
+        // Mise à jour des lookup tables pour le plafond
+        if (ceiling_y < sector->ceilx_ylut.t[x] || sector->ceilx_ylut.t[x] == 0)
+            sector->ceilx_ylut.t[x] = ceiling_y;
+        if (ceiling_y > sector->ceilx_ylut.b[x])
+            sector->ceilx_ylut.b[x] = ceiling_y;
+
+        // Mise à jour des lookup tables pour le sol
+        if (floor_y < sector->floorx_ylut.t[x] || sector->floorx_ylut.t[x] == 0)
+            sector->floorx_ylut.t[x] = floor_y;
+        if (floor_y > sector->floorx_ylut.b[x])
+            sector->floorx_ylut.b[x] = floor_y;
+    }
+}
+
+static void R_RenderFlatsForSector(sector_t *s, player_t *player, double fov, double dist_factor)
+{
+    for (int x = 0; x < scrnw; x++)
+    {
+        // Rendu du plafond
+        int ceil_y1 = s->ceilx_ylut.t[x];
+        int ceil_y2 = s->ceilx_ylut.b[x];
+        if (ceil_y1 < ceil_y2 && player->z < s->elevation + s->height)
+        {
+            unsigned int ceil_color = R_ApplyFog(s->ceil_clr, dist_factor);
+            R_DrawVerticalLine(x, ceil_y1, ceil_y2, ceil_color);
+        }
+
+        // Rendu du sol
+        int floor_y1 = s->floorx_ylut.t[x];
+        int floor_y2 = s->floorx_ylut.b[x];
+        if (floor_y1 < floor_y2 && player->z > s->elevation)
+        {
+            unsigned int floor_color = R_ApplyFog(s->floor_clr, dist_factor);
+            R_DrawVerticalLine(x, floor_y1, floor_y2, floor_color);
+        }
+    }
+}
+
+void R_Init(SDL_Window *main_win, game_state_t *game_state)
+{
+    window = main_win;
+    sdl_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (!sdl_renderer)
+    {
+        printf("Error creating renderer: %s\n", SDL_GetError());
+        return;
+    }
+    
+    R_InitScreen(game_state->scrn_w, game_state->scrn_h);
+    SDL_RenderSetLogicalSize(sdl_renderer, game_state->scrn_w, game_state->scrn_h);
 }
 
 void R_InitScreen(int w, int h)
 {
+    scrnw = w;
+    scrnh = h;
     screen_buffer_size = sizeof(unsigned int) * w * h;
     screen_buffer = (unsigned int*)malloc(screen_buffer_size);
     if (screen_buffer == NULL)
     {
-        screen_buffer_size = -1;
         printf("Error initializing screen buffer!\n");
         R_Shutdown();
+        return;
     }
 
     memset(screen_buffer, 0, screen_buffer_size);
@@ -73,484 +169,309 @@ void R_InitScreen(int w, int h)
     }
 }
 
-void R_Init(SDL_Window *main_win, game_state_t *game_state)
+void R_Shutdown()
 {
-    window = main_win;
-    scrnw = game_state->scrn_w / 2;
-    scrnh = game_state->scrn_h / 2;
-
-    sdl_renderer = SDL_CreateRenderer(window, 0, SDL_RENDERER_ACCELERATED);
-    R_InitScreen(scrnw, scrnh);
-    SDL_RenderSetLogicalSize(sdl_renderer, scrnw, scrnh);
+    if (screen_texture)
+        SDL_DestroyTexture(screen_texture);
+    if (screen_buffer)
+        free(screen_buffer);
+    if (sdl_renderer)
+        SDL_DestroyRenderer(sdl_renderer);
 }
 
-void R_DrawPoint(int x, int y, unsigned int color)
+void R_UpdateScreen()
 {
-    bool is_out_of_bounds = (x < 0 || x > scrnw || y < 0 || y >= scrnh);
-    bool is_outside_mem_buff = (scrnw * y + x) >= (scrnw * scrnh);
-
-    if (is_out_of_bounds || is_outside_mem_buff)
-        return;
-
-    screen_buffer[scrnw * y + x] = color;
-}
-
-void R_DrawLine(int x0, int y0, int x1, int y1, unsigned int color)
-{
-    int dx;
-    if (x1 > x0)
-        dx = x1 - x0;
-    else
-        dx = x0 - x1;
-
-    int dy;
-    if (y1 > y0)
-        dy = y1 - y0;
-    else
-        dy = y0 - y1;
-
-    int sx = x0 < x1 ? 1 : -1;
-    int sy = y0 < y1 ? 1 : -1;
-    int err = (dx > dy ? dx : -dy) / 2, e2;
-
-    for (;;)
-    {
-        R_DrawPoint(x0, y0, color);
-        if (x0 == x1 && y0 == y1)
-            break;
-
-        e2 = err;
-
-        if (e2 > -dx)
-        {
-            err -= dy;
-            x0 += sx;
-        }
-
-        if (e2 < dy)
-        {
-            err += dx;
-            y0 += sy;
-        }
-    }
-
-    if (is_debug_mode)
-    {
-        R_UpdateScreen();
-        SDL_Delay(10);
-    }
+    SDL_UpdateTexture(screen_texture, NULL, screen_buffer, scrnw * sizeof(unsigned int));
+    SDL_RenderCopy(sdl_renderer, screen_texture, NULL, NULL);
+    SDL_RenderPresent(sdl_renderer);
 }
 
 void R_ClearScreenBuffer()
 {
-    memset(screen_buffer, 0, sizeof(uint32_t) * scrnw * scrnh);
+    memset(screen_buffer, 0, screen_buffer_size);
 }
 
-void R_SwapQuadPoints(rquad_t *q)
+
+
+void R_AddSectorToMap(sector_t *sector)
 {
-    int t = q->bx;
-    q->bx = q->ax;
-    q->ax = t;
-
-    t = q->bt;
-    q->bt = q->at;
-    q->at = t;
-
-    t = q->bb;
-    q->bb = q->ab;
-    q->ab = t;
-}
-
-void R_CalcInterpolationFactors(rquad_t q, double *delta_height, double *delta_elevation)
-{
-    // absolute width
-    int width = abs(q.ax - q.bx);
-    if (width == 0)
+    if (map_sectors.num_sectors < 1024)
     {
-        *delta_height = -1;
-        *delta_elevation = -1;
-        return;
-    }
-
-    // calc height increment
-    int a_height = q.ab - q.at;
-    int b_height = q.bb - q.bt;
-
-    *delta_height = (double)(b_height - a_height) / (double)width;
-
-    // get player's view elevation from the floor
-    int y_center_a = (q.ab - (a_height / 2));
-    int y_center_b = (q.bb - (b_height / 2));
-
-    *delta_elevation = (y_center_b - y_center_a) / (double)width;
-}
-
-int R_CapToScreenH(int val)
-{
-    if (val < 0) val = 0;
-    if (val > scrnh) val = scrnh;
-
-    return val;
-}
-
-int R_CapToScreenW(int val)
-{
-    if (val < 0) val = 0;
-    if (val > scrnw) val = scrnw - 1;
-
-    return val;
-}
-
-void R_Rasterize(rquad_t q, uint32_t color, int ceil_floor_wall, plane_lut_t *xy_lut)
-{
-    // if backfacing wall then do not rasterize
-    if (ceil_floor_wall == IS_WALL && q.ax > q.bx)
-        return;
-
-    bool is_back_wall = false;
-
-    if ((ceil_floor_wall != IS_WALL) && q.ax > q.bx)
-    {
-        R_SwapQuadPoints(&q);
-        is_back_wall = true;
-    }
-
-    double delta_height, delta_elevation;
-
-    R_CalcInterpolationFactors(q, &delta_height, &delta_elevation);
-    if (delta_height == -1 && delta_elevation == -1)
-        return;
-
-    for (int x = q.ax, i = 1; x < q.bx; x++, i++)
-    {
-        if (x < 0 || x > scrnw-1) continue;
-
-        double dh = delta_height * i;
-        double dy_player_elev = delta_elevation * i;
-
-        int y1 = q.at - (dh / 2) + dy_player_elev;
-        int y2 = q.ab + (dh / 2) + dy_player_elev;
-
-        y1 = R_CapToScreenH(y1);
-        y2 = R_CapToScreenH(y2);
-
-        if (ceil_floor_wall == IS_CEIL)
-        {
-            // save the ceiling Y coordinates for each X coordinate
-            if (!is_back_wall)
-                xy_lut->t[x] = y1;
-            else
-                xy_lut->b[x] = y1;
-        }
-        else if (ceil_floor_wall == IS_FLOOR)
-        {
-            // save the floor's Y coordinates for each X coordinate
-            if (!is_back_wall)
-                xy_lut->t[x] = y2;
-            else
-                xy_lut->b[x] = y2;
-        }
-        else 
-        {
-            // rasterize
-            R_DrawLine(x, y1, x, y2, color);
-        }
+        map_sectors.sectors[map_sectors.num_sectors++] = *sector;
     }
 }
 
-rquad_t R_CreateRendarableQuad(int ax, int bx, int at, int ab, int bt, int bb)
+sector_t R_CreateSector(int height, int elevation, unsigned int color, unsigned int floor_clr, unsigned int ceil_clr)
 {
-    rquad_t quad =
-    {
-        .ax = ax, .bx = bx,
-        .at = at, .ab = ab,
-        .bt = bt, .bb = bb
-    };
-
-    return quad;
+    sector_t s = {0};
+    s.height = height;
+    s.elevation = elevation;
+    s.color = color;
+    s.floor_clr = floor_clr;
+    s.ceil_clr = ceil_clr;
+    s.num_walls = 0;
+    return s;
 }
 
-void R_ClipBehindPlayer(double *ax, double *ay, double bx, double by)
+wall_t R_CreateWall(int x1, int y1, int x2, int y2)
 {
-    double px1 = 1;
-    double py1 = 1;
-    double px2 = 200;
-    double py2 = 1;
-
-    double a = (px1 - px2) * (*ay - py2) - (py1 - py2) * (*ax - px2);
-    double b = (py1 - py2) * (*ax - bx) - (px1 - px2) * (*ay - by);
-
-    double t = a / b;
-
-    *ax = *ax - (t * (bx - *ax));
-    *ay = *ay - (t * (by - *ay));
+    wall_t w = {0};
+    w.a.x = x1; w.a.y = y1;
+    w.b.x = x2; w.b.y = y2;
+    w.is_portal = false;
+    return w;
 }
 
-vec2_t R_CalcCentroid(sector_t *s)
+void R_SectorAddWall(sector_t *sector, wall_t wall)
 {
-    vec2_t centroid = {0};
-    for (int i = 0; i < s->num_walls; i++)
+    if (sector->num_walls < 64)
     {
-        centroid.x += s->walls[i].a.x + s->walls[i].b.x;
-        centroid.y += s->walls[i].a.y + s->walls[i].b.y;
-    }
-
-    centroid.x /= s->num_walls * 2;
-    centroid.y /= s->num_walls * 2;
-
-    return centroid;
-}
-
-double R_DistanceToPoint(vec2_t a, vec2_t b)
-{
-    return sqrt((a.x - b.x) * (a.x - b.x) +
-            (a.y - b.y) * (a.y - b.y)
-    );
-}
-
-void R_SortSectorsByDistToPlayer(vec2_t player_pos)
-{
-    // calc sector distances
-    for (int i = 0; i < sectors_queue.num_sectors; i++)
-    {
-        vec2_t centroid = R_CalcCentroid(&sectors_queue.sectors[i]);
-        sectors_queue.sectors[i].dist = R_DistanceToPoint(centroid, player_pos);
-    }
-
-    // sort sectors by distance to player
-    for (int i = 0; i < sectors_queue.num_sectors - 1; i++)
-    {
-        for (int j = 0; j < sectors_queue.num_sectors - i - 1; j++)
-        {
-            if (sectors_queue.sectors[j].dist < sectors_queue.sectors[j+1].dist)
-            {
-                sector_t s = sectors_queue.sectors[j];
-                sectors_queue.sectors[j] = sectors_queue.sectors[j + 1];
-                sectors_queue.sectors[j + 1] = s;
-            }
-        }
-    }
-}
-
-void R_RenderSectors(player_t *player, game_state_t *game_state)
-{
-    double scrn_half_w = scrnw / 2;
-    double scrn_half_h = scrnh / 2;
-    double fov = 300;
-    unsigned int wall_color = 0xFFFF00FF;
-
-    // clear screen
-    R_ClearScreenBuffer();
-
-    // sort polygons prior processing
-    R_SortSectorsByDistToPlayer(player->position);
-
-    // lopp sectors
-    for (int i = 0; i < sectors_queue.num_sectors; i++)
-    {
-        sector_t *s = &sectors_queue.sectors[i];
-        int sector_h = s->height;
-        int sector_e = s->elevation;
-        int sector_clr = s->color;
-
-        for (int i = 0; i < 1024; i++)
-        {
-            s->ceilx_ylut.t[i] = 0;
-            s->ceilx_ylut.b[i] = 0;
-            s->floorx_ylut.t[i] = 0;
-            s->floorx_ylut.b[i] = 0;
-            s->portals_ceilx_ylut.t[i] = 0;
-            s->portals_ceilx_ylut.b[i] = 0;
-            s->portals_floorx_ylut.t[i] = 0;
-            s->portals_floorx_ylut.b[i] = 0;
-        }
-
-        // loop walls
-        for (int k = 0; k < s->num_walls; k++)
-        {
-            wall_t *w = &s->walls[k];
-
-            // displace the world based on player's position
-            double dx1 = w->a.x - player->position.x;
-            double dy1 = w->a.y - player->position.y;
-            double dx2 = w->b.x - player->position.x;
-            double dy2 = w->b.y - player->position.y;
-
-            // rotate the world around the player
-            double SN = sin(player->dir_angle);
-            double CN = cos(player->dir_angle);
-            double wx1 = dx1 * SN - dy1 * CN;
-            double wz1 = dx1 * CN + dy1 * SN;
-            double wx2 = dx2 * SN - dy2 * CN;
-            double wz2 = dx2 * CN + dy2 * SN;
-
-            // if z1 & z2 < 0 (wall completely behind player) -- skip it!
-            // if z1 or z2 is behind the player -> clip it!
-            if (wz1 < 0 && wz2 <0)
-                continue;
-            else if (wz1 < 0)
-                R_ClipBehindPlayer(&wx1, &wz1, wx2, wz2);
-            else if (wz2 < 0)
-                R_ClipBehindPlayer(&wx2, &wz2, wx1, wz1);
-
-            // calc wall height based on distance
-            double wh1 = (sector_h / wz1) * fov;
-            double wh2 = (sector_h / wz2) * fov;
-
-            // convert to screen space
-            double sx1 = (wx1 / wz1) * fov;
-            double sy1 = ((game_state->scrn_h + player->z) / wz1);
-            double sx2 = (wx2 / wz2) * fov;
-            double sy2 = ((game_state->scrn_h + player->z) / wz2);
-
-            // calc wall elevation from the floor
-            double s_level1 = (sector_e / wz1) * fov;
-            double s_level2 = (sector_e / wz2) * fov;
-            sy1 -= s_level1;
-            sy2 -= s_level2;
-
-            //construct portal top and bottom
-            double pbh1 = 0;
-            double pbh2 = 0;
-            double pth1 = 0;
-            double pth2 = 0;
-            if (w->is_portal)
-            {
-                pth1 = (w->portal_top_height / wz1) * fov;
-                pth2 = (w->portal_top_height / wz2) * fov;
-                pbh1 = (w->portal_bot_height / wz1) * fov;
-                pbh2 = (w->portal_bot_height / wz2) * fov;
-            }
-
-            // set screen-space origin to center of the screen
-            sx1 += scrn_half_w;
-            sy1 += scrn_half_h;
-            sx2 += scrn_half_w;
-            sy2 += scrn_half_h;
-
-            // // top
-            // R_DrawLine(sx1, sy1 - wh1, sx2, sy2 - wh2, wall_color);
-            // // bottom
-            // R_DrawLine(sx1, sy1, sx2, sy2, wall_color);
-            // // left edge
-            // R_DrawLine(sx1, sy1 - wh1, sx1, sy1, wall_color);
-            // // right edge
-            // R_DrawLine(sx2, sy2 - wh2, sx2, sy2, wall_color);
-
-            // if (w->is_portal)
-            // {
-            //     R_DrawLine(sx1, sy1 - wh1 + pth1, sx2, sy2 - wh2 + pth2, wall_color);
-            //     R_DrawLine(sx1, sy1 - pbh1, sx2, sy2 - pbh2, wall_color);
-            // }
-
-            if (w->is_portal)
-            {
-                // top
-                rquad_t qt = R_CreateRendarableQuad(sx1, sx2, sy1 - wh1, sy1 - wh1 + pth1, sy2 - wh2, sy2 - wh2 + pth2);
-                // bottom
-                rquad_t qb = R_CreateRendarableQuad(sx1, sx2, sy1 - pbh1, sy1, sy2 - pbh2, sy2);
-
-                R_Rasterize(qt, sector_clr, IS_CEIL, &s->portals_ceilx_ylut);
-                R_Rasterize(qt, sector_clr, IS_FLOOR, &s->portals_floorx_ylut);
-                R_Rasterize(qt, sector_clr, IS_WALL, NULL);
-
-                R_Rasterize(qb, sector_clr, IS_CEIL, &s->ceilx_ylut);
-                R_Rasterize(qb, sector_clr, IS_FLOOR, &s->floorx_ylut);
-                R_Rasterize(qb, sector_clr, IS_WALL, NULL);
-            }
-            else
-            {
-                rquad_t q = R_CreateRendarableQuad(sx1, sx2, sy1 - wh1, sy1, sy2 - wh2, sy2);
-                R_Rasterize(q, sector_clr, IS_CEIL, &s->ceilx_ylut);
-                R_Rasterize(q, sector_clr, IS_FLOOR, &s->floorx_ylut);
-                R_Rasterize(q, sector_clr, IS_WALL, NULL);
-            }
-        }
-
-        // rasterize sector's ceil & floor
-        for (int x = 1; x < 1024; x++)
-        {
-            // walls
-            int cy1 = s->ceilx_ylut.t[x];
-            int cy2 = s->ceilx_ylut.b[x];
-            int fy1 = s->floorx_ylut.t[x];
-            int fy2 = s->floorx_ylut.b[x];
-
-            // portals
-            int pcy1 = s->portals_ceilx_ylut.t[x];
-            int pcy2 = s->portals_ceilx_ylut.b[x];
-            int pfy1 = s->portals_floorx_ylut.t[x];
-            int pfy2 = s->portals_floorx_ylut.b[x];
-
-            // rasterize walls ceil & floor
-            if ((player->z > s->elevation + s->height) && (cy1 > cy2) && (cy1 != 0 && cy2 != 0))
-                R_DrawLine(x, cy1, x, cy2, s->ceil_clr);
-
-            if ((player->z < s->elevation) && (fy1 < fy2) && (fy1 != 0 || fy2 != 0))
-                R_DrawLine(x, fy1, x, fy2, s->floor_clr);
-
-            // rasterize portals ceil & floor
-            if (pcy1 > pcy2 && (pcy1 != 0 && pcy2 != 0))
-                R_DrawLine(x, pcy1, x, pcy2, s->ceil_clr);
-
-            if (pfy1 < pfy2 && (pfy1 != 0 || pfy2 != 0))
-                R_DrawLine(x, pfy1, x, pfy2, s->floor_clr);
-        }
+        sector->walls[sector->num_walls++] = wall;
     }
 }
 
 void R_Render(player_t *player, game_state_t *game_state)
 {
-    is_debug_mode = game_state->is_debug_mode;
-    R_RenderSectors(player, game_state);
+    double scrn_half_w = scrnw / 2.0;
+    double scrn_half_h = scrnh / 2.0;
+    double fov = (scrnw / 2.0) / tan(FOV_ANGLE / 2.0);
+    
+    R_ClearScreenBuffer();
+
+    // Initialiser la queue
+    render_queue.head = 0;
+    render_queue.tail = 0;
+
+    // Ajouter le secteur du joueur
+    sector_t *start_sector = player->current_sector;
+    if (!start_sector) 
+    {
+        // Fallback: trouver le secteur du joueur si non défini
+        // Pour l'instant, on prend le premier secteur ou on cherche
+        if (map_sectors.num_sectors > 0) {
+             start_sector = &map_sectors.sectors[0]; // Fallback temporaire
+             printf("DEBUG: Player sector NULL, using fallback sector %d\n", start_sector->id);
+        }
+        else {
+             printf("DEBUG: No sectors in map!\n");
+             return;
+        }
+    }
+    else {
+        printf("DEBUG: Starting render at sector %d\n", start_sector->id);
+    }
+
+    render_queue.items[render_queue.tail++] = (render_item_t){
+        .sector_id = start_sector->id,
+        .min_x = 0,
+        .max_x = scrnw - 1
+    };
+
+    // Traitement de la queue
+    while (render_queue.head != render_queue.tail)
+    {
+        render_item_t item = render_queue.items[render_queue.head++];
+        sector_t *current_sector = NULL;
+        
+        // Trouver le secteur par ID
+        for(int i=0; i<map_sectors.num_sectors; i++) {
+            if(map_sectors.sectors[i].id == item.sector_id) {
+                current_sector = &map_sectors.sectors[i];
+                break;
+            }
+        }
+        
+        if (!current_sector) continue;
+
+        // Initialiser les lookup tables pour ce secteur si nécessaire
+        // (Simplification: on reset juste pour le rendu actuel)
+        for(int x=0; x<scrnw; x++) {
+            current_sector->ceilx_ylut.t[x] = 0; current_sector->ceilx_ylut.b[x] = scrnh;
+            current_sector->floorx_ylut.t[x] = 0; current_sector->floorx_ylut.b[x] = scrnh;
+        }
+
+        // Pour chaque mur du secteur
+        // printf("DEBUG: Processing sector %d with %d walls\n", current_sector->id, current_sector->num_walls);
+        for (int i = 0; i < current_sector->num_walls; i++)
+        {
+            wall_t *wall = &current_sector->walls[i];
+            
+            // Transformation caméra
+            double dx1 = wall->a.x - player->position.x;
+            double dy1 = wall->a.y - player->position.y;
+            double dx2 = wall->b.x - player->position.x;
+            double dy2 = wall->b.y - player->position.y;
+
+            // Rotation caméra
+            double cs = cos(player->dir_angle);
+            double sn = sin(player->dir_angle);
+            
+            double rx1 = dx1 * cs - dy1 * sn;
+            double rz1 = dx1 * sn + dy1 * cs;
+            double rx2 = dx2 * cs - dy2 * sn;
+            double rz2 = dx2 * sn + dy2 * cs;
+
+            // Clipping
+            if (rz1 <= NEAR_PLANE && rz2 <= NEAR_PLANE)
+                continue;
+
+            if (rz1 <= NEAR_PLANE)
+                R_ClipBehindPlayer(&rx1, &rz1, rx2, rz2);
+            else if (rz2 <= NEAR_PLANE)
+                R_ClipBehindPlayer(&rx2, &rz2, rx1, rz1);
+
+            // Projection perspective
+            double sx1 = (rx1 * fov / rz1) + scrn_half_w;
+            double sx2 = (rx2 * fov / rz2) + scrn_half_w;
+            
+            // Clipping horizontal (X)
+            if (sx1 >= sx2 || sx2 < item.min_x || sx1 > item.max_x)
+                continue;
+
+            // Calcul des hauteurs
+            double sy1a = ((current_sector->elevation - player->z) * fov / rz1) + scrn_half_h;
+            double sy1b = ((current_sector->elevation + current_sector->height - player->z) * fov / rz1) + scrn_half_h;
+            double sy2a = ((current_sector->elevation - player->z) * fov / rz2) + scrn_half_h;
+            double sy2b = ((current_sector->elevation + current_sector->height - player->z) * fov / rz2) + scrn_half_h;
+
+            // Clamp X range
+            int x1 = fmax(item.min_x, sx1);
+            int x2 = fmin(item.max_x, sx2);
+
+            rquad_t quad = {
+                .ax = x1, .bx = x2,
+                .at = sy1b, .ab = sy1a, // Top/Bottom inversés car Y vers le bas ? Non, Y augmente vers le bas.
+                                        // sy1a = sol (bas), sy1b = plafond (haut).
+                                        // En SDL Y=0 est en haut. Donc plafond < sol.
+                                        // sy1b devrait être plus petit que sy1a si height > 0.
+                                        // Vérifions: z_ceil > z_floor.
+                                        // (z_ceil - pz) / z. Si z_ceil > pz, c'est positif.
+                                        // + scrn_half_h.
+                                        // Attends, Y screen: 0 = haut, H = bas.
+                                        // Un point haut dans le monde (Z grand) doit avoir un Y petit.
+                                        // Formule: Y = H/2 - (Z * fov / depth).
+                                        // Ici on a: Y = (Z * fov / depth) + H/2.
+                                        // C'est l'inverse. Si Z est positif (au dessus des yeux), Y augmente (vers le bas).
+                                        // Donc Z positif = bas de l'écran.
+                                        // C'est bizarre.
+                                        // Supposons que le code original était correct.
+                                        // sy1a = elevation (sol). sy1b = elevation + height (plafond).
+                                        // Si elevation < player.z (sol sous les pieds), (elev - pz) est négatif.
+                                        // Donc sy1a < H/2 (vers le haut).
+                                        // C'est l'inverse de ce qu'on veut.
+                                        // On veut sol en bas (Y grand).
+                                        // Donc on doit inverser le signe Z.
+                                        // Y = H/2 - (Z * fov / depth).
+            };
+            
+            // Correction de la projection Y
+            sy1a = scrn_half_h - ((current_sector->elevation - player->z) * fov / rz1);
+            sy1b = scrn_half_h - ((current_sector->elevation + current_sector->height - player->z) * fov / rz1);
+            sy2a = scrn_half_h - ((current_sector->elevation - player->z) * fov / rz2);
+            sy2b = scrn_half_h - ((current_sector->elevation + current_sector->height - player->z) * fov / rz2);
+
+            quad.at = sy1b; // Plafond (haut, Y petit)
+            quad.ab = sy1a; // Sol (bas, Y grand)
+            quad.bt = sy2b;
+            quad.bb = sy2a;
+
+            // Calcul de la distance pour le brouillard
+            double dist = (rz1 + rz2) / 2.0;
+            double dist_factor = 1.0 - (dist / FAR_PLANE);
+
+            if (wall->is_portal)
+            {
+                // Ajouter le secteur voisin à la queue
+                if (render_queue.tail < 1024)
+                {
+                    render_queue.items[render_queue.tail++] = (render_item_t){
+                        .sector_id = wall->neighbor_sector_id,
+                        .min_x = x1,
+                        .max_x = x2
+                    };
+                }
+                
+                // Dessiner les parties haut/bas du portail (steps)
+                
+                // Trouver le secteur voisin pour connaître ses hauteurs
+                sector_t *neighbor = NULL;
+                for(int k=0; k<map_sectors.num_sectors; k++) {
+                    if(map_sectors.sectors[k].id == wall->neighbor_sector_id) {
+                        neighbor = &map_sectors.sectors[k];
+                        break;
+                    }
+                }
+
+                if (neighbor)
+                {
+                    // Step du bas (si le voisin est plus haut)
+                    // On dessine du sol actuel jusqu'au sol du voisin
+                    if (neighbor->elevation > current_sector->elevation)
+                    {
+                        // Calculer Y écran pour le sol du voisin
+                        double neighbor_floor_z = neighbor->elevation;
+                        double sy_step_floor = scrn_half_h - ((neighbor_floor_z - player->z) * fov / rz1);
+                        double sy_step_floor2 = scrn_half_h - ((neighbor_floor_z - player->z) * fov / rz2);
+                        
+                        rquad_t step_quad = quad;
+                        step_quad.at = sy_step_floor; // Haut du step (sol voisin)
+                        step_quad.bt = sy_step_floor2;
+                        step_quad.ab = quad.ab;       // Bas du step (sol actuel)
+                        step_quad.bb = quad.bb;
+                        
+                        // Couleur un peu plus sombre pour le step
+                        unsigned int step_color = R_ApplyFog(0x505050, dist_factor);
+                        R_DrawVerticalWall(&step_quad, step_color);
+                        
+                        // Mettre à jour le bas du portail pour la suite (on ne voit pas à travers le step)
+                        quad.ab = sy_step_floor;
+                        quad.bb = sy_step_floor2;
+                    }
+                    
+                    // Step du haut (si le voisin est plus bas de plafond)
+                    // On dessine du plafond actuel jusqu'au plafond du voisin
+                    double current_ceil_z = current_sector->elevation + current_sector->height;
+                    double neighbor_ceil_z = neighbor->elevation + neighbor->height;
+                    
+                    if (neighbor_ceil_z < current_ceil_z)
+                    {
+                        // Calculer Y écran pour le plafond du voisin
+                        double sy_step_ceil = scrn_half_h - ((neighbor_ceil_z - player->z) * fov / rz1);
+                        double sy_step_ceil2 = scrn_half_h - ((neighbor_ceil_z - player->z) * fov / rz2);
+                        
+                        rquad_t step_quad = quad;
+                        step_quad.at = quad.at;       // Haut du step (plafond actuel)
+                        step_quad.bt = quad.bt;
+                        step_quad.ab = sy_step_ceil;  // Bas du step (plafond voisin)
+                        step_quad.bb = sy_step_ceil2;
+                        
+                        unsigned int step_color = R_ApplyFog(0x505050, dist_factor);
+                        R_DrawVerticalWall(&step_quad, step_color);
+                        
+                        // Mettre à jour le haut du portail
+                        quad.at = sy_step_ceil;
+                        quad.bt = sy_step_ceil2;
+                    }
+                }
+            }
+            else
+            {
+                // Mur plein
+                unsigned int wall_color = R_ApplyFog(current_sector->color, dist_factor);
+                // printf("DEBUG: Drawing wall at x range %d-%d\n", quad.ax, quad.bx);
+                R_DrawVerticalWall(&quad, wall_color);
+            }
+            
+            // Mettre à jour les tables pour le sol/plafond
+            UpdateLookupTables(&quad, current_sector);
+        }
+        
+        // Rendu des sols et plafonds
+        // Note: C'est une simplification, idéalement on le fait après avoir tout dessiné ou par scanline
+        // Mais pour ce moteur "Doom-like" simple, on peut le faire ici
+        double dist_factor = 1.0; // Simplifié pour le sol/plafond
+        R_RenderFlatsForSector(current_sector, player, fov, dist_factor);
+    }
+
     R_UpdateScreen();
-}
-
-sector_t R_CreateSector(int height, int elevation, unsigned int color, unsigned int ceil_clr, unsigned int floor_clr)
-{
-    static int sector_id = 0;
-    sector_t sector = {0};
-    sector.num_walls = 0;
-    sector.height = height;
-    sector.elevation = elevation;
-    sector.color = color;
-    sector.ceil_clr = ceil_clr;
-    sector.floor_clr = floor_clr;
-    sector.id = ++sector_id;
-
-    return sector;
-}
-
-void R_SectorAddWall(sector_t *sector, wall_t vertices)
-{
-    sector->walls[sector->num_walls] = vertices;
-    sector->num_walls++;
-}
-
-void R_AddSectorToQueue(sector_t *sector)
-{
-    sectors_queue.sectors[sectors_queue.num_sectors] = *sector;
-    sectors_queue.num_sectors++;
-}
-
-wall_t R_CreateWall(int ax, int ay, int bx, int by)
-{
-    wall_t w;
-    w.a.x = ax;
-    w.a.y = ay;
-    w.b.x = bx;
-    w.b.y = by;
-    w.is_portal = false;
-
-    return w;
-}
-
-wall_t R_CreatePortal(int ax, int ay, int bx, int by, int th, int bh)
-{
-    wall_t w = R_CreateWall(ax, ay, bx, by);
-    w.is_portal = true;
-    w.portal_top_height = th;
-    w.portal_bot_height = bh;
-
-    return w;
 }

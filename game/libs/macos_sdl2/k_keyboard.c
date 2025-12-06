@@ -108,12 +108,14 @@ void K_ProcessKeyStates(player_t *player, double delta_time)
     }
     if (keystates.up)
     {
-        player->z += ELEVATION_SPEED * delta_time;
+        P_Jump(player);
     } 
+    /*
     else if (keystates.down)
     {
         player->z -= ELEVATION_SPEED * delta_time;
     }
+    */
     // Appliquer le mouvement avec collision
     if (dx != 0 || dy != 0)
     {
@@ -121,7 +123,7 @@ void K_ProcessKeyStates(player_t *player, double delta_time)
         new_positon.y = player->position.y + dy;
         
         // Appliquer la collision (glissement ou stop net)
-        C_ApplyCollision(player, new_positon, sectors_queue.sectors, sectors_queue.num_sectors);
+        C_ApplyCollision(player, new_positon, map_sectors.sectors, map_sectors.num_sectors);
     }
 }
 

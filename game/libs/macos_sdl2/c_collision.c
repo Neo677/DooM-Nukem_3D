@@ -1,5 +1,5 @@
 #include "c_collision.h"
-#include "typedefs.h"
+#include "types.h"
 #include <math.h>
 
 // PLAYER_RADIUS et PLAYER_HEIGHT définis dans typedefs.h
@@ -272,75 +272,99 @@ collision_result_t C_TestPlayer3DCollision(player_t *player, vec2_t new_position
     rsl.colliding_wall = NULL;
     rsl.height_collision = false;
     rsl.xy_collision = false;
+    rsl.new_sector = player->current_sector;
+    
+    sector_t *current = player->current_sector;
+    if (!current) return rsl;
 
-    printf("Testing FULL 3D collision for position: (%.1f, %.1f, %.1f)\n", new_position.x, new_position.y, new_z);
-    
-    // Calculer les limites du joueur
-    double player_bottom = new_z;
-    double player_top = new_z + PLAYER_HEIGHT;
-    
-    // Tester tous les murs de tous les secteurs
-    for (int i = 0; i < num_sector; i++)
+    player_cylinder_t cylinder = C_CreatePlayerCylinder(player);
+    cylinder.center = new_position; // Test at new position
+    cylinder.z_bottom = new_z;
+    cylinder.z_top = new_z + PLAYER_HEIGHT;
+
+    // Check walls in current sector
+    for (int i = 0; i < current->num_walls; i++)
     {
-        sector_t *sector = &sectors[i];
-        for (int j = 0; j < sector->num_walls; j++)
+        wall_t *wall = &current->walls[i];
+        wall_vertical_t wall_vert = C_CreateWallVertical(wall, current);
+        
+        // Check 2D collision
+        if (C_CheckCylinderWallCollision2D(cylinder, wall_vert))
         {
-            wall_t *wall = &sector->walls[j];
-            
-            // 1. Test collision XY (distance 2D)
-            double distance = C_pointToLineDistance(new_position, wall->a, wall->b);
-            bool xy_collision = (distance < PLAYER_RADIUS);
-            
-            if (xy_collision)
+            // Check if it's a portal
+            if (wall->is_portal)
             {
-                printf("XY collision detected: distance=%.1f < radius=%.1f\n", distance, PLAYER_RADIUS);
-                
-                // 2. Test collision hauteur avec la nouvelle position Z
-                double wall_bottom = (double)sector->elevation;
-                double wall_top = (double)sector->elevation + (double)sector->height;
-                
-                printf("Height test: player[%.1f-%.1f] vs wall[%.1f-%.1f]\n", 
-                       player_bottom, player_top, wall_bottom, wall_top);
-                
-                // Debug détaillé pour le premier mur avec collision XY
-                static bool first_debug = true;
-                if (first_debug) {
-                    C_DebugHeightOverlap(player_bottom, player_top, wall_bottom, wall_top);
-                    first_debug = false;
-                }
-                
-                // Chevauchement en hauteur : (player_top > wall_bottom && player_bottom < wall_top)
-                bool height_collision = (player_top > wall_bottom && player_bottom < wall_top);
-                
-                if (height_collision)
-                {
-                    printf("FULL 3D COLLISION BLOCKED: XY=YES, Height=YES (overlapping)\n");
-                    rsl.collision_detected = true;
-                    rsl.colliding_wall = wall;
-                    rsl.xy_collision = true;
-                    rsl.height_collision = true;
-                    return rsl;
-                }
-                else
-                {
-                    if (player_bottom >= wall_top)
-                    {
-                        printf("FULL 3D COLLISION PASS: XY=YES, Height=NO (player ABOVE wall)\n");
+                // Find neighbor sector
+                sector_t *neighbor = NULL;
+                for(int j=0; j<num_sector; j++) {
+                    if (sectors[j].id == wall->neighbor_sector_id) {
+                        neighbor = &sectors[j];
+                        break;
                     }
-                    else if (player_top <= wall_bottom)
+                }
+                
+                if (neighbor)
+                {
+                    // Check if we fit in the opening (portal height)
+                    // Portal opening is intersection of current and neighbor heights
+                    double portal_floor = fmax(current->elevation, neighbor->elevation);
+                    double portal_ceil = fmin(current->elevation + current->height, neighbor->elevation + neighbor->height);
+                    
+                    // Check if player fits vertically
+                    // Allow stepping up if the floor difference is small (e.g. 20 units)
+                    double max_step = 25.0;
+                    bool can_step_up = (portal_floor <= cylinder.z_bottom + max_step);
+                    
+                    bool fits = can_step_up && (cylinder.z_top <= portal_ceil);
+                    
+                    if (fits)
                     {
-                        printf("FULL 3D COLLISION PASS: XY=YES, Height=NO (player BELOW wall)\n");
+                        // We can pass!
+                        // Check if we actually crossed the line to update sector
+                        // Simple check: center point side
+                        double side_old = C_PointSide(player->position, wall->a, wall->b);
+                        double side_new = C_PointSide(new_position, wall->a, wall->b);
+                        
+                        // If we crossed (signs different or zero)
+                        // Note: C_PointSide > 0 means inside (usually), depends on winding.
+                        // Assuming standard winding where > 0 is inside.
+                        // If we go from inside to outside, we cross.
+                        
+                        // Actually, simpler: if we are "inside" the wall collision radius but allowed to pass,
+                        // we might be transitioning.
+                        // Let's just update the sector if we are closer to the neighbor center? No.
+                        // Let's update if we cross the portal line.
+                        
+                        if ((side_old > 0 && side_new <= 0) || (side_old <= 0 && side_new > 0))
+                        {
+                            rsl.new_sector = neighbor;
+                            printf("Portal crossed! Entering sector %d\n", neighbor->id);
+                        }
+                        continue; // No collision, allow movement
                     }
                     else
                     {
-                        printf("FULL 3D COLLISION PASS: XY=YES, Height=NO (edge case)\n");
+                        // Blocked by height (step too high or ceiling too low)
+                        rsl.collision_detected = true;
+                        rsl.height_collision = true;
+                        rsl.colliding_wall = wall;
+                        // Slide
+                        rsl.new_position = C_CalculateSlideDirection(player->position, new_position, wall, PLAYER_RADIUS);
                     }
                 }
+            }
+            else
+            {
+                // Solid wall
+                rsl.collision_detected = true;
+                rsl.xy_collision = true;
+                rsl.colliding_wall = wall;
+                // Slide
+                rsl.new_position = C_CalculateSlideDirection(player->position, new_position, wall, PLAYER_RADIUS);
             }
         }
     }
     
-    printf("No FULL 3D collision detected - movement allowed\n");
     return rsl;
 }
 
@@ -354,23 +378,30 @@ collision_result_t C_TestPlayerMovement3D(player_t *player, vec2_t new_pos, sect
 void C_ApplyCollision(player_t *player, vec2_t attempted_position, sector_t *sectors, int num_sector)
 {
     collision_result_t test = C_TestPlayerMovement3D(player, attempted_position, sectors, num_sector);
-    if (!test.collision_detected)
-        player->position = test.new_position;
+    player->position = test.new_position;
+    if (test.new_sector != player->current_sector)
+    {
+        player->current_sector = test.new_sector;
+    }
 }
 
 // Applique un mouvement 3D complet (XY + Z) avec collision
 void C_Apply3DMovement(player_t *player, vec2_t new_position, double new_z, sector_t *sectors, int num_sector)
 {
     collision_result_t test = C_TestPlayer3DCollision(player, new_position, new_z, sectors, num_sector);
-    if (!test.collision_detected)
+    
+    player->position = test.new_position;
+    player->z = new_z; // TODO: Check floor/ceiling collision for Z
+    
+    if (test.new_sector != player->current_sector)
     {
-        player->position = test.new_position;
-        player->z = new_z;
-        printf("3D movement applied: pos(%.1f,%.1f) z=%.1f\n", player->position.x, player->position.y, player->z);
+        player->current_sector = test.new_sector;
+        // Adjust Z if needed (e.g. falling) - handled by physics update
     }
-    else
+    
+    if (test.collision_detected)
     {
-        printf("3D movement blocked by collision\n");
+        // printf("Collision handled. Sliding to: (%.1f, %.1f)\n", player->position.x, player->position.y);
     }
 }
 

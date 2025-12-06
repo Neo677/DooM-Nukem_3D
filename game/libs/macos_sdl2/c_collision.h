@@ -1,7 +1,7 @@
 #ifndef C_COLLISION_H
 #define C_COLLISION_H
 
-#include "typedefs.h"
+#include "types.h"
 #include "p_player.h"
 #include "r_renderer.h"
 
@@ -13,6 +13,7 @@ typedef struct _collision_result
     wall_t *colliding_wall;
     bool height_collision; // Nouvelle : collision en hauteur
     bool xy_collision;     // Nouvelle : collision en XY
+    struct _sector *new_sector; // Nouveau secteur si transition
 } collision_result_t;
 
 // Structure pour modéliser le cylindre du joueur

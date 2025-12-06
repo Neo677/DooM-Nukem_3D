@@ -1,6 +1,19 @@
 # Doom-Nukem 3D
 
-Un FPS rétro-moderne inspiré de Doom 4, utilisant un moteur raycasting personnalisé.
+Un FPS rétro-moderne inspiré de Doom 4, utilisant un moteur raycasting personnalisé. Une integration supplementaire sera mise en place incluant une reproduction du jeux Doom 2016 et Doom eternal 
+
+Cahier des charges personnelle : 
+
+	- refaire from schratch le moteur du jeux
+	- ajouter un mode admin avec un mot de passe qui nous permet de figer le jeux et renter dans un mode photoshoot
+	- comprendre comment sont fait les murs
+	- comprendre comment les afficher
+	- trier les fichier dans download concernant les armes montres ...
+	- pour ce qui es du decors il faut encore trouver certaine ressourse
+		
+
+
+
 
 ## 🎮 Caractéristiques
 

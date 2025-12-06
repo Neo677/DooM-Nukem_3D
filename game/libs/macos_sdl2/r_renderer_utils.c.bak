@@ -1,0 +1,72 @@
+// Ajout des fonctions manquantes
+
+static void R_DrawVerticalWall(rquad_t *quad, unsigned int color)
+{
+    if (quad->ax > quad->bx)
+        return;  // Mur dos à la caméra
+
+    for (int x = quad->ax; x <= quad->bx; x++)
+    {
+        if (x < 0 || x >= scrnw)
+            continue;
+
+        // Interpolation des hauteurs
+        float t = (float)(x - quad->ax) / (quad->bx - quad->ax);
+        int y1 = quad->at + t * (quad->bt - quad->at);
+        int y2 = quad->ab + t * (quad->bb - quad->ab);
+
+        R_DrawVerticalLine(x, y1, y2, color);
+    }
+}
+
+static void UpdateLookupTables(rquad_t *quad, sector_t *sector)
+{
+    if (quad->ax > quad->bx)
+        return;
+
+    for (int x = quad->ax; x <= quad->bx; x++)
+    {
+        if (x < 0 || x >= scrnw)
+            continue;
+
+        float t = (float)(x - quad->ax) / (quad->bx - quad->ax);
+        int ceiling_y = quad->at + t * (quad->bt - quad->at);
+        int floor_y = quad->ab + t * (quad->bb - quad->ab);
+
+        // Mise à jour des lookup tables pour le plafond
+        if (ceiling_y < sector->ceilx_ylut.t[x] || sector->ceilx_ylut.t[x] == 0)
+            sector->ceilx_ylut.t[x] = ceiling_y;
+        if (ceiling_y > sector->ceilx_ylut.b[x])
+            sector->ceilx_ylut.b[x] = ceiling_y;
+
+        // Mise à jour des lookup tables pour le sol
+        if (floor_y < sector->floorx_ylut.t[x] || sector->floorx_ylut.t[x] == 0)
+            sector->floorx_ylut.t[x] = floor_y;
+        if (floor_y > sector->floorx_ylut.b[x])
+            sector->floorx_ylut.b[x] = floor_y;
+    }
+}
+
+static void R_RenderFlatsForSector(sector_t *s, player_t *player, double fov, double dist_factor)
+{
+    for (int x = 0; x < scrnw; x++)
+    {
+        // Rendu du plafond
+        int ceil_y1 = s->ceilx_ylut.t[x];
+        int ceil_y2 = s->ceilx_ylut.b[x];
+        if (ceil_y1 < ceil_y2 && player->z < s->elevation + s->height)
+        {
+            unsigned int ceil_color = R_ApplyFog(s->ceil_clr, dist_factor);
+            R_DrawVerticalLine(x, ceil_y1, ceil_y2, ceil_color);
+        }
+
+        // Rendu du sol
+        int floor_y1 = s->floorx_ylut.t[x];
+        int floor_y2 = s->floorx_ylut.b[x];
+        if (floor_y1 < floor_y2 && player->z > s->elevation)
+        {
+            unsigned int floor_color = R_ApplyFog(s->floor_clr, dist_factor);
+            R_DrawVerticalLine(x, floor_y1, floor_y2, floor_color);
+        }
+    }
+}

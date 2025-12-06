@@ -1,0 +1,305 @@
+#include "r_renderer.h"
+
+#define CEIL_CLR 0x3ac960
+#define FLOOR_CLR 0x1a572a
+
+SDL_Window* window;
+SDL_Renderer* sdl_renderer;
+SDL_Texture* screen_texture;
+unsigned int scrnw, scrnh;
+bool is_debug_mode = false;
+unsigned int *screen_buffer = NULL;
+int screen_buffer_size = 0;
+
+typedef struct {
+    int ax, bx;    // X coordinates of points A & B
+    int at, ab;    // A top & A bottom coordinates
+    int bt, bb;    // B top & B bottom coordinates
+} rquad_t;
+
+// Prototypes des fonctions internes
+static void R_SwapQuadPoints(rquad_t *q);
+static vec2_t R_CalcCentroid(sector_t *s);
+static double R_DistanceToPoint(vec2_t a, vec2_t b);
+static void R_CalcInterpolationFactors(rquad_t q, double *delta_height, double *delta_elevation);
+static void R_ClipBehindPlayer(double *ax, double *ay, double bx, double by);
+static unsigned int R_ApplyFog(unsigned int color, double dist_factor);
+static void R_DrawVerticalLine(int x, int y1, int y2, unsigned int color);
+static rquad_t R_CreateRendarableQuad(int ax, int bx, int at, int ab, int bt, int bb);
+static void R_RenderFlatsForSector(sector_t *s, player_t *player, double fov, double dist_factor);
+
+void R_ShutdownScreen()
+{
+    if (screen_texture)
+        SDL_DestroyTexture(screen_texture);
+
+    if (screen_buffer != NULL)
+        free(screen_buffer);
+}
+
+void R_Shutdown()
+{
+    R_ShutdownScreen();
+    SDL_DestroyRenderer(sdl_renderer);
+}
+
+void R_UpdateScreen()
+{
+    SDL_UpdateTexture(screen_texture, NULL, screen_buffer, scrnw * sizeof(unsigned int));
+    SDL_RenderCopy(sdl_renderer, screen_texture, NULL, NULL);
+    SDL_RenderPresent(sdl_renderer);
+}
+
+void R_InitScreen(int w, int h)
+{
+    scrnw = w;
+    scrnh = h;
+    screen_buffer_size = sizeof(unsigned int) * w * h;
+    screen_buffer = (unsigned int*)malloc(screen_buffer_size);
+    if (screen_buffer == NULL)
+    {
+        printf("Error initializing screen buffer!\n");
+        R_Shutdown();
+        return;
+    }
+
+    memset(screen_buffer, 0, screen_buffer_size);
+
+    screen_texture = SDL_CreateTexture(
+        sdl_renderer,
+        SDL_PIXELFORMAT_RGBA32,
+        SDL_TEXTUREACCESS_STREAMING,
+        w, h
+    );
+
+    if (screen_texture == NULL)
+    {
+        printf("Error creating screen texture!\n");
+        R_Shutdown();
+    }
+}
+
+void R_Init(SDL_Window *main_win, game_state_t *game_state)
+{
+    window = main_win;
+    sdl_renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED);
+    if (!sdl_renderer)
+    {
+        printf("Error creating renderer: %s\n", SDL_GetError());
+        return;
+    }
+    
+    R_InitScreen(game_state->scrn_w, game_state->scrn_h);
+    SDL_RenderSetLogicalSize(sdl_renderer, game_state->scrn_w, game_state->scrn_h);
+}
+
+void R_DrawPoint(int x, int y, unsigned int color)
+{
+    if (x < 0 || x >= scrnw || y < 0 || y >= scrnh)
+        return;
+
+    screen_buffer[scrnw * y + x] = color;
+}
+
+void R_DrawLine(int x0, int y0, int x1, int y1, unsigned int color)
+{
+    int dx = abs(x1 - x0);
+    int dy = abs(y1 - y0);
+    int sx = x0 < x1 ? 1 : -1;
+    int sy = y0 < y1 ? 1 : -1;
+    int err = (dx > dy ? dx : -dy) / 2;
+
+    while (true)
+    {
+        R_DrawPoint(x0, y0, color);
+        if (x0 == x1 && y0 == y1)
+            break;
+
+        int e2 = err;
+        if (e2 > -dx)
+        {
+            err -= dy;
+            x0 += sx;
+        }
+        if (e2 < dy)
+        {
+            err += dx;
+            y0 += sy;
+        }
+    }
+}
+
+void R_DrawVerticalLine(int x, int y1, int y2, unsigned int color)
+{
+    if (x < 0 || x >= scrnw)
+        return;
+
+    y1 = fmax(0, fmin(y1, scrnh - 1));
+    y2 = fmax(0, fmin(y2, scrnh - 1));
+
+    for (int y = y1; y <= y2; y++)
+    {
+        screen_buffer[scrnw * y + x] = color;
+    }
+}
+
+void R_ClearScreenBuffer()
+{
+    memset(screen_buffer, 0, screen_buffer_size);
+}
+
+static unsigned int R_ApplyFog(unsigned int color, double dist_factor)
+{
+    dist_factor = fmax(0.0, fmin(1.0, dist_factor));
+    
+    unsigned char r = (color >> 16) & 0xFF;
+    unsigned char g = (color >> 8) & 0xFF;
+    unsigned char b = color & 0xFF;
+
+    r = (unsigned char)(r * dist_factor);
+    g = (unsigned char)(g * dist_factor);
+    b = (unsigned char)(b * dist_factor);
+
+    return (r << 16) | (g << 8) | b;
+}
+
+static void R_ClipBehindPlayer(double *ax, double *ay, double bx, double by)
+{
+    double denom = (*ay - by);
+    if (fabs(denom) > 0.0001)
+    {
+        double t = *ay / denom;
+        *ax = *ax + t * (bx - *ax);
+        *ay = *ay + t * (by - *ay);
+    }
+}
+
+static vec2_t R_CalcCentroid(sector_t *s)
+{
+    vec2_t centroid = {0, 0};
+    if (s->num_walls == 0)
+        return centroid;
+
+    for (int i = 0; i < s->num_walls; i++)
+    {
+        centroid.x += s->walls[i].a.x + s->walls[i].b.x;
+        centroid.y += s->walls[i].a.y + s->walls[i].b.y;
+    }
+
+    centroid.x /= (2 * s->num_walls);
+    centroid.y /= (2 * s->num_walls);
+    return centroid;
+}
+
+static double R_DistanceToPoint(vec2_t a, vec2_t b)
+{
+    double dx = b.x - a.x;
+    double dy = b.y - a.y;
+    return sqrt(dx * dx + dy * dy);
+}
+
+void R_RenderSectors(player_t *player, game_state_t *game_state)
+{
+    double scrn_half_w = scrnw / 2.0;
+    double scrn_half_h = scrnh / 2.0;
+    double fov = (scrnw / 2.0) / tan(FOV_ANGLE / 2.0);
+    
+    R_ClearScreenBuffer();
+
+    // Tri des secteurs par distance
+    for (int i = 0; i < sectors_queue.num_sectors; i++)
+    {
+        vec2_t centroid = R_CalcCentroid(&sectors_queue.sectors[i]);
+        sectors_queue.sectors[i].dist = R_DistanceToPoint(centroid, player->position);
+    }
+
+    // Tri du plus proche au plus loin
+    for (int i = 0; i < sectors_queue.num_sectors - 1; i++)
+    {
+        for (int j = 0; j < sectors_queue.num_sectors - i - 1; j++)
+        {
+            if (sectors_queue.sectors[j].dist > sectors_queue.sectors[j+1].dist)
+            {
+                sector_t temp = sectors_queue.sectors[j];
+                sectors_queue.sectors[j] = sectors_queue.sectors[j + 1];
+                sectors_queue.sectors[j + 1] = temp;
+            }
+        }
+    }
+
+    // Rendu des secteurs
+    for (int i = 0; i < sectors_queue.num_sectors; i++)
+    {
+        sector_t *s = &sectors_queue.sectors[i];
+        double dist_factor = 1.0 - (s->dist / FAR_PLANE);
+
+        // Initialiser les lookup tables
+        memset(&s->ceilx_ylut, 0, sizeof(plane_lut_t));
+        memset(&s->floorx_ylut, 0, sizeof(plane_lut_t));
+
+        // Rendu des murs
+        for (int w = 0; w < s->num_walls; w++)
+        {
+            wall_t *wall = &s->walls[w];
+
+            // Transformation caméra
+            double dx1 = wall->a.x - player->position.x;
+            double dy1 = wall->a.y - player->position.y;
+            double dx2 = wall->b.x - player->position.x;
+            double dy2 = wall->b.y - player->position.y;
+
+            // Rotation caméra
+            double cs = cos(player->dir_angle);
+            double sn = sin(player->dir_angle);
+            
+            double rx1 = dx1 * cs - dy1 * sn;
+            double rz1 = dx1 * sn + dy1 * cs;
+            double rx2 = dx2 * cs - dy2 * sn;
+            double rz2 = dx2 * sn + dy2 * cs;
+
+            // Clipping
+            if (rz1 <= NEAR_PLANE && rz2 <= NEAR_PLANE)
+                continue;
+
+            if (rz1 <= NEAR_PLANE)
+                R_ClipBehindPlayer(&rx1, &rz1, rx2, rz2);
+            else if (rz2 <= NEAR_PLANE)
+                R_ClipBehindPlayer(&rx2, &rz2, rx1, rz1);
+
+            // Projection perspective
+            double sx1 = (rx1 * fov / rz1) + scrn_half_w;
+            double sy1 = ((-player->z + s->elevation) * fov / rz1) + scrn_half_h;
+            double sx2 = (rx2 * fov / rz2) + scrn_half_w;
+            double sy2 = ((-player->z + s->elevation) * fov / rz2) + scrn_half_h;
+
+            // Hauteurs des murs
+            double wh1 = (s->height * fov) / rz1;
+            double wh2 = (s->height * fov) / rz2;
+
+            // Créer et rendre le quad
+            rquad_t quad = {
+                .ax = (int)sx1, .bx = (int)sx2,
+                .at = (int)(sy1 - wh1), .ab = (int)sy1,
+                .bt = (int)(sy2 - wh2), .bb = (int)sy2
+            };
+
+            // Appliquer le fog et rendre
+            unsigned int wall_color = R_ApplyFog(s->color, dist_factor);
+            R_DrawVerticalWall(&quad, wall_color);
+            
+            // Mettre à jour les lookup tables pour sols/plafonds
+            UpdateLookupTables(&quad, s);
+        }
+
+        // Rendu des sols et plafonds
+        R_RenderFlatsForSector(s, player, fov, dist_factor);
+    }
+}
+
+void R_Render(player_t *player, game_state_t *game_state)
+{
+    R_RenderSectors(player, game_state);
+    R_UpdateScreen();
+}
+
+// Les autres fonctions restent inchangées (R_CreateSector, R_SectorAddWall, etc.)
