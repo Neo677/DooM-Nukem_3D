@@ -1,35 +1,48 @@
 #ifndef TYPES_H
 #define TYPES_H
 
-#define max_Polyes 10
-#define max_Verts 8
+#define MAX_POLYS 10
+#define MAX_VERTS 8
 
-typedef struct Vec2
+typedef struct Vec2_s
 {
     float x;
     float y;
-}        Vec2;
+}        Vec2_t;
 
-typedef struct 
+typedef struct lineSeg_s
 {
-    Vec2 p1, p2;
-}        lineSeg;
+    Vec2_t p1, p2;
+}        lineSeg_t;
 
-typedef struct
+typedef struct polygon_s
 {
-    Vec2 vert[max_Verts];
+    Vec2_t vert[MAX_VERTS];
     int vertCnt;
     float height;
     float curDist;
-}        polygon;
+    int color;
+}        polygon_t;
 
-typedef struct 
+typedef struct screenSpacePoly_s
 {
-    Vec2 vert[4];
+    Vec2_t vert[MAX_VERTS];
+    int vertCnt;
     float distFromCamera;
     int planeIdInPoly;
-}        screenSpacePoly;
+}        screenSpacePoly_t;
 
+typedef struct Camera_s
+{
+    float camAngle;
+    float stepWave;
+    Vec2_t camPos;
+    Vec2_t oldCamPos;
+}   Camera_t;
 
+typedef struct color_s
+{
+    unsigned char R, G, B;
+}           color_t;
 
 #endif
