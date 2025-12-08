@@ -1,6 +1,7 @@
 
 #include "./header/game.h"
 #include "./header/types.h"
+#include <sys/time.h>
 
 Camera_t cam;
 polygon_t polys[MAX_POLYS];
@@ -8,6 +9,181 @@ Vec2_t vert[MAX_VERTS];
 static int g_keys[65536];
 int screenSpaceVisiblePlanes;
 screenSpacePoly_t screenSpacePoly[MAX_POLYS][MAX_VERTS];
+static double lastTime = 0.0;
+
+// // ----------------- MATH -----------
+// float dotPoints(float x1, float y1, float x2, float y2)
+// {
+//     return (x1 * x2 + y1 * y2);
+// }
+
+// float ft_dot(Vec2_t pointA, Vec2_t pointB)
+// {
+//     return (dotPoints(pointA.x, pointA.y, pointB.x, pointB.y));
+// }
+
+// Vec2_t normalize(Vec2_t vec)
+// {
+//     float len = sqrt((vec.x * vec.x) + (vec.y * vec.y));
+//     Vec2_t normalize;
+//     normalize.x = vec.x / len;
+//     normalize.y = vec.y / len;
+
+//     return (normalize);
+// }
+
+// Vec2_t vecMinus(Vec2_t v1, Vec2_t v2)
+// {
+//     Vec2_t v3;
+//     v3.x = v1.x - v2.x;
+//     v3.y = v1.y - v2.y;
+
+//     return (v3);
+// }
+
+// Vec2_t vecPlus(Vec2_t v1, Vec2_t v2)
+// {
+//     Vec2_t v3;
+//     v3.x = v1.x + v2.x;
+//     v3.y = v1.y + v2.y;
+
+//     return (v3);
+// }
+
+// Vec2_t vecMulF(Vec2_t v1, float val)
+// {
+//     Vec2_t v2;
+//     v2.x = v1.x * val;
+//     v2.y = v1.y * val;
+//     return (v2);
+// }
+
+// float len_vec(Vec2_t pointA, Vec2_t pointB)
+// {
+//     float distX = pointB.x - pointA.x;
+//     float distY = pointB.y - pointA.y;
+
+//     return (sqrt(distX * distX + distY * distY));
+// }
+
+// Vec2_t closestPointOnLine(lineSeg_t line, Vec2_t point)
+// {
+//     float lineLen = len_vec(line.p1, line.p2);
+//     float dot = (((point.x - line.p1.x) * (line.p2.x - line.p1.x)) + ((point.y - line.p1.y) * (line.p2.y - line.p1.y))) / (lineLen * lineLen);
+
+//     if (dot > 1) {
+//         dot = 1;
+//     } else if (dot < 0) {
+//         dot = 0;
+//     }
+//     Vec2_t closestPoint;
+//     closestPoint.x = line.p1.x + (dot * (line.p2.x - line.p1.x));
+//     closestPoint.y = line.p1.y + (dot * (line.p2.y - line.p1.y));
+//     return (closestPoint);
+// }
+
+// int isPointOnLine(lineSeg_t line, Vec2_t point)
+// {
+//     float lineLen = len_vec(line.p1, line.p2);
+//     float pointDist1 = len_vec(point, line.p1);
+//     float pointDist2 = len_vec(point, line.p2);
+//     float resolution = 0.1f;
+//     float lineLenMarginHigh = lineLen + resolution;
+//     float lineLenMarginLow = lineLen - resolution;
+//     float distFromLineEnds = pointDist1 + pointDist2;
+
+//     if (distFromLineEnds >= lineLenMarginLow && distFromLineEnds <= lineLenMarginHigh)
+//         return (1);
+//     return (0);
+// }
+
+// int lineCircleCollision(lineSeg_t line, Vec2_t circleCenter, float circleRadius)
+// {
+//     Vec2_t closestPointToLine = closestPointOnLine(line, circleCenter);
+//     float circleToPointOnLineDist = len_vec(closestPointToLine, circleCenter);
+
+//     if (circleToPointOnLineDist < circleRadius)
+//         return (1);
+//     return (0);
+// }
+
+// Vec2_t resolveCollision(Vec2_t newPos)
+// {
+//     float RADIUS = 20.0f;
+//     int iterations = 0;
+//     int maxIterations = 5;
+    
+//     while (iterations < maxIterations)
+//     {
+//         int collisionDetected = 0;
+//         Vec2_t totalPush = {0, 0};
+        
+//         for (int polyIdx = 0; polyIdx < MAX_POLYS; polyIdx++)
+//         {
+//             if (polys[polyIdx].vertCnt < 2)
+//                 continue;
+//             // Test tous les segments du polygone
+//             for (int i = 0; i < polys[polyIdx].vertCnt; i++)
+//             {
+//                 lineSeg_t wall;
+//                 wall.p1 = polys[polyIdx].vert[i];
+//                 wall.p2 = polys[polyIdx].vert[(i + 1) % polys[polyIdx].vertCnt];
+                
+//                 if (lineCircleCollision(wall, newPos, RADIUS))
+//                 {
+//                     collisionDetected = 1;
+//                     Vec2_t closestPoint = closestPointOnLine(wall, newPos);
+//                     Vec2_t pushDir = vecMinus(newPos, closestPoint);
+                    
+//                     float dist = sqrt(pushDir.x * pushDir.x + pushDir.y * pushDir.y);
+                    
+//                     if (dist > 0.001f)
+//                     {
+//                         pushDir.x /= dist;
+//                         pushDir.y /= dist;
+                        
+//                         float pushAmount = RADIUS - dist + 0.5f;
+//                         totalPush.x += pushDir.x * pushAmount;
+//                         totalPush.y += pushDir.y * pushAmount;
+//                     }
+//                     else
+//                     {
+//                         totalPush.x += RADIUS + 0.5f;
+//                         totalPush.y += 0.0f;
+//                     }
+//                 }
+//             }
+//         }
+        
+//         if (!collisionDetected)
+//             break;
+        
+//         newPos.x += totalPush.x;
+//         newPos.y += totalPush.y;
+        
+//         iterations++;
+//     }
+    
+//     return newPos;
+// }
+
+// int checkCollision(Vec2_t newPos)
+// {
+//     for (int polyIdx = 0; polyIdx < MAX_POLYS; polyIdx++) {
+//         if (polys[polyIdx].vertCnt < 2) 
+//             continue;
+//         for (int i = 0; i < polys[polyIdx].vertCnt; i++) {
+//             lineSeg_t wall;
+//             wall.p1 = polys[polyIdx].vert[i];
+//             wall.p2 = polys[polyIdx].vert[(i + 1) % polys[polyIdx].vertCnt];
+
+//             if (lineCircleCollision(wall, newPos, 20.0f))
+//                 return (1);
+//         }
+//     }
+//     return (0);
+// }
+
 
 void putPixel(t_render *render, int x, int y, int color)
 {
@@ -111,29 +287,57 @@ int key_release(int keycode, t_render *render)
 
 void CameraTranslate(double deltaTime)
 {
-    // int isMoving = 0;
+    int isMoving = 0;
+    cam.oldCamPos = cam.camPos;
+    Vec2_t newPos = cam.camPos;
 
     if (g_keys[KEY_W]) {
-        cam.camPos.x += MOV_SPEED * cos(cam.camAngle) * deltaTime;
-        cam.camPos.y += MOV_SPEED * sin(cam.camAngle) * deltaTime;
-        cam.stepWave += 3 * deltaTime;
+        newPos.x += MOV_SPEED * cos(cam.camAngle) * deltaTime;
+        newPos.y += MOV_SPEED * sin(cam.camAngle) * deltaTime;
+        isMoving = 1;
     } else if (g_keys[KEY_S]) {
-        cam.camPos.x -= MOV_SPEED * cos(cam.camAngle) * deltaTime;
-        cam.camPos.y -= MOV_SPEED * sin(cam.camAngle) * deltaTime;
-        cam.stepWave += 3 * deltaTime;
+        newPos.x -= MOV_SPEED * cos(cam.camAngle) * deltaTime;
+        newPos.y -= MOV_SPEED * sin(cam.camAngle) * deltaTime;
+        isMoving = 1;
     }
+
+    cam.camPos = resolveCollision(newPos);
+
     if (g_keys[KEY_A]) {
         cam.camAngle -= ROT_SPEED * deltaTime;
     } else if (g_keys[KEY_D]) {
         cam.camAngle += ROT_SPEED * deltaTime;
     }
+
+    if (isMoving)
+        cam.stepWave += 3 * deltaTime;
     if (cam.stepWave > M_PI * 2)
         cam.stepWave = 0;
+}
 
-    // if (isMoving) 
-    //     cam.stepWave += deltaTime * 5.0;
-    // else
-    //     cam.stepWave = 0.0;
+double getDeltaTime(void)
+{
+    struct timeval tv;
+    double currentTime;
+    double deltaTime;
+
+    gettimeofday(&tv, NULL);
+    currentTime = tv.tv_sec + tv.tv_usec / 1000000.0;
+    
+    if (lastTime == 0.0)
+    {
+        lastTime = currentTime;
+        return 0.016;  // First frame fallback
+    }
+    
+    deltaTime = currentTime - lastTime;
+    lastTime = currentTime;
+    
+    // Cap delta time to avoid huge jumps (10 FPS min) and zero/negative values
+    if (deltaTime > 0.1 || deltaTime <= 0.0)
+        deltaTime = 0.016;
+    
+    return deltaTime;
 }
 
 void display_debug_info(t_render *render)
@@ -155,10 +359,8 @@ void init()
     polys[0].vert[2].y = 136.00;
     polys[0].vert[3].x = 135.00;
     polys[0].vert[3].y = 132.00;
-    polys[0].vert[4].x = 141.00;
-    polys[0].vert[4].y = 84.00;
     polys[0].height = 50000;
-    polys[0].vertCnt = 5;
+    polys[0].vertCnt = 4;
     polys[1].vert[0].x = 133.00;
     polys[1].vert[0].y = 441.00;
     polys[1].vert[1].x = 576.00;
@@ -167,10 +369,8 @@ void init()
     polys[1].vert[2].y = 493.00;
     polys[1].vert[3].x = 123.00;
     polys[1].vert[3].y = 497.00;
-    polys[1].vert[4].x = 133.00;
-    polys[1].vert[4].y = 441.00;
     polys[1].height = 50000;
-    polys[1].vertCnt = 5;
+    polys[1].vertCnt = 4;
     polys[2].vert[0].x = 691.00;
     polys[2].vert[0].y = 165.00;
     polys[2].vert[1].x = 736.00;
@@ -183,10 +383,8 @@ void init()
     polys[2].vert[4].y = 222.00;
     polys[2].vert[5].x = 653.00;
     polys[2].vert[5].y = 183.00;
-    polys[2].vert[6].x = 691.00;
-    polys[2].vert[6].y = 165.00;
     polys[2].height = 10000;
-    polys[2].vertCnt = 7;
+    polys[2].vertCnt = 6;
     polys[3].vert[0].x = 698.00;
     polys[3].vert[0].y = 330.00;
     polys[3].vert[1].x = 741.00;
@@ -199,10 +397,8 @@ void init()
     polys[3].vert[4].y = 384.00;
     polys[3].vert[5].x = 652.00;
     polys[3].vert[5].y = 348.00;
-    polys[3].vert[6].x = 698.00;
-    polys[3].vert[6].y = 330.00;
     polys[3].height = 10000;
-    polys[3].vertCnt = 7;
+    polys[3].vertCnt = 6;
     polys[4].vert[0].x = 419.00;
     polys[4].vert[0].y = 311.00;
     polys[4].vert[1].x = 461.00;
@@ -213,10 +409,8 @@ void init()
     polys[4].vert[3].y = 395.00;
     polys[4].vert[4].x = 348.00;
     polys[4].vert[4].y = 337.00;
-    polys[4].vert[5].x = 419.00;
-    polys[4].vert[5].y = 311.00;
     polys[4].height = 50000;
-    polys[4].vertCnt = 6;
+    polys[4].vertCnt = 5;
     polys[5].vert[0].x = 897.00;
     polys[5].vert[0].y = 98.00;
     polys[5].vert[1].x = 1079.00;
@@ -225,10 +419,8 @@ void init()
     polys[5].vert[2].y = 297.00;
     polys[5].vert[3].x = 851.00;
     polys[5].vert[3].y = 96.00;
-    polys[5].vert[4].x = 897.00;
-    polys[5].vert[4].y = 98.00;
     polys[5].height = 10000;
-    polys[5].vertCnt = 5;
+    polys[5].vertCnt = 4;
     polys[6].vert[0].x = 1025.00;
     polys[6].vert[0].y = 294.00;
     polys[6].vert[1].x = 1080.00;
@@ -237,10 +429,8 @@ void init()
     polys[6].vert[2].y = 485.00;
     polys[6].vert[3].x = 1072.00;
     polys[6].vert[3].y = 485.00;
-    polys[6].vert[4].x = 1025.00;
-    polys[6].vert[4].y = 294.00;
     polys[6].height = 1000;
-    polys[6].vertCnt = 5;
+    polys[6].vertCnt = 4;
     polys[7].vert[0].x = 1070.00;
     polys[7].vert[0].y = 483.00;
     polys[7].vert[1].x = 1148.00;
@@ -249,20 +439,16 @@ void init()
     polys[7].vert[2].y = 717.00;
     polys[7].vert[3].x = 847.00;
     polys[7].vert[3].y = 718.00;
-    polys[7].vert[4].x = 1070.00;
-    polys[7].vert[4].y = 483.00;
     polys[7].height = 1000;
-    polys[7].vertCnt = 5;
+    polys[7].vertCnt = 4;
     polys[8].vert[0].x = 690.00;
     polys[8].vert[0].y = 658.00;
     polys[8].vert[1].x = 807.00;
     polys[8].vert[1].y = 789.00;
     polys[8].vert[2].x = 564.00;
     polys[8].vert[2].y = 789.00;
-    polys[8].vert[3].x = 690.00;
-    polys[8].vert[3].y = 658.00;
     polys[8].height = 10000;
-    polys[8].vertCnt = 4;
+    polys[8].vertCnt = 3;
     polys[9].vert[0].x = 1306.00;
     polys[9].vert[0].y = 598.00;
     polys[9].vert[1].x = 1366.00;
@@ -275,10 +461,8 @@ void init()
     polys[9].vert[4].y = 673.00;
     polys[9].vert[5].x = 1242.00;
     polys[9].vert[5].y = 623.00;
-    polys[9].vert[6].x = 1306.00;
-    polys[9].vert[6].y = 598.00;
     polys[9].height = 50000;
-    polys[9].vertCnt = 7;
+    polys[9].vertCnt = 6;
 
     for (int i = 0; i < MAX_POLYS; i++)
         polys[i].color = 0xF54927;
@@ -312,8 +496,13 @@ int pointInPoly(int nvert, float *vertx, float *verty, float testx, float testy)
 
         if ((verty[i] > testy) == (verty[j] > testy))
             isSameCoordn = 1;
-        if (isSameCoordn == 0 && (testx < (vertx[j] - vertx[i]) * (testy - verty[i]) / (verty[j] - verty[i]) + vertx[i]))
-            isPointInside = !isPointInside;
+        
+        float denom = verty[j] - verty[i];
+        if (isSameCoordn == 0 && denom != 0.0f)
+        {
+            if (testx < (vertx[j] - vertx[i]) * (testy - verty[i]) / denom + vertx[i])
+                isPointInside = !isPointInside;
+        }
     }
     return (isPointInside);
 }
@@ -323,14 +512,15 @@ color_t getColorBydistance(float dist)
     if (dist <= 0.1)
         dist = 0.1;
     float pixelShader = 100.0 / dist;
-    if (pixelShader > 1)
+    if (pixelShader > 1.0)
         pixelShader = 1.0;
-    else if (pixelShader < 0)
-        pixelShader = 0.1;
+    else if (pixelShader < 0.15)
+        pixelShader = 0.15;  // Minimum brightness to prevent pure black
+    
     color_t clr;
-    clr.R = 0xFF * pixelShader;
-    clr.G = 0x64 * pixelShader;
-    clr.B = 0x00 * pixelShader;
+    clr.R = (unsigned char)(0xFF * pixelShader);
+    clr.G = (unsigned char)(0x64 * pixelShader);
+    clr.B = (unsigned char)(0x00 * pixelShader);
 
     return (clr);
 }
@@ -374,26 +564,28 @@ void renderGround(t_render *render)
     }
 }
 
+static float depthBuff[screenH][screenW];
+
+void clearDepthBuffer()
+{
+    for (int y = 0; y < screenH; y++)
+        for (int x = 0; x < screenW; x++)
+            depthBuff[y][x] = 999999.0f;
+}
+
 void Rasterize(t_render *render)
 {
     float vx[MAX_VERTS];
     float vy[MAX_VERTS];
 
-    static float depthBuff[screenH][screenW];
-    for (int y = 0; y < screenH; y++)
-        for (int x = 0; x < screenW; x++)
-            depthBuff[y][x] = 999999.0f;
-
-
-    for (int polyIdx = screenSpaceVisiblePlanes - 1; polyIdx >= 0; polyIdx--) {
+    // Iterate forward - z-buffer handles depth sorting
+    for (int polyIdx = 0; polyIdx < screenSpaceVisiblePlanes; polyIdx++) {
         
         for (int segIdx = 0; segIdx < MAX_VERTS; segIdx++) {
             int vertCnt = screenSpacePoly[polyIdx][segIdx].vertCnt;
             
             if (vertCnt == 0)
                 continue;
-            
-            // ← CHANGÉ: utilise la distance du segment, pas du polygone
             float dist = screenSpacePoly[polyIdx][segIdx].distFromCamera;
             if (dist <= 0)
                 continue;
@@ -426,6 +618,12 @@ void Rasterize(t_render *render)
                 minY = 0;
             if (maxY >= screenH)
                 maxY = screenH - 1;
+            
+            // Skip if bounding box is completely off screen
+            if (minX >= screenW || maxX < 0 || minY >= screenH || maxY < 0)
+                continue;
+            if (maxX < minX || maxY < minY)
+                continue;
 
             for (int y = (int)minY; y <= (int)maxY; y++) {
                 for (int x = (int)minX; x <= (int)maxX; x++) {
@@ -492,6 +690,7 @@ void render_scene(t_render *render)
 
     if (Should_Rasterize == 1) {
         clearRasterBuffer();
+        clearDepthBuffer();
         screenSpaceVisiblePlanes = 0;
     }
 
@@ -502,11 +701,11 @@ void render_scene(t_render *render)
         int planeIdx = screenSpaceVisiblePlanes;
         int segmentCount = 0;
         
-        for (int i = 0; i < polys[polyIdx].vertCnt - 1; i++) {
+        for (int i = 0; i < polys[polyIdx].vertCnt; i++) {
             Vec2_t p1 = polys[polyIdx].vert[i];
-            Vec2_t p2 = polys[polyIdx].vert[i + 1];
+            Vec2_t p2 = polys[polyIdx].vert[(i + 1) % polys[polyIdx].vertCnt];
 
-            float height = -polys[polyIdx].height;
+            float height = -polys[polyIdx].height / RES_DIV;
 
             float distX1 = p1.x - cam.camPos.x;
             float distY1 = p1.y - cam.camPos.y;
@@ -588,7 +787,7 @@ void render_scene(t_render *render)
                 
                 int inBounds = !allOutOfBounds;
                 
-                if (avgDist > 0 && inBounds)
+                if (avgDist > 0.01 && inBounds)
                 {
                     screenSpacePoly[planeIdx][segmentCount].vert[0].x = v0x;
                     screenSpacePoly[planeIdx][segmentCount].vert[0].y = v0y;
@@ -616,7 +815,7 @@ void render_scene(t_render *render)
 
 int game_loop(t_render *render)
 {
-    double dt = 0.016;
+    double dt = getDeltaTime();
     CameraTranslate(dt);
     // clearScreen(render, 0x000000);
     renderSky(render);

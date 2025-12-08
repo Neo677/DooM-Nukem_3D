@@ -21,3 +21,11 @@ Also i sort a considerable number of sprite for the animation such as
   - hand of caracter (2 version armor)
   
 
+# TODO / FOLLOW List
+  For now we got a good game engine, with sky / ground / polygons and collisions 
+                                                                    (collisions not optimal)
+  we can go on : 
+    - handle mouse / keyboard
+    - save / loading
+    - fly or swim
+    - systeme object 

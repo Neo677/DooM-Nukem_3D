@@ -1,6 +1,6 @@
 
 
-SRC = main.c srcs/key.c
+SRC = main.c srcs/key.c srcs/collision_vector.c 
 OUTPUT = doom-nukem
 FLAGS = -Wall -Wextra -Werror
 MLX_DIR = ../minilibx-linux
