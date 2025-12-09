@@ -1,8 +1,11 @@
 #ifndef TYPES_H
 # define TYPES_H
 
-#define MAX_POLYS 10
-#define MAX_VERTS 8
+# define MAX_POLYS 10
+# define MAX_VERTS 8
+# define MAX_WALLS 256
+# define MAX_SECTORS 64
+
 
 typedef struct Vec2_s
 {
@@ -77,6 +80,37 @@ typedef struct s_texture {
     char name[64];
     t_texture_type type;
 }   t_texture;
+
+typedef struct s_wall {
+    int id;
+    Vec2_t p1, p2;
+
+    int frontSectorId;
+    int backSectorId;
+    int upperTextureId;
+    int lowerTextureId;
+    int middleTextureId;
+
+    int isPortal;
+    int twoSided;
+}           t_wall;
+
+typedef struct s_sector {
+    int id;
+
+    float floorHeight;
+    float ceilingHeight;
+
+    int floorTextureId;
+    int ceilingTextureId;
+    int lightLevel;
+
+    int wallCount;
+    int wallids[MAX_VERTS];
+
+    int visited;
+
+}       t_sector;
 
 # define MAX_TEXTURES 256
 
