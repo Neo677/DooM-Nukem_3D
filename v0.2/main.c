@@ -10,179 +10,146 @@ static int g_keys[65536];
 int screenSpaceVisiblePlanes;
 screenSpacePoly_t screenSpacePoly[MAX_POLYS][MAX_VERTS];
 static double lastTime = 0.0;
+static t_skybox skybox;
+static t_texture_manager tex_manager = {0};
+static int polyOrder[MAX_POLYS];
+static float polyDistances[MAX_POLYS];
 
-// // ----------------- MATH -----------
-// float dotPoints(float x1, float y1, float x2, float y2)
-// {
-//     return (x1 * x2 + y1 * y2);
-// }
+t_texture_type detectTextureType(const char *filename)
+{
+    char lower[256];
+    int i = 0;
+    while (filename[i] && i < 255) {
+        lower[i] = tolower(filename[i]);
+        i++;
+    }
+    lower[i] = '\0';
 
-// float ft_dot(Vec2_t pointA, Vec2_t pointB)
-// {
-//     return (dotPoints(pointA.x, pointA.y, pointB.x, pointB.y));
-// }
+    if (strstr(lower, "ceil") || strstr(lower, "ceiling"))
+        return (TEXTURE_CEILING);
+    if (strstr(lower, "floor") || strstr(lower, "flat") || strstr(lower, "mflr") || strstr(lower, "sflr"))
+        return (TEXTURE_FLOOR);
+    if (strstr(lower, "lava") || strstr(lower, "slime") || strstr(lower, "nukage") || 
+        strstr(lower, "water") || strstr(lower, "fwater") || strstr(lower, "swater"))
+        return (TEXTURE_LIQUID);
+    if (strstr(lower, "rrock") || strstr(lower, "aqf") || strstr(lower, "cons") || 
+        strstr(lower, "dem") || strstr(lower, "gate") || strstr(lower, "step"))
+        return (TEXTURE_WALL);
+    return (TEXTURE_WALL);
+}
 
-// Vec2_t normalize(Vec2_t vec)
-// {
-//     float len = sqrt((vec.x * vec.x) + (vec.y * vec.y));
-//     Vec2_t normalize;
-//     normalize.x = vec.x / len;
-//     normalize.y = vec.y / len;
-
-//     return (normalize);
-// }
-
-// Vec2_t vecMinus(Vec2_t v1, Vec2_t v2)
-// {
-//     Vec2_t v3;
-//     v3.x = v1.x - v2.x;
-//     v3.y = v1.y - v2.y;
-
-//     return (v3);
-// }
-
-// Vec2_t vecPlus(Vec2_t v1, Vec2_t v2)
-// {
-//     Vec2_t v3;
-//     v3.x = v1.x + v2.x;
-//     v3.y = v1.y + v2.y;
-
-//     return (v3);
-// }
-
-// Vec2_t vecMulF(Vec2_t v1, float val)
-// {
-//     Vec2_t v2;
-//     v2.x = v1.x * val;
-//     v2.y = v1.y * val;
-//     return (v2);
-// }
-
-// float len_vec(Vec2_t pointA, Vec2_t pointB)
-// {
-//     float distX = pointB.x - pointA.x;
-//     float distY = pointB.y - pointA.y;
-
-//     return (sqrt(distX * distX + distY * distY));
-// }
-
-// Vec2_t closestPointOnLine(lineSeg_t line, Vec2_t point)
-// {
-//     float lineLen = len_vec(line.p1, line.p2);
-//     float dot = (((point.x - line.p1.x) * (line.p2.x - line.p1.x)) + ((point.y - line.p1.y) * (line.p2.y - line.p1.y))) / (lineLen * lineLen);
-
-//     if (dot > 1) {
-//         dot = 1;
-//     } else if (dot < 0) {
-//         dot = 0;
-//     }
-//     Vec2_t closestPoint;
-//     closestPoint.x = line.p1.x + (dot * (line.p2.x - line.p1.x));
-//     closestPoint.y = line.p1.y + (dot * (line.p2.y - line.p1.y));
-//     return (closestPoint);
-// }
-
-// int isPointOnLine(lineSeg_t line, Vec2_t point)
-// {
-//     float lineLen = len_vec(line.p1, line.p2);
-//     float pointDist1 = len_vec(point, line.p1);
-//     float pointDist2 = len_vec(point, line.p2);
-//     float resolution = 0.1f;
-//     float lineLenMarginHigh = lineLen + resolution;
-//     float lineLenMarginLow = lineLen - resolution;
-//     float distFromLineEnds = pointDist1 + pointDist2;
-
-//     if (distFromLineEnds >= lineLenMarginLow && distFromLineEnds <= lineLenMarginHigh)
-//         return (1);
-//     return (0);
-// }
-
-// int lineCircleCollision(lineSeg_t line, Vec2_t circleCenter, float circleRadius)
-// {
-//     Vec2_t closestPointToLine = closestPointOnLine(line, circleCenter);
-//     float circleToPointOnLineDist = len_vec(closestPointToLine, circleCenter);
-
-//     if (circleToPointOnLineDist < circleRadius)
-//         return (1);
-//     return (0);
-// }
-
-// Vec2_t resolveCollision(Vec2_t newPos)
-// {
-//     float RADIUS = 20.0f;
-//     int iterations = 0;
-//     int maxIterations = 5;
+int loadTexture(t_render *render, const char *path, const char *name)
+{
+    if (tex_manager.count >= MAX_TEXTURES) {
+        printf("Erreur: Trop de texture chargees (max: %d)\n", MAX_TEXTURES);
+        return (-1);
+    }
     
-//     while (iterations < maxIterations)
-//     {
-//         int collisionDetected = 0;
-//         Vec2_t totalPush = {0, 0};
+    int idx = tex_manager.count;
+    t_texture *tex = &tex_manager.textures[idx];
+    int width, height;
+
+    tex->img = mlx_png_file_to_image(render->mlx, (char *)path, &width, &height);
+    if (!tex->img) {
+        // Essayer XPM si PNG échoue
+        tex->img = mlx_xpm_file_to_image(render->mlx, (char *)path, &width, &height);
+    }
+    
+    if (!tex->img) {
+        printf("Erreur: Impossible de charger la texture: %s\n", path);
+        fflush(stdout);
+        printf("  Creation d'une texture procedurale a la place...\n");
+        fflush(stdout);
         
-//         for (int polyIdx = 0; polyIdx < MAX_POLYS; polyIdx++)
-//         {
-//             if (polys[polyIdx].vertCnt < 2)
-//                 continue;
-//             // Test tous les segments du polygone
-//             for (int i = 0; i < polys[polyIdx].vertCnt; i++)
-//             {
-//                 lineSeg_t wall;
-//                 wall.p1 = polys[polyIdx].vert[i];
-//                 wall.p2 = polys[polyIdx].vert[(i + 1) % polys[polyIdx].vertCnt];
+        // Créer une texture procédurale de 64x64
+        width = 64;
+        height = 64;
+        tex->img = mlx_new_image(render->mlx, width, height);
+        if (!tex->img) {
+            printf("  Erreur: Impossible de créer une image procédurale\n");
+            return (-1);
+        }
+        
+        // Remplir avec un motif procédural coloré et visible
+        char *img_data = mlx_get_data_addr(tex->img, &tex->bits_per_pixel, &tex->line_len, &tex->endian);
+        
+        // Couleur différente selon le nom de la texture
+        int base_color = 0xFFFFFF; // Blanc par défaut
+        if (strstr(name, "wall")) base_color = 0x8B4513; // Brun (mur)
+        else if (strstr(name, "floor")) base_color = 0x696969; // Gris (sol)
+        
+        for (int y = 0; y < height; y++) {
+            for (int x = 0; x < width; x++) {
+                // Motif damier
+                int color;
+                if ((x / 8 + y / 8) % 2 == 0) {
+                    color = base_color; // Couleur vive
+                } else {
+                    // Version plus sombre (diviser par 2)
+                    int r = ((base_color >> 16) & 0xFF) / 2;
+                    int g = ((base_color >> 8) & 0xFF) / 2;
+                    int b = (base_color & 0xFF) / 2;
+                    color = (r << 16) | (g << 8) | b;
+                }
                 
-//                 if (lineCircleCollision(wall, newPos, RADIUS))
-//                 {
-//                     collisionDetected = 1;
-//                     Vec2_t closestPoint = closestPointOnLine(wall, newPos);
-//                     Vec2_t pushDir = vecMinus(newPos, closestPoint);
-                    
-//                     float dist = sqrt(pushDir.x * pushDir.x + pushDir.y * pushDir.y);
-                    
-//                     if (dist > 0.001f)
-//                     {
-//                         pushDir.x /= dist;
-//                         pushDir.y /= dist;
-                        
-//                         float pushAmount = RADIUS - dist + 0.5f;
-//                         totalPush.x += pushDir.x * pushAmount;
-//                         totalPush.y += pushDir.y * pushAmount;
-//                     }
-//                     else
-//                     {
-//                         totalPush.x += RADIUS + 0.5f;
-//                         totalPush.y += 0.0f;
-//                     }
-//                 }
-//             }
-//         }
-        
-//         if (!collisionDetected)
-//             break;
-        
-//         newPos.x += totalPush.x;
-//         newPos.y += totalPush.y;
-        
-//         iterations++;
-//     }
+                int pixel_offset = y * tex->line_len + x * (tex->bits_per_pixel / 8);
+                *(unsigned int *)(img_data + pixel_offset) = color;
+            }
+        }
+    }
+
+    tex->width = width;
+    tex->height = height;
+    tex->addr = mlx_get_data_addr(tex->img, &tex->bits_per_pixel, &tex->line_len, &tex->endian);
+    tex->loaded = 1;
+    tex->type = detectTextureType(path);
+    strncpy(tex->name, name ? name : path, 63);
+    tex->name[63] = '\0';
+    tex_manager.count++;
+    printf("Texture chargee [%d]: %s (%dx%d) - Type: %d\n", idx, tex->name, width, height, tex->type);
+    fflush(stdout);
+    return (idx);
+}
+
+int findTextureByName(const char *name)
+{
+    for (int i = 0; i < tex_manager.count; i++) {
+        if (strstr(tex_manager.textures[i].name, name) != NULL) {
+            return (i);
+        }
+    }
+    return (-1);
+}
+
+int getTexturePixel(int texId, int x, int y)
+{
+    if (texId < 0 || texId >= tex_manager.count)
+        return (0);
+    t_texture *tex = &tex_manager.textures[texId];
+    if (!tex->loaded || x < 0 || x >= tex->width || y < 0 || y >= tex->height)
+        return (0);
+    x = x % tex->width;
+    y = y % tex->height;
+    if (x < 0)
+        x += tex->width;
+    if (y < 0)
+        y += tex->height;
+    char *pixel = tex->addr + (y * tex->line_len + x * (tex->bits_per_pixel / 8));
+    return (*(unsigned int *)pixel);
+}
+
+void initTextureManager(t_render *render)
+{
+    tex_manager.mlx = render->mlx;
+    tex_manager.count = 0;
+
+    // Charger la texture pour les murs (converties en RGB)
+    loadTexture(render, "textures/wall.png", "wall");
     
-//     return newPos;
-// }
+    // Charger la texture pour le sol (converties en RGB)
+    loadTexture(render, "textures/floor.png", "floor");
+}
 
-// int checkCollision(Vec2_t newPos)
-// {
-//     for (int polyIdx = 0; polyIdx < MAX_POLYS; polyIdx++) {
-//         if (polys[polyIdx].vertCnt < 2) 
-//             continue;
-//         for (int i = 0; i < polys[polyIdx].vertCnt; i++) {
-//             lineSeg_t wall;
-//             wall.p1 = polys[polyIdx].vert[i];
-//             wall.p2 = polys[polyIdx].vert[(i + 1) % polys[polyIdx].vertCnt];
-
-//             if (lineCircleCollision(wall, newPos, 20.0f))
-//                 return (1);
-//         }
-//     }
-//     return (0);
-// }
 
 
 void putPixel(t_render *render, int x, int y, int color)
@@ -270,7 +237,7 @@ int key_press(int keycode, t_render *render)
     (void)render;
     if (keycode >= 0 && keycode < 65536)
         g_keys[keycode] = 1;
-    if (keycode == KEY_ESC) {
+    if (keycode == ESC) {
         mlx_destroy_window(render->mlx, render->win);
         exit (0);
     }
@@ -291,11 +258,11 @@ void CameraTranslate(double deltaTime)
     cam.oldCamPos = cam.camPos;
     Vec2_t newPos = cam.camPos;
 
-    if (g_keys[KEY_W]) {
+    if (g_keys[W]) {
         newPos.x += MOV_SPEED * cos(cam.camAngle) * deltaTime;
         newPos.y += MOV_SPEED * sin(cam.camAngle) * deltaTime;
         isMoving = 1;
-    } else if (g_keys[KEY_S]) {
+    } else if (g_keys[S]) {
         newPos.x -= MOV_SPEED * cos(cam.camAngle) * deltaTime;
         newPos.y -= MOV_SPEED * sin(cam.camAngle) * deltaTime;
         isMoving = 1;
@@ -303,9 +270,9 @@ void CameraTranslate(double deltaTime)
 
     cam.camPos = resolveCollision(newPos);
 
-    if (g_keys[KEY_A]) {
+    if (g_keys[A]) {
         cam.camAngle -= ROT_SPEED * deltaTime;
-    } else if (g_keys[KEY_D]) {
+    } else if (g_keys[D]) {
         cam.camAngle += ROT_SPEED * deltaTime;
     }
 
@@ -351,6 +318,7 @@ void init()
     cam.camPos.x = 451.96;
     cam.camPos.y = 209.24;
     cam.stepWave = 0.0;
+    
     polys[0].vert[0].x = 141.00;
     polys[0].vert[0].y = 84.00;
     polys[0].vert[1].x = 496.00;
@@ -464,8 +432,54 @@ void init()
     polys[9].height = 50000;
     polys[9].vertCnt = 6;
 
+    // Initialiser tous les textureId à -1 (pas de texture par défaut)
+    for (int i = 0; i < MAX_POLYS; i++) {
+        polys[i].textureId = -1;
+    }
+    
     for (int i = 0; i < MAX_POLYS; i++)
         polys[i].color = 0xF54927;
+}
+
+void assignTexturesToPolygons(void)
+{
+    // Assigner la même texture (flat1_2) à tous les polygones
+    int wallTextureId = findTextureByName("wall");
+    
+    for (int i = 0; i < MAX_POLYS; i++) {
+        polys[i].textureId = wallTextureId;
+    }
+    
+    printf("Textures assignees aux polygones (texture: %d)\n", wallTextureId);
+    fflush(stdout);
+}
+
+int loadSkybox(t_render *render, const char *path)
+{
+    int width, height;
+
+    skybox.img = mlx_xpm_file_to_image(render->mlx, (char *)path, &width, &height);
+
+    if (!skybox.img) {
+        printf("Erreur: Impossible de charger la skybox: %s\n", path);
+        skybox.loaded = 0;
+        return (0);
+    }
+    skybox.width = width;
+    skybox.height = height;
+    skybox.addr = mlx_get_data_addr(skybox.img, &skybox.bits_per_pixel, &skybox.line_len, &skybox.endian);
+    skybox.loaded = 1;
+
+    printf("Skybox chargee: %dx%d pixels\n", width, height);
+    return (1);
+}
+
+int getSkyboxPixel(int x, int y) 
+{
+    if (!skybox.loaded || x < 0 || x >= skybox.width || y < 0 || y >= skybox.height)
+        return (0);
+    char *pixel = skybox.addr + (y * skybox.line_len + x * (skybox.bits_per_pixel / 8));
+    return (*(unsigned int *)pixel);
 }
 
 float cross2dpoints(float x1, float y1, float x2, float y2)
@@ -515,7 +529,7 @@ color_t getColorBydistance(float dist)
     if (pixelShader > 1.0)
         pixelShader = 1.0;
     else if (pixelShader < 0.15)
-        pixelShader = 0.15;  // Minimum brightness to prevent pure black
+        pixelShader = 0.15;
     
     color_t clr;
     clr.R = (unsigned char)(0xFF * pixelShader);
@@ -534,12 +548,33 @@ void renderSky(t_render *render)
     if (maxy > screenH)
         maxy = screenH;
 
-    int skyColor = (77 << 16) | (181 << 8) | 255;  // 0x4DB5FF
-    for (int y = 0; y < maxy; y++) {
-        for (int x = 0; x < screenW; x++) {
-            putPixel(render, x, y, skyColor);
+    if (!skybox.loaded) {
+        int skyColor = (77 << 16) | (181 << 8) | 255; // 0x4DB5FF
+        for (int y = 0; y < maxy; y++) {
+            for (int x = 0; x < screenW; x++) {
+                putPixel(render, x, y, skyColor);
+            }
         }
     }
+
+    for (int y = 0; y < maxy; y++) {
+        for (int x = 0; x < screenW; x++) {
+            float normalizedX = (float)x / screenW;
+            float angle = cam.camAngle + (normalizedX - 0.5f) * M_PI;
+
+            float u = fmod(angle + M_PI, 2.0f * M_PI) / (2.0f * M_PI) * skybox.width;
+            if (u < 0)
+                u += skybox.width;
+            
+            float v = (float)y / maxy * skybox.height;
+            if (v >= skybox.height) 
+                v = skybox.height - 1;
+
+            int color = getSkyboxPixel((int)u, (int)v);
+            putPixel(render, x, y, color);
+        }
+    }
+
 }
 
 void renderGround(t_render *render)
@@ -552,14 +587,55 @@ void renderGround(t_render *render)
     if (starty >= screenH)
         starty = screenH - 1;
 
-    for (int y = starty; y < screenH; y++) {
-        int intensity = y / 2;
-        if (intensity > 255)
-            intensity = 255;
-        int groundColor = (intensity << 16) | (intensity << 8) | intensity;
+    // Trouver la texture du sol
+    int floorTextureId = findTextureByName("floor");
+    t_texture *floorTex = NULL;
+    if (floorTextureId >= 0 && floorTextureId < tex_manager.count) {
+        floorTex = &tex_manager.textures[floorTextureId];
+    }
 
+    for (int y = starty; y < screenH; y++) {
+        // Distance relative pour le mapping de perspective
+        float rowDistance = (screenH / 2.0f) / (y - screenH / 2.0f + 0.1f);
+        
         for (int x = 0; x < screenW; x++) {
-            putPixel(render, x, y, groundColor);
+            int color;
+            
+            if (floorTex && floorTex->loaded) {
+                // Calculer la position du sol dans l'espace monde
+                float normalizedX = (x - screenW / 2.0f) / (screenW / 2.0f);
+                
+                // Position dans l'espace monde avec perspective
+                float worldX = cam.camPos.x + cos(cam.camAngle) * rowDistance * 100 + sin(cam.camAngle) * normalizedX * rowDistance * 100;
+                float worldY = cam.camPos.y + sin(cam.camAngle) * rowDistance * 100 - cos(cam.camAngle) * normalizedX * rowDistance * 100;
+                
+                // Mapper sur la texture avec répétition
+                int texX = ((int)(worldX / 4) % floorTex->width);
+                int texY = ((int)(worldY / 4) % floorTex->height);
+                
+                if (texX < 0) texX += floorTex->width;
+                if (texY < 0) texY += floorTex->height;
+                
+                color = getTexturePixel(floorTextureId, texX, texY);
+                
+                // Appliquer un shader de distance (plus loin = plus sombre)
+                float darkness = 1.0f - (rowDistance / 20.0f);
+                if (darkness < 0.3f) darkness = 0.3f;
+                if (darkness > 1.0f) darkness = 1.0f;
+                
+                int r = ((color >> 16) & 0xFF) * darkness;
+                int g = ((color >> 8) & 0xFF) * darkness;
+                int b = (color & 0xFF) * darkness;
+                color = (r << 16) | (g << 8) | b;
+            } else {
+                // Fallback : gradient gris
+                int intensity = y / 2;
+                if (intensity > 255)
+                    intensity = 255;
+                color = (intensity << 16) | (intensity << 8) | intensity;
+            }
+            
+            putPixel(render, x, y, color);
         }
     }
 }
@@ -578,7 +654,6 @@ void Rasterize(t_render *render)
     float vx[MAX_VERTS];
     float vy[MAX_VERTS];
 
-    // Iterate forward - z-buffer handles depth sorting
     for (int polyIdx = 0; polyIdx < screenSpaceVisiblePlanes; polyIdx++) {
         
         for (int segIdx = 0; segIdx < MAX_VERTS; segIdx++) {
@@ -590,8 +665,12 @@ void Rasterize(t_render *render)
             if (dist <= 0)
                 continue;
             
-            color_t c = getColorBydistance(dist);
-            int color = (c.R << 16) | (c.G << 8) | c.B;
+            // color_t c = getColorBydistance(dist);
+            // int color = (c.R << 16) | (c.G << 8) | c.B;
+
+            int textureId = -1;
+            if (polyIdx < MAX_POLYS) 
+                textureId = polys[polyOrder[polyIdx]].textureId;
             
             float minX = screenW, maxX = 0;
             float minY = screenH, maxY = 0;
@@ -618,19 +697,52 @@ void Rasterize(t_render *render)
                 minY = 0;
             if (maxY >= screenH)
                 maxY = screenH - 1;
-            
-            // Skip if bounding box is completely off screen
+
             if (minX >= screenW || maxX < 0 || minY >= screenH || maxY < 0)
                 continue;
             if (maxX < minX || maxY < minY)
                 continue;
 
+
+            t_texture *tex = NULL;
+            if (textureId >= 0 && textureId < tex_manager.count) {
+                tex = &tex_manager.textures[textureId];
+            }
+            
+            // Debug : afficher la première fois qu'une texture est utilisée
+            static int debug_once = 0;
+            if (tex && tex->loaded && debug_once == 0) {
+                printf("DEBUG: Utilisation texture [%d]: %s (%dx%d)\n", textureId, tex->name, tex->width, tex->height);
+                fflush(stdout);
+                debug_once = 1;
+            }
+
             for (int y = (int)minY; y <= (int)maxY; y++) {
                 for (int x = (int)minX; x <= (int)maxX; x++) {
                     if (dist < depthBuff[y][x]) {
                         if (pointInPoly(vertCnt, vx, vy, x, y) == 1) {
+                            int color;
+
+                            if (tex && tex->loaded) {
+                                float u = ((float)(x - minX) / (maxX - minX + 1)) * tex->width;
+                                float v = ((float)(y - minY) / (maxY - minY + 1)) * tex->height;
+                                float scale = dist / 50.0f;
+
+                                u = fmod(u * scale, tex->width);
+                                v = fmod(v * scale, tex->height);
+
+                                color = getTexturePixel(textureId, (int)u, (int)v);
+                                color_t c = getColorBydistance(dist);
+                                int r = ((color >> 16) & 0xFF) * c.R / 255;
+                                int g = ((color >> 8) & 0xFF) * c.G / 255;
+                                int b = (color & 0xFF) * c.B / 255;
+                                color = (r << 16) | (g << 8) | b;
+                            } else {
+                                color_t c = getColorBydistance(dist);
+                                color = (c.R << 16) | (c.G << 8) | c.B;
+                            }
                             putPixel(render, x, y, color);
-                            depthBuff[y][x] = dist;  // Stocke la distance
+                            depthBuff[y][x] = dist;
                         }
                     }
                 }
@@ -662,23 +774,40 @@ float closestVertexInPoly(polygon_t poly, Vec2_t pos)
     return (dist);
 }
 
+
 void sortPolysByDeph()
 {
+
+    for (int i = 0; i < MAX_POLYS; i++)
+        polyOrder[i] = i;
     for (int i = 0; i < MAX_POLYS; i++) {
-        for (int j = 0; j < MAX_POLYS - i - 1; j++) {
-            polygon_t poly1 = polys[j];
-            polygon_t poly2 = polys[j + 1];
+        if (polys[i].vertCnt < 2) {
+            polyDistances[i] = -1.0f;
+            continue;
+        }
+        
 
-            float distP1 = closestVertexInPoly(poly1, cam.camPos);
-            float distP2 = closestVertexInPoly(poly2, cam.camPos);
+        float centerX = 0, centerY = 0;
+        for (int j = 0; j < polys[i].vertCnt; j++) {
+            centerX += polys[i].vert[j].x;
+            centerY += polys[i].vert[j].y;
+        }
+        centerX /= polys[i].vertCnt;
+        centerY /= polys[i].vertCnt;
+        
 
-            polys[j].curDist = distP1;
-            polys[j + 1].curDist = distP2;
-
-            if (distP1 < distP2) {
-                polygon_t tmp = polys[j + 1];
-                polys[j + 1] = polys[j];
-                polys[j] = tmp;
+        float dx = centerX - cam.camPos.x;
+        float dy = centerY - cam.camPos.y;
+        polyDistances[i] = sqrt(dx * dx + dy * dy);
+        polys[i].curDist = polyDistances[i];
+    }
+    
+    for (int i = 0; i < MAX_POLYS - 1; i++) {
+        for (int j = i + 1; j < MAX_POLYS; j++) {
+            if (polyDistances[polyOrder[i]] < polyDistances[polyOrder[j]]) {
+                int tmp = polyOrder[i];
+                polyOrder[i] = polyOrder[j];
+                polyOrder[j] = tmp;
             }
         }
     }
@@ -694,7 +823,9 @@ void render_scene(t_render *render)
         screenSpaceVisiblePlanes = 0;
     }
 
-    for (int polyIdx = 0; polyIdx < MAX_POLYS; polyIdx++) {
+    for (int i = 0; i < MAX_POLYS; i++) {
+        int polyIdx = polyOrder[i]; 
+        
         if (polys[polyIdx].vertCnt < 2)
             continue;
         
@@ -731,7 +862,8 @@ void render_scene(t_render *render)
                         distX1 = i2.x;
                         z1 = i2.y;
                     }
-                } if (z2 <= 0)
+                }
+                else if (z2 <= 0) 
                 {
                     if (i1.y > 0) {
                         distX2 = i1.x;
@@ -837,6 +969,13 @@ int main()
     render.win = mlx_new_window(render.mlx, screenW, screenH, "doom-nukem");
     render.img = mlx_new_image(render.mlx, screenW, screenH);
     render.addr = mlx_get_data_addr(render.img, &render.bits_per_pixel, &render.line_len, &render.endian);
+
+
+    skybox.loaded = 0;
+
+    loadSkybox(&render, "../sprite_selection/skybox/CTYSKY01_1.xpm");
+    initTextureManager(&render);
+    assignTexturesToPolygons();  // Assigner les textures APRÈS avoir chargé le gestionnaire
 
     mlx_hook(render.win, 2, 1L<<0, key_press, &render);
     mlx_hook(render.win, 3, 1L<<1, key_release, &render);

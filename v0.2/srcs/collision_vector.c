@@ -58,7 +58,14 @@ float len_vec(Vec2_t pointA, Vec2_t pointB)
 Vec2_t closestPointOnLine(lineSeg_t line, Vec2_t point)
 {
     float lineLen = len_vec(line.p1, line.p2);
-    float dot = (((point.x - line.p1.x) * (line.p2.x - line.p1.x)) + ((point.y - line.p1.y) * (line.p2.y - line.p1.y))) / (lineLen * lineLen);
+    
+    // Check for degenerate line (point) - avoid division by zero
+    if (lineLen < 0.0001f)
+        return line.p1;
+    
+    float lineLenSq = lineLen * lineLen;
+    float dot = (((point.x - line.p1.x) * (line.p2.x - line.p1.x)) + 
+                 ((point.y - line.p1.y) * (line.p2.y - line.p1.y))) / lineLenSq;
 
     if (dot > 1) {
         dot = 1;
@@ -103,11 +110,10 @@ Vec2_t resolveCollision(Vec2_t newPos)
     
     while (iterations < maxIterations)
     {
-        int collisionDetected = 0;
-        float minDistSq = CAMERA_RADIUS * CAMERA_RADIUS;
-        Vec2_t bestPush = {0, 0};
+        Vec2_t totalPush = {0, 0};
+        int collisionCount = 0;
         
-        // Find the closest collision
+        // Accumulate ALL collisions, not just the closest
         for (int polyIdx = 0; polyIdx < MAX_POLYS; polyIdx++)
         {
             if (polys[polyIdx].vertCnt < 2)
@@ -123,35 +129,38 @@ Vec2_t resolveCollision(Vec2_t newPos)
                 Vec2_t toPoint = vecMinus(newPos, closestPoint);
                 float distSq = toPoint.x * toPoint.x + toPoint.y * toPoint.y;
                 
-                if (distSq < minDistSq)
+                // Check if colliding with this wall
+                if (distSq < CAMERA_RADIUS * CAMERA_RADIUS)
                 {
-                    collisionDetected = 1;
-                    minDistSq = distSq;
+                    collisionCount++;
                     float dist = sqrt(distSq);
                     
                     if (dist > 0.001f)
                     {
+                        // Normalize direction
                         toPoint.x /= dist;
                         toPoint.y /= dist;
+                        // Calculate push amount
                         float pushAmount = CAMERA_RADIUS - dist + 0.1f;
-                        bestPush.x = toPoint.x * pushAmount;
-                        bestPush.y = toPoint.y * pushAmount;
+                        // Accumulate push vectors
+                        totalPush.x += toPoint.x * pushAmount;
+                        totalPush.y += toPoint.y * pushAmount;
                     }
                     else
                     {
-                        bestPush.x = CAMERA_RADIUS + 0.1f;
-                        bestPush.y = 0.0f;
+                        // Player is exactly on the wall - push in arbitrary direction
+                        totalPush.x += CAMERA_RADIUS + 0.1f;
                     }
                 }
             }
         }
         
-        if (!collisionDetected)
+        if (collisionCount == 0)
             break;
         
-        // Apply only the strongest push
-        newPos.x += bestPush.x;
-        newPos.y += bestPush.y;
+        // Apply accumulated push
+        newPos.x += totalPush.x;
+        newPos.y += totalPush.y;
         
         iterations++;
     }
