@@ -98,36 +98,44 @@ Vec2_t resolveCollision(Vec2_t newPos)
 {
     int iterations = 0;
     int maxIterations = 3;
+    int targetSectorId = findSectorContainingPoint(newPos);
+    if (targetSectorId < 0) {
+        printf("hors du monde - garde lancienne position\n");
+        return (global.cam.camPos);
+    }
+
+    global.currentSectorId = targetSectorId;
     
     while (iterations < maxIterations)
     {
         Vec2_t totalPush = {0, 0};
         int collisionCount = 0;
+        t_sector *sector = &global.sectors[targetSectorId];
 
-        for (int polyIdx = 0; polyIdx < MAX_POLYS; polyIdx++) {
-            if (global.polys[polyIdx].vertCnt < 2)
+        for (int i = 0; i < sector->wallCount; i++) {
+            t_wall *wall = &global.walls[sector->wallIds[i]];
+            if (wall->isPortal)
                 continue;
-            
-            for (int i = 0; i < global.polys[polyIdx].vertCnt; i++) {
-                lineSeg_t wall;
-                wall.p1 = global.polys[polyIdx].vert[i];
-                wall.p2 = global.polys[polyIdx].vert[(i + 1) % global.polys[polyIdx].vertCnt];
-                Vec2_t closestPoint = closestPointOnLine(wall, newPos);
-                Vec2_t toPoint = vecMinus(newPos, closestPoint);
-                float distSq = toPoint.x * toPoint.x + toPoint.y * toPoint.y;
-                if (distSq < CAMERA_RADIUS * CAMERA_RADIUS) // Check if colliding with this wall
+            lineSeg_t wallSeg;
+            wallSeg.p1 = wall.p1;
+            wallSeg.p2 = wall.p2;
+
+            Vec2_t closestPoint = closestPointOnLine(wallSeg, newPos);
+            Vec2_t toPoint = vecMinus(newPos, closestPoint);
+            float distSq = toPoint.x * toPoint.x + toPoint.y * toPoint.y;
+
+            if (distSq < CAMERA_RADIUS * CAMERA_RADIUS) {
+                collisionCount++;
+                float dist = sqrt(distSq);
+                if (dist > 0.001f) 
                 {
-                    collisionCount++;
-                    float dist = sqrt(distSq);
-                    if (dist > 0.001f) {
-                        toPoint.x /= dist; // Normalize direction
-                        toPoint.y /= dist; // Normalize direction
-                        float pushAmount = CAMERA_RADIUS - dist + 0.1f;
-                        totalPush.x += toPoint.x * pushAmount;
-                        totalPush.y += toPoint.y * pushAmount;
-                    } else {
-                        totalPush.x += CAMERA_RADIUS + 0.1f;
-                    }
+                    toPoint.x /= dist;
+                    toPoint.y /= dist;
+                    float pushAmount = CAMERA_RADIUS - dist + 0.1f;
+                    totalPush.x += toPoint.x * pushAmount;
+                    totalPush.y += toPoint.y * pushAmount;
+                } else {
+                    totalPush.x += CAMERA_RADIUS + 0.1f;
                 }
             }
         }

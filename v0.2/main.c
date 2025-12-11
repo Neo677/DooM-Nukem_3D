@@ -157,132 +157,6 @@ void display_debug_info(t_render *render)
     (void)render;
 }
 
-void init()
-{
-    global.cam.camAngle = 0.42;
-    global.cam.camPos.x = 451.96;
-    global.cam.camPos.y = 209.24;
-    global.cam.stepWave = 0.0;
-
-    global.polys[0].vert[0].x = 141.00;
-    global.polys[0].vert[0].y = 84.00;
-    global.polys[0].vert[1].x = 496.00;
-    global.polys[0].vert[1].y = 81.00;
-    global.polys[0].vert[2].x = 553.00;
-    global.polys[0].vert[2].y = 136.00;
-    global.polys[0].vert[3].x = 135.00;
-    global.polys[0].vert[3].y = 132.00;
-    global.polys[0].height = 50000;
-    global.polys[0].vertCnt = 4;
-    global.polys[1].vert[0].x = 133.00;
-    global.polys[1].vert[0].y = 441.00;
-    global.polys[1].vert[1].x = 576.00;
-    global.polys[1].vert[1].y = 438.00;
-    global.polys[1].vert[2].x = 519.00;
-    global.polys[1].vert[2].y = 493.00;
-    global.polys[1].vert[3].x = 123.00;
-    global.polys[1].vert[3].y = 497.00;
-    global.polys[1].height = 50000;
-    global.polys[1].vertCnt = 4;
-    global.polys[2].vert[0].x = 691.00;
-    global.polys[2].vert[0].y = 165.00;
-    global.polys[2].vert[1].x = 736.00;
-    global.polys[2].vert[1].y = 183.00;
-    global.polys[2].vert[2].x = 737.00;
-    global.polys[2].vert[2].y = 229.00;
-    global.polys[2].vert[3].x = 697.00;
-    global.polys[2].vert[3].y = 247.00;
-    global.polys[2].vert[4].x = 656.00;
-    global.polys[2].vert[4].y = 222.00;
-    global.polys[2].vert[5].x = 653.00;
-    global.polys[2].vert[5].y = 183.00;
-    global.polys[2].height = 10000;
-    global.polys[2].vertCnt = 6;
-    global.polys[3].vert[0].x = 698.00;
-    global.polys[3].vert[0].y = 330.00;
-    global.polys[3].vert[1].x = 741.00;
-    global.polys[3].vert[1].y = 350.00;
-    global.polys[3].vert[2].x = 740.00;
-    global.polys[3].vert[2].y = 392.00;
-    global.polys[3].vert[3].x = 699.00;
-    global.polys[3].vert[3].y = 414.00;
-    global.polys[3].vert[4].x = 654.00;
-    global.polys[3].vert[4].y = 384.00;
-    global.polys[3].vert[5].x = 652.00;
-    global.polys[3].vert[5].y = 348.00;
-    global.polys[3].height = 10000;
-    global.polys[3].vertCnt = 6;
-    global.polys[4].vert[0].x = 419.00;
-    global.polys[4].vert[0].y = 311.00;
-    global.polys[4].vert[1].x = 461.00;
-    global.polys[4].vert[1].y = 311.00;
-    global.polys[4].vert[2].x = 404.00;
-    global.polys[4].vert[2].y = 397.00;
-    global.polys[4].vert[3].x = 346.00;
-    global.polys[4].vert[3].y = 395.00;
-    global.polys[4].vert[4].x = 348.00;
-    global.polys[4].vert[4].y = 337.00;
-    global.polys[4].height = 50000;
-    global.polys[4].vertCnt = 5;
-    global.polys[5].vert[0].x = 897.00;
-    global.polys[5].vert[0].y = 98.00;
-    global.polys[5].vert[1].x = 1079.00;
-    global.polys[5].vert[1].y = 294.00;
-    global.polys[5].vert[2].x = 1028.00;
-    global.polys[5].vert[2].y = 297.00;
-    global.polys[5].vert[3].x = 851.00;
-    global.polys[5].vert[3].y = 96.00;
-    global.polys[5].height = 10000;
-    global.polys[5].vertCnt = 4;
-    global.polys[6].vert[0].x = 1025.00;
-    global.polys[6].vert[0].y = 294.00;
-    global.polys[6].vert[1].x = 1080.00;
-    global.polys[6].vert[1].y = 292.00;
-    global.polys[6].vert[2].x = 1149.00;
-    global.polys[6].vert[2].y = 485.00;
-    global.polys[6].vert[3].x = 1072.00;
-    global.polys[6].vert[3].y = 485.00;
-    global.polys[6].height = 1000;
-    global.polys[6].vertCnt = 4;
-    global.polys[7].vert[0].x = 1070.00;
-    global.polys[7].vert[0].y = 483.00;
-    global.polys[7].vert[1].x = 1148.00;
-    global.polys[7].vert[1].y = 484.00;
-    global.polys[7].vert[2].x = 913.00;
-    global.polys[7].vert[2].y = 717.00;
-    global.polys[7].vert[3].x = 847.00;
-    global.polys[7].vert[3].y = 718.00;
-    global.polys[7].height = 1000;
-    global.polys[7].vertCnt = 4;
-    global.polys[8].vert[0].x = 690.00;
-    global.polys[8].vert[0].y = 658.00;
-    global.polys[8].vert[1].x = 807.00;
-    global.polys[8].vert[1].y = 789.00;
-    global.polys[8].vert[2].x = 564.00;
-    global.polys[8].vert[2].y = 789.00;
-    global.polys[8].height = 10000;
-    global.polys[8].vertCnt = 3;
-    global.polys[9].vert[0].x = 1306.00;
-    global.polys[9].vert[0].y = 598.00;
-    global.polys[9].vert[1].x = 1366.00;
-    global.polys[9].vert[1].y = 624.00;
-    global.polys[9].vert[2].x = 1369.00;
-    global.polys[9].vert[2].y = 678.00;
-    global.polys[9].vert[3].x = 1306.00;
-    global.polys[9].vert[3].y = 713.00;
-    global.polys[9].vert[4].x = 1245.00;
-    global.polys[9].vert[4].y = 673.00;
-    global.polys[9].vert[5].x = 1242.00;
-    global.polys[9].vert[5].y = 623.00;
-    global.polys[9].height = 50000;
-    global.polys[9].vertCnt = 6;
-
-    for (int i = 0; i < MAX_POLYS; i++)
-        global.polys[i].textureId = -1;
-    for (int i = 0; i < MAX_POLYS; i++)
-        global.polys[i].color = 0xF54927;
-}
-
 int createWall(Vec2_t p1 Vec2_t p2, int frontSectorId) 
 {
     if (global.wallCount >= MAX_WALLS) {
@@ -327,10 +201,73 @@ void convertPolysToSectors()
         sector->visited = 0;
 
         for (int j = 0; j < global.polys[i].vertCnt; j++) {
-            
+            Vec2_t p1 = global.polys[i].vert[j];
+            Vec2_t p2 = global.polys[i].vert[[j + 1] % global.polys[i].vertCnt];
+
+            int wallId = createWall(p1, p2, global.sectorCount);
+            if (wallId >= 0) {
+                sector->wallIds[j] = wallId;
+                global.walls[wallId].middleTextureId = global.polys.textureId;
+            }
         }
-    
+        printf("Secteur %d cree: %d murs, plafond=%.1f\n", sector->id, sector->wallCount, sector->ceilingHeight);
+        global.sectorCount++;
     }
+    printf("=== Conversion terminee: %d secteurs, %d murs ===\n\n", global.sectorCount, global.wallCount);
+}
+
+int wallAreConnected(t_wall *w1, t_wall *w2) 
+{
+    float epsilon  = 1.0f;// https://fr.wikipedia.org/wiki/Epsilon
+    float dist_p1_p2_1 = len(w1->p1, w2->p2);
+    float dist_p2_p1_1 = len(w1->p2, w2->p1);
+    return (dist_p1_p2_1 < epsilon && dist_p2_p1_1 < epsilon);
+}
+
+void detec_Portals()
+{
+    int portalCount = 0;
+
+    for (int i = 0; i < global.wallCount; i++) {
+        for (int j = 0; j < global.wallCount; j++) {
+            if (wallAreConnected(&global.walls[i], &global.walls[j])) {
+                global.walls[i].backSectorId = global.walls[j].frontSectorId;
+                global.walls[j].backSectorId = global.walls[i].frontSectorId;
+                global.walls[i].isPortal = 1;
+                global.walls[j].isPortal = 1;
+                global.walls[i].twoSided = 1;
+                global.walls[j].twoSided = 1;
+
+                global.walls[i].middleTextureId = -1;
+                global.walls[j].middleTextureId = -1;
+
+                portalCount++;
+            }
+        }
+    }
+}
+
+int pointInSector(t_sector *sector, Vec2_t point) 
+{
+    float vx[MAX_VERTS];
+    float vy[MAX_VERTS];
+
+    for (int i = 0; i < sector.wallCount; i++) {
+        t_wall *wall = &global.walls[sector->wallIds[i]];
+        vx[i] = wall->p1.x;
+        vy[i] = wall->p1.y;
+    }
+    return (pointInPoly(sector->wallCount, vx, vy, point.x, point.y));
+}
+
+int findSectorContaining(Vec2_t point)
+{
+    for (int i = 0; i < global.sectorCount; i++) {
+        if (pointInSector(&global.sectors[i], point)) {
+            return (i);
+        }
+    }
+    return (-1);
 }
 
 int loadSkybox(t_render *render, const char *path)
@@ -524,6 +461,64 @@ void sortPolysByDeph()
     }
 }
 
+int projectWallToScreen(t_wall *wall, int *screenX1, int *screenX2, float *z1_out, float *z2_out)
+{
+    Vec2_t p1 = wall->p1;
+    Vec2_t p2 = wall->p2;
+    float distX1 = p1.x - global.cam.camPos.x;
+    float distY1 = p1.y - global.cam.camPos.y;
+    float z1 = distX1 * cos(global.cam.camAngle) + distY1 * sin(global.cam.camAngle);
+
+    float distX2 = p2.x - global.cam.camPos.x;
+    float distY2 = p2.y - global.cam.camPos.y;
+    float z2 = distX2 * cos(global.cam.camAngle) + distY2 * sin(global.cam.camAngle);
+
+    if (z1 <= 0.1f && z2 <= 0.1f)
+        return (0);
+    if (z1 <= 0.1f)
+        z1 = 0.1f;
+    if (z2 <= 0.1f)
+        z2 = 0.1f;
+
+    distX1 = distX1 * sin(global.cam.camAngle) - distY1 * cos(global.cam.camAngle);
+    distX2 = distx2 * sin(global.cam.camAngle) - distY2 * cos(global.cam.camAngle);
+
+    float centerScreenW = screenW / 2;
+    float widthRatio = screenW / 2;
+
+    float x1 = -distX1 * widthRatio / z1;
+    float x2 = -distX2 * widthRatio / z2;
+
+    *screenX1 = (int)(centerScreenW + x1);
+    *screenX2 = (int)(centerScreenW + x2);
+    *z1_out = z1;
+    *z2_out = z2;
+
+    return (1);
+}
+
+void drawWallSlice(t_render *render, t_wall *wall, int screenX1, int screenX2, float z1, float z2, float bottomHeight, float topHeight, int textureId)
+{
+    if (screenX1 >= screenW || screenX2 < 0)
+        return;
+    float heightRatio = (screenW * screenH) / 60.0f;
+    float centerScreenH = screenH / 2;
+
+    float y1_top = (bottomHeight - topHeight - heightRatio) / z1;
+    float y1_bot = (bottomHeight - heightRatio) / z1;
+    float y2_top = (bottomHeight - topHeight - heightRatio) / z2;
+    float y2_bot = (bottomHeight - heightRatio) / z2;
+
+    int startX = (screenX1 < 0) ? 0 : screenX1;
+    int endX = (screenX2 >= screenW) ? screenW - 1 : screenX2;
+    
+    for (int x = startX; x <= endX; x++) {
+        float t = (float)(x - screenX1) / (float)(screenX2 - screenX1 + 1);
+
+        
+    }
+}
+
 void render_scene(t_render *render)
 {
     sortPolysByDeph();
@@ -661,6 +656,134 @@ int game_loop(t_render *render)
     updateScreen(render);
     display_debug_info(render);
     return (0);
+}
+
+void init()
+{
+    global.cam.camAngle = 0.42;
+    global.cam.camPos.x = 451.96;
+    global.cam.camPos.y = 209.24;
+    global.cam.stepWave = 0.0;
+
+    global.polys[0].vert[0].x = 141.00;
+    global.polys[0].vert[0].y = 84.00;
+    global.polys[0].vert[1].x = 496.00;
+    global.polys[0].vert[1].y = 81.00;
+    global.polys[0].vert[2].x = 553.00;
+    global.polys[0].vert[2].y = 136.00;
+    global.polys[0].vert[3].x = 135.00;
+    global.polys[0].vert[3].y = 132.00;
+    global.polys[0].height = 50000;
+    global.polys[0].vertCnt = 4;
+    global.polys[1].vert[0].x = 133.00;
+    global.polys[1].vert[0].y = 441.00;
+    global.polys[1].vert[1].x = 576.00;
+    global.polys[1].vert[1].y = 438.00;
+    global.polys[1].vert[2].x = 519.00;
+    global.polys[1].vert[2].y = 493.00;
+    global.polys[1].vert[3].x = 123.00;
+    global.polys[1].vert[3].y = 497.00;
+    global.polys[1].height = 50000;
+    global.polys[1].vertCnt = 4;
+    global.polys[2].vert[0].x = 691.00;
+    global.polys[2].vert[0].y = 165.00;
+    global.polys[2].vert[1].x = 736.00;
+    global.polys[2].vert[1].y = 183.00;
+    global.polys[2].vert[2].x = 737.00;
+    global.polys[2].vert[2].y = 229.00;
+    global.polys[2].vert[3].x = 697.00;
+    global.polys[2].vert[3].y = 247.00;
+    global.polys[2].vert[4].x = 656.00;
+    global.polys[2].vert[4].y = 222.00;
+    global.polys[2].vert[5].x = 653.00;
+    global.polys[2].vert[5].y = 183.00;
+    global.polys[2].height = 10000;
+    global.polys[2].vertCnt = 6;
+    global.polys[3].vert[0].x = 698.00;
+    global.polys[3].vert[0].y = 330.00;
+    global.polys[3].vert[1].x = 741.00;
+    global.polys[3].vert[1].y = 350.00;
+    global.polys[3].vert[2].x = 740.00;
+    global.polys[3].vert[2].y = 392.00;
+    global.polys[3].vert[3].x = 699.00;
+    global.polys[3].vert[3].y = 414.00;
+    global.polys[3].vert[4].x = 654.00;
+    global.polys[3].vert[4].y = 384.00;
+    global.polys[3].vert[5].x = 652.00;
+    global.polys[3].vert[5].y = 348.00;
+    global.polys[3].height = 10000;
+    global.polys[3].vertCnt = 6;
+    global.polys[4].vert[0].x = 419.00;
+    global.polys[4].vert[0].y = 311.00;
+    global.polys[4].vert[1].x = 461.00;
+    global.polys[4].vert[1].y = 311.00;
+    global.polys[4].vert[2].x = 404.00;
+    global.polys[4].vert[2].y = 397.00;
+    global.polys[4].vert[3].x = 346.00;
+    global.polys[4].vert[3].y = 395.00;
+    global.polys[4].vert[4].x = 348.00;
+    global.polys[4].vert[4].y = 337.00;
+    global.polys[4].height = 50000;
+    global.polys[4].vertCnt = 5;
+    global.polys[5].vert[0].x = 897.00;
+    global.polys[5].vert[0].y = 98.00;
+    global.polys[5].vert[1].x = 1079.00;
+    global.polys[5].vert[1].y = 294.00;
+    global.polys[5].vert[2].x = 1028.00;
+    global.polys[5].vert[2].y = 297.00;
+    global.polys[5].vert[3].x = 851.00;
+    global.polys[5].vert[3].y = 96.00;
+    global.polys[5].height = 10000;
+    global.polys[5].vertCnt = 4;
+    global.polys[6].vert[0].x = 1025.00;
+    global.polys[6].vert[0].y = 294.00;
+    global.polys[6].vert[1].x = 1080.00;
+    global.polys[6].vert[1].y = 292.00;
+    global.polys[6].vert[2].x = 1149.00;
+    global.polys[6].vert[2].y = 485.00;
+    global.polys[6].vert[3].x = 1072.00;
+    global.polys[6].vert[3].y = 485.00;
+    global.polys[6].height = 1000;
+    global.polys[6].vertCnt = 4;
+    global.polys[7].vert[0].x = 1070.00;
+    global.polys[7].vert[0].y = 483.00;
+    global.polys[7].vert[1].x = 1148.00;
+    global.polys[7].vert[1].y = 484.00;
+    global.polys[7].vert[2].x = 913.00;
+    global.polys[7].vert[2].y = 717.00;
+    global.polys[7].vert[3].x = 847.00;
+    global.polys[7].vert[3].y = 718.00;
+    global.polys[7].height = 1000;
+    global.polys[7].vertCnt = 4;
+    global.polys[8].vert[0].x = 690.00;
+    global.polys[8].vert[0].y = 658.00;
+    global.polys[8].vert[1].x = 807.00;
+    global.polys[8].vert[1].y = 789.00;
+    global.polys[8].vert[2].x = 564.00;
+    global.polys[8].vert[2].y = 789.00;
+    global.polys[8].height = 10000;
+    global.polys[8].vertCnt = 3;
+    global.polys[9].vert[0].x = 1306.00;
+    global.polys[9].vert[0].y = 598.00;
+    global.polys[9].vert[1].x = 1366.00;
+    global.polys[9].vert[1].y = 624.00;
+    global.polys[9].vert[2].x = 1369.00;
+    global.polys[9].vert[2].y = 678.00;
+    global.polys[9].vert[3].x = 1306.00;
+    global.polys[9].vert[3].y = 713.00;
+    global.polys[9].vert[4].x = 1245.00;
+    global.polys[9].vert[4].y = 673.00;
+    global.polys[9].vert[5].x = 1242.00;
+    global.polys[9].vert[5].y = 623.00;
+    global.polys[9].height = 50000;
+    global.polys[9].vertCnt = 6;
+
+    for (int i = 0; i < MAX_POLYS; i++)
+        global.polys[i].textureId = -1;
+    for (int i = 0; i < MAX_POLYS; i++)
+        global.polys[i].color = 0xF54927;
+    convertPolysToSectors();
+    detectPortals();
 }
 
 int main()
