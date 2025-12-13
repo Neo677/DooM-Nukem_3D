@@ -22,4 +22,7 @@ int     isPointOnLine(lineSeg_t line, Vec2_t point);
 int     lineCircleCollision(lineSeg_t line, Vec2_t circleCenter, float circleRadius);
 int     checkCollision(Vec2_t newPos);
 
+int     pointInSector(t_sector *sector, Vec2_t point);
+int     findSectorContainingPoint(Vec2_t point);
+
 #endif

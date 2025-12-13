@@ -11,6 +11,7 @@
     # define LEFT 123
     # define RIGHT 124
     # define PRESS_E 14
+    # define SPACE 49
     # define ESC 53
 #else
     // Linux keycodes (default)
@@ -21,6 +22,7 @@
     # define LEFT 65361
     # define RIGHT 65363
     # define PRESS_E 101
+    # define SPACE 32
     # define ESC 65307
 #endif
 

@@ -28,6 +28,13 @@
 # define WWAVE_MAG 1
 # define SLY_COLOR 0x4DB5FF
 
+// Constantes pour la physique verticale (step-up/down, gravité, saut)
+# define GRAVITY          800.0f   // Force de gravité (unités/s²)
+# define JUMP_VELOCITY    350.0f   // Vélocité initiale du saut
+# define MAX_STEP_HEIGHT  24.0f    // Hauteur max d'un step automatique (escalier)
+# define STEP_SMOOTH_SPEED 150.0f  // Vitesse de transition fluide Z
+# define MAX_FALL_VELOCITY 1000.0f // Vélocité max de chute
+
 // #define screenW 1800 / RES_DIV
 // #define screenH 1600 / RES_DIV
 # define screenW 800
@@ -57,6 +64,16 @@ typedef struct s_global {
     int sectorCount;
     int wallCount;
     int currentSectorId;
+    
+    // Overlay & Minimap
+    int showOverlay;
+    int keyE_pressed;
+    
+    // Buffer d'occlusion pour le rendu récursif par portail
+    int columnOccluded[screenW];
+    
+    // Y-Buffer pour le rendu du plafond/sol par colonne
+    t_ybuffer ybuffer;
 }           t_global;
 
 extern t_global global;

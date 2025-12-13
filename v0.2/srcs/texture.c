@@ -34,10 +34,13 @@ int loadTexture(t_render *render, const char *path, const char *name)
     t_texture *tex = &global.tex_manager.textures[idx];
     int width, height;
 
+#ifdef OS_MAC
     tex->img = mlx_png_file_to_image(render->mlx, (char *)path, &width, &height);
-    if (!tex->img) {
+    if (!tex->img)
         tex->img = mlx_xpm_file_to_image(render->mlx, (char *)path, &width, &height);
-    }
+#else
+    tex->img = mlx_xpm_file_to_image(render->mlx, (char *)path, &width, &height);
+#endif
     
     if (!tex->img) {
         // printf("Erreur: Impossible de charger la texture: %s\n", path);

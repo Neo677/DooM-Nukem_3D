@@ -1,5 +1,5 @@
 # Source files
-SRC = main.c srcs/key.c srcs/collision_vector.c srcs/texture.c srcs/rasterize.c
+SRC = main.c srcs/key.c srcs/collision_vector.c srcs/texture.c srcs/rasterize.c srcs/ceiling_render.c
 OUTPUT = doom-nukem
 FLAGS = -Wall -Wextra -Werror
 
