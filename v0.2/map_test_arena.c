@@ -46,6 +46,10 @@
 // COPIE CE CODE DANS LA FONCTION init() (après l'initialisation de la caméra)
 // Remplace tout depuis "// Réinitialiser tous les polygones" jusqu'à "detectPortals();"
 
+#include "./header/game.h"
+#include "./header/types.h"
+#include "./header/map_test_arena.h"
+
 void init_test_arena_map(void)
 {
     // Réinitialiser tous les polygones
@@ -54,7 +58,7 @@ void init_test_arena_map(void)
 
     // ========================================
     // SECTEUR 0 : Spawn Room (départ joueur)
-    // Hauteur: 3.0 unités
+    // Hauteur: 60 unités
     // ========================================
     global.polys[0].vert[0].x = 350.00;
     global.polys[0].vert[0].y = 50.00;
@@ -64,12 +68,12 @@ void init_test_arena_map(void)
     global.polys[0].vert[2].y = 150.00;  // Portal → S1
     global.polys[0].vert[3].x = 350.00;
     global.polys[0].vert[3].y = 150.00;
-    global.polys[0].height = 20000000;
+    global.polys[0].height = 60000000;
     global.polys[0].vertCnt = 4;
 
     // ========================================
     // SECTEUR 1 : Couloir étroit (oppressant)
-    // Hauteur: 2.0 unités (plafond bas)
+    // Hauteur: 50 unités (plafond bas mais passable)
     // ========================================
     global.polys[1].vert[0].x = 450.00;  // Portal ← S0
     global.polys[1].vert[0].y = 150.00;
@@ -79,12 +83,12 @@ void init_test_arena_map(void)
     global.polys[1].vert[2].y = 300.00;  // Portal → S2
     global.polys[1].vert[3].x = 450.00;
     global.polys[1].vert[3].y = 300.00;
-    global.polys[1].height = 12000000;
+    global.polys[1].height = 50000000;
     global.polys[1].vertCnt = 4;
 
     // ========================================
     // SECTEUR 2 : Grande salle centrale (Hall)
-    // Hauteur: 6.0 unités (plafond haut)
+    // Hauteur: 100 unités (plafond haut)
     // ========================================
     global.polys[2].vert[0].x = 100.00;
     global.polys[2].vert[0].y = 300.00;
@@ -95,11 +99,19 @@ void init_test_arena_map(void)
     global.polys[2].vert[3].x = 700.00;
     global.polys[2].vert[3].y = 300.00;
     global.polys[2].vert[4].x = 700.00;
-    global.polys[2].vert[4].y = 750.00;
-    global.polys[2].vert[5].x = 100.00;
-    global.polys[2].vert[5].y = 750.00;
-    global.polys[2].height = 40000000;
-    global.polys[2].vertCnt = 6;
+    global.polys[2].vert[4].y = 450.00;  // Portal → S15 (Pillar R)
+    global.polys[2].vert[5].x = 700.00;
+    global.polys[2].vert[5].y = 500.00;
+    global.polys[2].vert[6].x = 700.00;
+    global.polys[2].vert[6].y = 750.00;
+    global.polys[2].vert[7].x = 100.00;
+    global.polys[2].vert[7].y = 750.00;
+    global.polys[2].vert[8].x = 100.00;
+    global.polys[2].vert[8].y = 500.00;  // Portal → S14 (Pillar L)
+    global.polys[2].vert[9].x = 100.00;
+    global.polys[2].vert[9].y = 450.00;
+    global.polys[2].height = 100000000;
+    global.polys[2].vertCnt = 10;
 
     // ========================================
     // SECTEUR 3 : Pilier Nord-Ouest
@@ -112,7 +124,7 @@ void init_test_arena_map(void)
     global.polys[3].vert[2].y = 440.00;
     global.polys[3].vert[3].x = 220.00;
     global.polys[3].vert[3].y = 440.00;
-    global.polys[3].height = 40000000;
+    global.polys[3].height = 80000000;
     global.polys[3].vertCnt = 4;
 
     // ========================================
@@ -126,7 +138,7 @@ void init_test_arena_map(void)
     global.polys[4].vert[2].y = 440.00;
     global.polys[4].vert[3].x = 520.00;
     global.polys[4].vert[3].y = 440.00;
-    global.polys[4].height = 40000000;
+    global.polys[4].height = 80000000;
     global.polys[4].vertCnt = 4;
 
     // ========================================
@@ -140,7 +152,7 @@ void init_test_arena_map(void)
     global.polys[5].vert[2].y = 620.00;
     global.polys[5].vert[3].x = 220.00;
     global.polys[5].vert[3].y = 620.00;
-    global.polys[5].height = 40000000;
+    global.polys[5].height = 80000000;
     global.polys[5].vertCnt = 4;
 
     // ========================================
@@ -154,7 +166,7 @@ void init_test_arena_map(void)
     global.polys[6].vert[2].y = 620.00;
     global.polys[6].vert[3].x = 520.00;
     global.polys[6].vert[3].y = 620.00;
-    global.polys[6].height = 40000000;
+    global.polys[6].height = 80000000;
     global.polys[6].vertCnt = 4;
 
     // ========================================
@@ -169,7 +181,7 @@ void init_test_arena_map(void)
     global.polys[7].vert[2].y = 850.00;
     global.polys[7].vert[3].x = 700.00;
     global.polys[7].vert[3].y = 850.00;  // Portal → S9
-    global.polys[7].height = 25000000;
+    global.polys[7].height = 80000000;
     global.polys[7].vertCnt = 4;
 
     // ========================================
@@ -183,7 +195,7 @@ void init_test_arena_map(void)
     global.polys[8].vert[2].y = 380.00;  // Portal → S11
     global.polys[8].vert[3].x = 550.00;
     global.polys[8].vert[3].y = 380.00;
-    global.polys[8].height = 30000000;
+    global.polys[8].height = 80000000;
     global.polys[8].vertCnt = 4;
 
     // ========================================
@@ -198,7 +210,7 @@ void init_test_arena_map(void)
     global.polys[9].vert[2].y = 1050.00;
     global.polys[9].vert[3].x = 700.00;
     global.polys[9].vert[3].y = 1050.00;
-    global.polys[9].height = 50000000;
+    global.polys[9].height = 80000000;
     global.polys[9].vertCnt = 4;
 
     // ========================================
@@ -213,7 +225,7 @@ void init_test_arena_map(void)
     global.polys[10].vert[2].y = 600.00;
     global.polys[10].vert[3].x = 100.00;
     global.polys[10].vert[3].y = 600.00;
-    global.polys[10].height = 15000000;
+    global.polys[10].height = 80000000;
     global.polys[10].vertCnt = 4;
 
     // ========================================
@@ -227,7 +239,7 @@ void init_test_arena_map(void)
     global.polys[11].vert[2].y = 460.00;  // Portal → S12
     global.polys[11].vert[3].x = 550.00;
     global.polys[11].vert[3].y = 460.00;
-    global.polys[11].height = 28000000;
+    global.polys[11].height = 80000000;
     global.polys[11].vertCnt = 4;
 
     // ========================================
@@ -241,7 +253,7 @@ void init_test_arena_map(void)
     global.polys[12].vert[2].y = 540.00;
     global.polys[12].vert[3].x = 550.00;
     global.polys[12].vert[3].y = 540.00;
-    global.polys[12].height = 26000000;
+    global.polys[12].height = 80000000;
     global.polys[12].vertCnt = 4;
 
     // ========================================
@@ -260,14 +272,43 @@ void init_test_arena_map(void)
     global.polys[13].vert[4].y = 540.00;
     global.polys[13].vert[5].x = 650.00;
     global.polys[13].vert[5].y = 540.00;
-    global.polys[13].height = 25000000;
+    global.polys[13].height = 80000000;
     global.polys[13].vertCnt = 6;
+
+    // ========================================
+    // SECTEUR 14 : Pilier Mur Gauche (S2)
+    // ========================================
+    global.polys[14].vert[0].x = 100.00;  // Portal ← S2
+    global.polys[14].vert[0].y = 500.00;
+    global.polys[14].vert[1].x = 150.00;
+    global.polys[14].vert[1].y = 500.00;
+    global.polys[14].vert[2].x = 150.00;
+    global.polys[14].vert[2].y = 450.00;
+    global.polys[14].vert[3].x = 100.00;
+    global.polys[14].vert[3].y = 450.00;
+    global.polys[14].height = 80000000;
+    global.polys[14].vertCnt = 4;
+
+    // ========================================
+    // SECTEUR 15 : Pilier Mur Droit (S2)
+    // ========================================
+    global.polys[15].vert[0].x = 700.00;  // Portal ← S2
+    global.polys[15].vert[0].y = 500.00;
+    global.polys[15].vert[1].x = 700.00;
+    global.polys[15].vert[1].y = 450.00;
+    global.polys[15].vert[2].x = 650.00;
+    global.polys[15].vert[2].y = 450.00;
+    global.polys[15].vert[3].x = 650.00;
+    global.polys[15].vert[3].y = 500.00;
+    global.polys[15].height = 80000000;
+    global.polys[15].vertCnt = 4;
+
 
     // ========================================
     // INITIALISATION DES TEXTURES
     // ========================================
     for (int i = 0; i < MAX_POLYS; i++)
-        global.polys[i].textureId = -1;
+        global.polys[i].textureId = 0;
     
     // ========================================
     // COULEURS DES SECTEURS
@@ -286,8 +327,26 @@ void init_test_arena_map(void)
     global.polys[11].color = 0x708090;  // Escalier 2
     global.polys[12].color = 0x778899;  // Escalier 3
     global.polys[13].color = 0x6B8E23;  // Couloir Est
+    global.polys[14].color = 0x2F4F4F;  // Pilier L
+    global.polys[15].color = 0x2F4F4F;  // Pilier R
 
     convertPolysToSectors();
     detectPortals();
-}
 
+    int wallTexId = findTextureByName("wall");
+    int floorTexId = findTextureByName("floor");
+    
+    for (int i = 0; i < MAX_POLYS; i++)
+        global.polys[i].textureId = wallTexId;
+    
+    for (int i = 0; i < global.sectorCount; i++)
+    {
+        global.sectors[i].floorTextureId = floorTexId;
+        global.sectors[i].ceilingTextureId = wallTexId;
+    }
+    
+    if (global.sectorCount > 9)
+    {
+        global.sectors[9].ceilingTextureId = -1;
+    }
+}

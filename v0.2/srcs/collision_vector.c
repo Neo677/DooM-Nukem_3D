@@ -15,6 +15,14 @@ Vec2_t normalize(Vec2_t vec)
 {
     float len = sqrt((vec.x * vec.x) + (vec.y * vec.y));
     Vec2_t normalize;
+    
+    if (len < 1e-6f)
+    {
+        normalize.x = 0.0f;
+        normalize.y = 0.0f;
+        return (normalize);
+    }
+    
     normalize.x = vec.x / len;
     normalize.y = vec.y / len;
     return (normalize);
@@ -53,20 +61,23 @@ float len_vec(Vec2_t pointA, Vec2_t pointB)
 
 Vec2_t closestPointOnLine(lineSeg_t line, Vec2_t point)
 {
-    float lineLen = len_vec(line.p1, line.p2);    
-    if (lineLen < 0.0001f)
+    float dx = line.p2.x - line.p1.x;
+    float dy = line.p2.y - line.p1.y;
+    float lineLenSq = dx * dx + dy * dy;
+    
+    if (lineLenSq < 1e-8f)
         return line.p1;
-    float lineLenSq = lineLen * lineLen;
-    float dot = (((point.x - line.p1.x) * (line.p2.x - line.p1.x)) + ((point.y - line.p1.y) * (line.p2.y - line.p1.y))) / lineLenSq;
+    
+    float dot = (((point.x - line.p1.x) * dx) + ((point.y - line.p1.y) * dy)) / lineLenSq;
 
-    if (dot > 1) {
-        dot = 1;
-    } else if (dot < 0) {
-        dot = 0;
+    if (dot > 1.0f) {
+        dot = 1.0f;
+    } else if (dot < 0.0f) {
+        dot = 0.0f;
     }
     Vec2_t closestPoint;
-    closestPoint.x = line.p1.x + (dot * (line.p2.x - line.p1.x));
-    closestPoint.y = line.p1.y + (dot * (line.p2.y - line.p1.y));
+    closestPoint.x = line.p1.x + (dot * dx);
+    closestPoint.y = line.p1.y + (dot * dy);
     return (closestPoint);
 }
 
@@ -117,7 +128,6 @@ int lineCircleCollision(lineSeg_t line, Vec2_t circleCenter, float circleRadius)
     return (0);
 }
 
-// Vérifie si le joueur peut passer d'un secteur à un autre (step-up/down)
 static int canTransitionToSector(int fromSectorId, int toSectorId)
 {
     if (fromSectorId < 0 || toSectorId < 0)
@@ -130,47 +140,43 @@ static int canTransitionToSector(int fromSectorId, int toSectorId)
     float newFloorZ = toSector->floorHeight;
     float heightDiff = newFloorZ - currentFootZ;
     
-    // Vérifier le headroom (espace pour le joueur dans le nouveau secteur)
     float headroom = toSector->ceilingHeight - toSector->floorHeight;
-    if (headroom < EYE_HEIGHT + 5.0f)
-        return (0);  // Pas assez d'espace
     
-    // CAS 1: Step-up (montée)
+    if (headroom < EYE_HEIGHT + 5.0f)
+        return (0);
     if (heightDiff > 0)
     {
         if (heightDiff <= MAX_STEP_HEIGHT)
         {
-            // Step-up automatique autorisé
-            // Mettre à jour targetZ pour transition smooth
+            if (!global.cam.onGround)
+                return (1);
+            
             global.cam.targetZ = newFloorZ + EYE_HEIGHT;
             return (1);
         }
         else
         {
-            // Mur trop haut - BLOCAGE
             return (0);
         }
     }
     
-    // CAS 2: Step-down (descente)
     if (heightDiff < 0)
     {
         if (fabs(heightDiff) <= MAX_STEP_HEIGHT)
         {
-            // Petite descente - transition smooth
+            if (!global.cam.onGround)
+                return (1);
+            
             global.cam.targetZ = newFloorZ + EYE_HEIGHT;
             return (1);
         }
         else
         {
-            // Grande descente - le joueur va tomber (gravité)
-            // Permettre le passage, la gravité fera le reste
             global.cam.onGround = 0;
             return (1);
         }
     }
     
-    // CAS 3: Même hauteur
     return (1);
     
     (void)fromSector;
@@ -181,17 +187,13 @@ Vec2_t resolveCollision(Vec2_t newPos)
     int targetSectorId = findSectorContainingPoint(newPos);
     int oldSectorId = global.currentSectorId;
 
-    // Si pas de secteur valide, bloquer
     if (targetSectorId < 0)
         return (global.cam.camPos);
 
-    // Vérifier si on change de secteur
     if (targetSectorId != oldSectorId && oldSectorId >= 0)
     {
-        // Vérifier si la transition est possible (step-up/down)
         if (!canTransitionToSector(oldSectorId, targetSectorId))
         {
-            // Transition bloquée (mur trop haut ou pas assez d'espace)
             return (global.cam.camPos);
         }
     }
@@ -210,14 +212,18 @@ Vec2_t resolveCollision(Vec2_t newPos)
         for (int i = 0; i < sector->wallCount; i++)
         {
             t_wall *wall = &global.walls[sector->wallIds[i]];
+            int isTraversable = 0;
 
-            // Pour les portails, vérifier si on peut traverser (step-up/down)
             if (wall->isPortal && wall->backSectorId >= 0)
             {
-                // Le portail est traversable si canTransitionToSector retourne vrai
-                // (déjà vérifié plus haut lors du changement de secteur)
-                continue;
+                if (canTransitionToSector(targetSectorId, wall->backSectorId))
+                {
+                    isTraversable = 1;
+                }
             }
+            
+            if (isTraversable)
+                continue;
 
             lineSeg_t wallSeg;
             wallSeg.p1 = wall->p1;
@@ -231,18 +237,33 @@ Vec2_t resolveCollision(Vec2_t newPos)
             {
                 collisionCount++;
                 float dist = sqrt(distSq);
+                float pushAmount = CAMERA_RADIUS - dist + 0.1f;
 
-                if (dist > 0.001f)
+                if (dist > 1e-4f)
                 {
                     toPoint.x /= dist;
                     toPoint.y /= dist;
-                    float pushAmount = CAMERA_RADIUS - dist + 0.1f;
                     totalPush.x += toPoint.x * pushAmount;
                     totalPush.y += toPoint.y * pushAmount;
                 }
                 else
                 {
-                    totalPush.x += CAMERA_RADIUS + 0.1f;
+                    Vec2_t wallVec = vecMinus(wallSeg.p2, wallSeg.p1);
+                    float wallLen = sqrt(wallVec.x * wallVec.x + wallVec.y * wallVec.y);
+                    
+                    if (wallLen > 1e-4f)
+                    {
+                        Vec2_t normal;
+                        normal.x = -wallVec.y / wallLen;
+                        normal.y = wallVec.x / wallLen;
+                        
+                        totalPush.x += normal.x * pushAmount;
+                        totalPush.y += normal.y * pushAmount;
+                    }
+                    else
+                    {
+                        totalPush.x += pushAmount;
+                    }
                 }
             }
         }
@@ -250,6 +271,14 @@ Vec2_t resolveCollision(Vec2_t newPos)
         if (collisionCount == 0)
             break;
 
+        float pushMagnitude = sqrt(totalPush.x * totalPush.x + totalPush.y * totalPush.y);
+        float maxPush = CAMERA_RADIUS * 2.0f;
+        if (pushMagnitude > maxPush)
+        {
+            totalPush.x *= maxPush / pushMagnitude;
+            totalPush.y *= maxPush / pushMagnitude;
+        }
+        
         newPos.x += totalPush.x;
         newPos.y += totalPush.y;
         iterations++;

@@ -11,8 +11,15 @@
     # define LEFT 123
     # define RIGHT 124
     # define PRESS_E 14
+    # define V 9
     # define SPACE 49
     # define ESC 53
+    # define F1 122
+    # define F2 120
+    # define F3 99
+    # define F4 118
+    # define V 9
+    # define LSHIFT 56
 #else
     // Linux keycodes (default)
     # define W 119
@@ -22,8 +29,15 @@
     # define LEFT 65361
     # define RIGHT 65363
     # define PRESS_E 101
+    # define V 118
     # define SPACE 32
     # define ESC 65307
+    # define F1 65470
+    # define F2 65471
+    # define F3 65472
+    # define F4 65473
+    # define V 118
+    # define LSHIFT 65505
 #endif
 
 # define SENSI 0.0005f

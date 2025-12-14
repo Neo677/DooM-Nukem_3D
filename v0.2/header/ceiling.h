@@ -38,5 +38,8 @@ void	initYBuffer(void);
 // Applique le fog de distance à une couleur
 int		applyDistanceFog(int color, float distance);
 
+// ✅ OPTIMISATION: Précalcul des directions de rayon
+void	precomputeRayDirections(void);
+
 #endif
 

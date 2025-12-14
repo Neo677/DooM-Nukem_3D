@@ -1,8 +1,8 @@
 #ifndef TYPES_H
 # define TYPES_H
 
-# define MAX_POLYS 15
-# define MAX_VERTS 8
+# define MAX_POLYS 20
+# define MAX_VERTS 16
 # define MAX_WALLS 256
 # define MAX_SECTORS 64
 # define MAX_RENDER_DEPTH 16
@@ -130,6 +130,7 @@ typedef struct s_render_entry {
     int clipLeft;
     int clipRight;
     int depth;
+    int fromSectorId;
 }       t_render_entry;
 
 // Fenêtre de rendu pour le clipping horizontal des portails
@@ -154,5 +155,47 @@ typedef struct s_ybuffer {
     int		ceilingSector[SCREEN_W_MAX];  // Secteur visible au plafond
     int		floorSector[SCREEN_W_MAX];    // Secteur visible au sol
 }		t_ybuffer;
+
+// ============================================
+// DEBUG OVERLAY STRUCTURES
+// ============================================
+
+typedef struct s_ray_sample {
+    int screenX;
+    float distance;
+    int wallId;
+    int sectorId;
+    float zbuffer;
+}		t_ray_sample;
+
+typedef struct s_debug_overlay {
+    // Toggles principaux
+    int enabled;           // F1 : ON/OFF général
+    int showPlayer;        // F2 : Panel joueur
+    int showRender;        // F3 : Panel render/portal stats
+    int showRaySamples;    // F4 : Panel ray samples
+    
+    // Compteurs par frame (reset chaque frame)
+    int sectorsVisited;
+    int portalTraversals;
+    int maxDepthThisFrame;
+    int clipWindowStart;
+    int clipWindowEnd;
+    
+    // FPS tracking
+    double lastFpsTime;
+    int frameCount;
+    float currentFPS;
+    float lastFrameTime;
+    
+    // Ray samples (3 colonnes configurables)
+    t_ray_sample samples[3];
+    
+    // Debounce pour les touches
+    int keyF1Pressed;
+    int keyF2Pressed;
+    int keyF3Pressed;
+    int keyF4Pressed;
+}		t_debug_overlay;
 
 #endif

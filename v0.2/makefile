@@ -1,47 +1,46 @@
-# Source files
-SRC = main.c srcs/key.c srcs/collision_vector.c srcs/texture.c srcs/rasterize.c srcs/ceiling_render.c
-OUTPUT = doom-nukem
-FLAGS = -Wall -Wextra -Werror
+NAME = doom-nukem
 
-# OS Detection
-UNAME_S := $(shell uname -s)
+OBJDIR = obj
 
-# Configure MiniLibX based on OS
-ifeq ($(UNAME_S),Linux)
-    # Linux configuration
-    OS_DEF = -D OS_LINUX
-    MLX_DIR = ../minilibx-linux
-    MLX_INC = -I$(MLX_DIR)
-    MLX_LIB = -L$(MLX_DIR) -lmlx -lXext -lX11 -lm
-    CC = gcc
-endif
+SRCS = main.c \
+       map_test_arena.c \
+       srcs/key.c \
+       srcs/collision_vector.c \
+       srcs/texture.c \
+       srcs/rasterize.c \
+       srcs/ceiling_render.c \
+       srcs/draw_utils.c \
+       srcs/ui_overlay.c \
+       srcs/input_handler.c \
+       srcs/player_physics.c \
+       srcs/map_manager.c \
+       srcs/skybox.c \
+       srcs/math_utils.c \
+       srcs/render_engine.c \
+       srcs/game_loop.c
 
-ifeq ($(UNAME_S),Darwin)
-    # macOS configuration
-    OS_DEF = -D OS_MAC
-    MLX_DIR = ../minilibx_opengl_20191021
-    MLX_INC = -I$(MLX_DIR)
-    MLX_LIB = -L$(MLX_DIR) -lmlx -framework OpenGL -framework AppKit -lz
-    CC = gcc
-endif
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
 
-all: mlx
-	$(CC) $(FLAGS) $(OS_DEF) $(SRC) $(MLX_INC) $(MLX_LIB) -o $(OUTPUT)
+OBJS := $(SRCS:%.c=$(OBJDIR)/%.o)
 
-mlx:
-	@echo "Building MiniLibX for $(UNAME_S)..."
-	@make -C $(MLX_DIR)
+CC = gcc
+CFLAGS = -Wall -Wextra -Werror -D OS_LINUX
+INCLUDES = -I../minilibx-linux
+LIBS = -L../minilibx-linux -lmlx -lXext -lX11 -lm
+
+all: $(NAME)
+
+$(NAME): $(OBJS)
+	$(CC) $(CFLAGS) $(OBJS) $(INCLUDES) $(LIBS) -o $(NAME)
 
 clean:
-	@make -C $(MLX_DIR) clean
-	rm -f $(OUTPUT)
+	rm -rf $(OBJDIR)
 
 fclean: clean
-	rm -f $(OUTPUT)
+	rm -f $(NAME)
 
 re: fclean all
 
-run:
-	./$(OUTPUT)
-
-.PHONY: all mlx clean fclean re run
+.PHONY: all clean fclean re

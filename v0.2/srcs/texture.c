@@ -26,7 +26,6 @@ t_texture_type detectTextureType(const char *filename)
 int loadTexture(t_render *render, const char *path, const char *name)
 {
     if (global.tex_manager.count >= MAX_TEXTURES) {
-        // printf("Erreur: Trop de texture chargees (max: %d)\n", MAX_TEXTURES);
         return (-1);
     }
     
@@ -43,18 +42,18 @@ int loadTexture(t_render *render, const char *path, const char *name)
 #endif
     
     if (!tex->img) {
-        // printf("Erreur: Impossible de charger la texture: %s\n", path);
         fflush(stdout);
-        // printf("  Creation d'une texture procedurale a la place...\n");
         fflush(stdout);
         width = 64;
         height = 64;
         tex->img = mlx_new_image(render->mlx, width, height);
         if (!tex->img) {
-            // printf("  Erreur: Impossible de créer une image procédurale\n");
             return (-1);
-        }        
+        }
         char *img_data = mlx_get_data_addr(tex->img, &tex->bits_per_pixel, &tex->line_len, &tex->endian);
+        if (!img_data) {
+            return (-1);
+        }
         
         int base_color = 0xFFFFFF;
         if (strstr(name, "wall"))
@@ -87,7 +86,6 @@ int loadTexture(t_render *render, const char *path, const char *name)
     strncpy(tex->name, name ? name : path, 63);
     tex->name[63] = '\0';
     global.tex_manager.count++;
-    // printf("Texture chargee [%d]: %s (%dx%d) - Type: %d\n", idx, tex->name, width, height, tex->type);
     fflush(stdout);
     return (idx);
 }
@@ -107,14 +105,15 @@ int getTexturePixel(int texId, int x, int y)
     if (texId < 0 || texId >= global.tex_manager.count)
         return (0);
     t_texture *tex = &global.tex_manager.textures[texId];
-    if (!tex->loaded || x < 0 || x >= tex->width || y < 0 || y >= tex->height)
+    if (!tex->loaded)
         return (0);
-    x = x % tex->width;
-    y = y % tex->height;
-    if (x < 0)
-        x += tex->width;
-    if (y < 0)
-        y += tex->height;
+    
+    x = ((x % tex->width) + tex->width) % tex->width;
+    y = ((y % tex->height) + tex->height) % tex->height;
+    
+    if (x < 0 || x >= tex->width || y < 0 || y >= tex->height)
+        return (0);
+    
     char *pixel = tex->addr + (y * tex->line_len + x * (tex->bits_per_pixel / 8));
     return (*(unsigned int *)pixel);
 }
@@ -133,7 +132,6 @@ void assignTexturesToPolygons(void)
     for (int i = 0; i < MAX_POLYS; i++) {
         global.polys[i].textureId = wallTextureId;
     }
-    // printf("Textures assignees aux polygones (texture: %d)\n", wallTextureId);
     fflush(stdout);
 }
 
