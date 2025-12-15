@@ -342,7 +342,18 @@ void init_test_arena_map(void)
     for (int i = 0; i < global.sectorCount; i++)
     {
         global.sectors[i].floorTextureId = floorTexId;
-        global.sectors[i].ceilingTextureId = wallTexId;
+        global.sectors[i].ceilingTextureId = floorTexId;
+    }
+    
+    // Assign textures to all walls (including portals)
+    for (int i = 0; i < global.wallCount; i++)
+    {
+        if (global.walls[i].middleTextureId == -1 || global.walls[i].middleTextureId == 0)
+            global.walls[i].middleTextureId = wallTexId;
+        if (global.walls[i].upperTextureId == -1 || global.walls[i].upperTextureId == 0)
+            global.walls[i].upperTextureId = wallTexId;
+        if (global.walls[i].lowerTextureId == -1 || global.walls[i].lowerTextureId == 0)
+            global.walls[i].lowerTextureId = wallTexId;
     }
     
     if (global.sectorCount > 9)

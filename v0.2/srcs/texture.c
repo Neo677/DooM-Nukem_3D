@@ -25,7 +25,9 @@ t_texture_type detectTextureType(const char *filename)
 
 int loadTexture(t_render *render, const char *path, const char *name)
 {
+    fprintf(stderr, "[TEX] Loading: %s (name: %s)\n", path, name);
     if (global.tex_manager.count >= MAX_TEXTURES) {
+        fprintf(stderr, "[TEX] ERROR: Manager full\n");
         return (-1);
     }
     
@@ -40,63 +42,39 @@ int loadTexture(t_render *render, const char *path, const char *name)
 #else
     tex->img = mlx_xpm_file_to_image(render->mlx, (char *)path, &width, &height);
 #endif
-    
+
     if (!tex->img) {
-        fflush(stdout);
-        fflush(stdout);
-        width = 64;
-        height = 64;
-        tex->img = mlx_new_image(render->mlx, width, height);
-        if (!tex->img) {
-            return (-1);
-        }
-        char *img_data = mlx_get_data_addr(tex->img, &tex->bits_per_pixel, &tex->line_len, &tex->endian);
-        if (!img_data) {
-            return (-1);
-        }
-        
-        int base_color = 0xFFFFFF;
-        if (strstr(name, "wall"))
-            base_color = 0x8B4513;
-        else if (strstr(name, "floor")) 
-            base_color = 0x696969;
-        
-        for (int y = 0; y < height; y++) {
-            for (int x = 0; x < width; x++) {
-                int color;
-                if ((x / 8 + y / 8) % 2 == 0) {
-                    color = base_color;
-                } else {
-                    int r = ((base_color >> 16) & 0xFF) / 2;
-                    int g = ((base_color >> 8) & 0xFF) / 2;
-                    int b = (base_color & 0xFF) / 2;
-                    color = (r << 16) | (g << 8) | b;
-                }
-                int pixel_offset = y * tex->line_len + x * (tex->bits_per_pixel / 8);
-                *(unsigned int *)(img_data + pixel_offset) = color;
-            }
-        }
+        fprintf(stderr, "[TEX] ERROR: mlx_*_file_to_image failed for %s\n", path);
+        return (-1);
     }
 
     tex->width = width;
     tex->height = height;
     tex->addr = mlx_get_data_addr(tex->img, &tex->bits_per_pixel, &tex->line_len, &tex->endian);
+    if (!tex->addr) {
+        fprintf(stderr, "[TEX] ERROR: mlx_get_data_addr failed for %s\n", path);
+        return (-1);
+    }
     tex->loaded = 1;
     tex->type = detectTextureType(path);
     strncpy(tex->name, name ? name : path, 63);
     tex->name[63] = '\0';
     global.tex_manager.count++;
-    fflush(stdout);
+    fprintf(stderr, "[TEX] SUCCESS: Loaded %s as ID %d (%dx%d)\n", name, idx, width, height);
     return (idx);
 }
 
 int findTextureByName(const char *name)
 {
+    fprintf(stderr, "[TEX] Searching for: %s (total loaded: %d)\n", name, global.tex_manager.count);
     for (int i = 0; i < global.tex_manager.count; i++) {
+        fprintf(stderr, "[TEX]   Slot %d: %s\n", i, global.tex_manager.textures[i].name);
         if (strstr(global.tex_manager.textures[i].name, name) != NULL) {
+            fprintf(stderr, "[TEX] FOUND: %s -> ID %d\n", name, i);
             return (i);
         }
     }
+    fprintf(stderr, "[TEX] NOT FOUND: %s\n", name);
     return (-1);
 }
 
@@ -122,8 +100,8 @@ void initTextureManager(t_render *render)
 {
     global.tex_manager.mlx = render->mlx;
     global.tex_manager.count = 0;
-    loadTexture(render, "textures/wall.png", "wall");    
-    loadTexture(render, "textures/floor.png", "floor");
+    loadTexture(render, "textures/wall.xpm", "wall");
+    loadTexture(render, "textures/floor.xpm", "floor");
 }
 
 void assignTexturesToPolygons(void)

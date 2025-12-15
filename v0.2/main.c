@@ -14,6 +14,10 @@ void init(void)
     global.cam.camAngle = 1.57;
     global.cam.camPos.x = 400.0;
     global.cam.camPos.y = 100.0;
+    global.cam.camZ = EYE_HEIGHT;   // start camera at eye height above floor
+    global.cam.footZ = 0.0f;
+    global.cam.velZ = 0.0f;
+    global.cam.onGround = 1;
     global.cam.stepWave = 0.0;
     global.cam.camPitch = 0.0f;
     global.currentSectorId = -1;
@@ -44,26 +48,34 @@ int main(void)
     t_render render;
 
     memset(global.g_keys, 0, sizeof(global.g_keys));
+    memset(&render, 0, sizeof(render));
     render.mlx = mlx_init();
     if (!render.mlx)
     {
-        fprintf(stderr, "Erreur: mlx_init() a echoue\n");
+        fprintf(stderr, "mlx_init failed\n");
         return (1);
     }
     render.win = mlx_new_window(render.mlx, screenW, screenH, "doom-nukem");
     if (!render.win)
     {
-        fprintf(stderr, "Erreur: mlx_new_window() a echoue\n");
+        fprintf(stderr, "mlx_new_window failed\n");
         return (1);
     }
     render.img = mlx_new_image(render.mlx, screenW, screenH);
     if (!render.img)
     {
-        fprintf(stderr, "Erreur: mlx_new_image() a echoue (%dx%d)\n", screenW, screenH);
+        fprintf(stderr, "mlx_new_image failed (%dx%d)\n", screenW, screenH);
         mlx_destroy_window(render.mlx, render.win);
         return (1);
     }
     render.addr = mlx_get_data_addr(render.img, &render.bits_per_pixel, &render.line_len, &render.endian);
+    if (!render.addr)
+    {
+        fprintf(stderr, "mlx_get_data_addr failed\n");
+        mlx_destroy_image(render.mlx, render.img);
+        mlx_destroy_window(render.mlx, render.win);
+        return (1);
+    }
     global.skybox.loaded = 0;
     loadSkybox(&render, "../sprite_selection/skybox/Orangecloudmtn.xpm");
     initTextureManager(&render);

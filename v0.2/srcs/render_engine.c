@@ -214,6 +214,16 @@ void drawWallSlice(t_render *render, t_wall *wall, int screenX1, int screenX2, f
     int y;
     color_t c;
     int color;
+    t_texture *tex;
+    float vCoord;
+    int texX;
+    int texY;
+    float wallHeightScreen;
+    Vec2_t hitPoint;
+    float uCoord;
+    int r;
+    int g;
+    int b;
 
     if (screenX1 >= screenW || screenX2 < 0)
         return;
@@ -238,11 +248,39 @@ void drawWallSlice(t_render *render, t_wall *wall, int screenX1, int screenX2, f
             yTop = 0;
         if (yBot >= screenH)
             yBot = screenH - 1;
+        tex = NULL;
+        uCoord = 0.0f;
+        if (textureId >= 0 && textureId < global.tex_manager.count)
+        {
+            tex = &global.tex_manager.textures[textureId];
+            if (!(tex && tex->loaded && tex->addr))
+                tex = NULL;
+        }
+        if (!tex)
+        {
+            x++;
+            continue;
+        }
+        wallHeightScreen = (float)(yBot - yTop);
+        if (wallHeightScreen < 1.0f) wallHeightScreen = 1.0f;
         y = yTop;
         while (y <= yBot)
         {
+            hitPoint = calculateWallHitPoint(wall, x, z);
+            uCoord = calculateWallU(wall, hitPoint);
+            if (uCoord < 0.0f) uCoord = 0.0f;
+            if (uCoord > 1.0f) uCoord = 1.0f;
+            vCoord = (float)(y - yTop) / wallHeightScreen;
+            if (vCoord < 0.0f) vCoord = 0.0f;
+            if (vCoord > 1.0f) vCoord = 1.0f;
+            texX = (int)(uCoord * tex->width) % tex->width;
+            texY = (int)(vCoord * tex->height) % tex->height;
+            color = getTexturePixel(textureId, texX, texY);
             c = getColorBydistance(z);
-            color = (c.R << 16) | (c.G << 8) | c.B;
+            r = ((color >> 16) & 0xFF) * c.R / 255;
+            g = ((color >> 8) & 0xFF) * c.G / 255;
+            b = (color & 0xFF) * c.B / 255;
+            color = (r << 16) | (g << 8) | b;
             putPixel(render, x, y, color);
             y++;
         }
@@ -356,38 +394,35 @@ void drawWallSliceClipped(t_render *render, t_wall *wall, int clippedX1, int cli
             y = wallYTop;
             while (y <= wallYBot)
             {
-                if (tex && tex->loaded)
+                if (!tex)
                 {
-                    vCoord = (float)(y - yTop) / wallHeightScreen;
-                    if (vCoord < 0.0f) vCoord = 0.0f;
-                    if (vCoord > 1.0f) vCoord = 1.0f;
-                    texX = ((int)(uCoord * tex->width) % tex->width + tex->width) % tex->width;
-                    texY = ((int)(vCoord * tex->height) % tex->height + tex->height) % tex->height;
-                    if (texX < 0) texX = 0;
-                    if (texX >= tex->width) texX = tex->width - 1;
-                    if (texY < 0) texY = 0;
-                    if (texY >= tex->height) texY = tex->height - 1;
-                    color = getTexturePixel(textureId, texX, texY);
-                    c = getColorBydistance(z);
-                    r = (((color >> 16) & 0xFF) * c.R) / 255;
-                    g = (((color >> 8) & 0xFF) * c.G) / 255;
-                    b = ((color & 0xFF) * c.B) / 255;
-                    color = (r << 16) | (g << 8) | b;
+                    y++;
+                    continue;
                 }
-                else
-                {
-                    c = getColorBydistance(z);
-                    color = (c.R << 16) | (c.G << 8) | c.B;
-                }
+                vCoord = (float)(y - yTop) / wallHeightScreen;
+                if (vCoord < 0.0f) vCoord = 0.0f;
+                if (vCoord > 1.0f) vCoord = 1.0f;
+                texX = ((int)(uCoord * tex->width) % tex->width + tex->width) % tex->width;
+                texY = ((int)(vCoord * tex->height) % tex->height + tex->height) % tex->height;
+                if (texX < 0) texX = 0;
+                if (texX >= tex->width) texX = tex->width - 1;
+                if (texY < 0) texY = 0;
+                if (texY >= tex->height) texY = tex->height - 1;
+                color = getTexturePixel(textureId, texX, texY);
+                c = getColorBydistance(z);
+                r = (((color >> 16) & 0xFF) * c.R) / 255;
+                g = (((color >> 8) & 0xFF) * c.G) / 255;
+                b = ((color & 0xFF) * c.B) / 255;
+                color = (r << 16) | (g << 8) | b;
                 putPixel(render, x, y, color);
                 if (y >= 0 && y < screenH && x >= 0 && x < screenW)
                     depthBuff[y][x] = z;
                 y++;
             }
-            if (wallYBot >= wallYTop)
+            if (wallYBot > wallYTop)
             {
-                if (flags & RENDER_CEILING) global.ybuffer.yTop[x] = wallYBot;
-                if (flags & RENDER_FLOOR) global.ybuffer.yBottom[x] = wallYTop;
+                if (flags & RENDER_CEILING) global.ybuffer.yTop[x] = wallYBot + 1;
+                if (flags & RENDER_FLOOR) global.ybuffer.yBottom[x] = wallYTop - 1;
             }
         }
         if ((flags & RENDER_FLOOR) && yBot < global.ybuffer.yBottom[x])
@@ -714,16 +749,15 @@ void render_scene(t_render *render)
     x = 0;
     while (x < screenW)
     {
-        if (global.ybuffer.yTop[x] < screenH / 2)
-        {
-            int ceilSector = (global.ybuffer.ceilingSector[x] >= 0) ? global.ybuffer.ceilingSector[x] : global.currentSectorId;
+        int ceilSector = (global.ybuffer.ceilingSector[x] >= 0) ? global.ybuffer.ceilingSector[x] : global.currentSectorId;
+        int floorSector = (global.ybuffer.floorSector[x] >= 0) ? global.ybuffer.floorSector[x] : global.currentSectorId;
+        
+        if (global.ybuffer.yTop[x] > 0)
             renderCeilingSlice(render, x, 0, global.ybuffer.yTop[x], ceilSector);
-        }
-        if (global.ybuffer.yBottom[x] > screenH / 2)
-        {
-            int floorSector = (global.ybuffer.floorSector[x] >= 0) ? global.ybuffer.floorSector[x] : global.currentSectorId;
+        
+        if (global.ybuffer.yBottom[x] < screenH)
             renderFloorSlice(render, x, global.ybuffer.yBottom[x], screenH, floorSector);
-        }
+        
         x++;
     }
 }

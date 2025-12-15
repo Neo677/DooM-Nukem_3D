@@ -23,6 +23,9 @@ int createWall(Vec2_t p1, Vec2_t p2, int frontSectorId)
     return (wallId);
 }
 
+// Map data encodes heights in micro-units (e.g., 60,000,000 -> 60.0). Scale back to world units.
+#define MAP_HEIGHT_SCALE 1000000.0f
+
 void convertPolysToSectors(void)
 {
     int i;
@@ -45,7 +48,7 @@ void convertPolysToSectors(void)
         sector = &global.sectors[global.sectorCount];
         sector->id = global.sectorCount;
         sector->floorHeight = 0.0f;
-        sector->ceilingHeight = global.polys[i].height / 1000000.0f;
+        sector->ceilingHeight = global.polys[i].height / MAP_HEIGHT_SCALE;
         sector->floorTextureId = -1;
         sector->ceilingTextureId = -1;
         sector->lightLevel = 255;
@@ -78,12 +81,12 @@ int wallsAreConnected(t_wall *w1, t_wall *w2)
     float dist_p2_p2;
 
     epsilon = 1.0f;
-    dist_p1_p2 = len_vec(w1->p1, w2->p2);
-    dist_p2_p1 = len_vec(w1->p2, w2->p1);
+    dist_p1_p2 = len(w1->p1, w2->p2);
+    dist_p2_p1 = len(w1->p2, w2->p1);
     if (dist_p1_p2 < epsilon && dist_p2_p1 < epsilon)
         return (1);
-    dist_p1_p1 = len_vec(w1->p1, w2->p1);
-    dist_p2_p2 = len_vec(w1->p2, w2->p2);
+    dist_p1_p1 = len(w1->p1, w2->p1);
+    dist_p2_p2 = len(w1->p2, w2->p2);
     if (dist_p1_p1 < epsilon && dist_p2_p2 < epsilon)
         return (1);
     return (0);
