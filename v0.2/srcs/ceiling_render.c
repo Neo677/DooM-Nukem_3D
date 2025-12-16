@@ -210,8 +210,6 @@ void renderCeilingSlice(t_render *render, int x, int yStart, int yEnd, int secto
             color = getCeilingPixelAt(x, y, sectorId, rowDist);
         }
         putPixel(render, x, y, color);
-        if (y >= 0 && y < screenH && x >= 0 && x < screenW)
-            depthBuff[y][x] = rowDist + 0.01f;
         y++;
     }
 }
@@ -269,8 +267,6 @@ void renderFloorSlice(t_render *render, int x, int yStart, int yEnd, int sectorI
             color = (intensity << 16) | (intensity << 8) | intensity;
         }
         putPixel(render, x, y, color);
-        if (y >= 0 && y < screenH && x >= 0 && x < screenW)
-            depthBuff[y][x] = rowDist + 0.01f;
         y++;
     }
 }

@@ -419,10 +419,10 @@ void drawWallSliceClipped(t_render *render, t_wall *wall, int clippedX1, int cli
                     depthBuff[y][x] = z;
                 y++;
             }
-            if (wallYBot > wallYTop)
+            if (wallYBot >= wallYTop)
             {
-                if (flags & RENDER_CEILING) global.ybuffer.yTop[x] = wallYBot + 1;
-                if (flags & RENDER_FLOOR) global.ybuffer.yBottom[x] = wallYTop - 1;
+                if (flags & RENDER_CEILING) global.ybuffer.yTop[x] = wallYBot;
+                if (flags & RENDER_FLOOR) global.ybuffer.yBottom[x] = wallYTop;
             }
         }
         if ((flags & RENDER_FLOOR) && yBot < global.ybuffer.yBottom[x])
@@ -749,15 +749,16 @@ void render_scene(t_render *render)
     x = 0;
     while (x < screenW)
     {
-        int ceilSector = (global.ybuffer.ceilingSector[x] >= 0) ? global.ybuffer.ceilingSector[x] : global.currentSectorId;
-        int floorSector = (global.ybuffer.floorSector[x] >= 0) ? global.ybuffer.floorSector[x] : global.currentSectorId;
-        
-        if (global.ybuffer.yTop[x] > 0)
+        if (global.ybuffer.yTop[x] < screenH / 2)
+        {
+            int ceilSector = (global.ybuffer.ceilingSector[x] >= 0) ? global.ybuffer.ceilingSector[x] : global.currentSectorId;
             renderCeilingSlice(render, x, 0, global.ybuffer.yTop[x], ceilSector);
-        
-        if (global.ybuffer.yBottom[x] < screenH)
+        }
+        if (global.ybuffer.yBottom[x] > screenH / 2)
+        {
+            int floorSector = (global.ybuffer.floorSector[x] >= 0) ? global.ybuffer.floorSector[x] : global.currentSectorId;
             renderFloorSlice(render, x, global.ybuffer.yBottom[x], screenH, floorSector);
-        
+        }
         x++;
     }
 }

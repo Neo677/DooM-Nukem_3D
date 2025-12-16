@@ -3,6 +3,9 @@
 #include <stdbool.h>
 #include <SDL.h>
 
+#include "./header/global.h"
+
+
 #define ASSERT(_e, ...) if (!(_e)) { fprintf(stderr, __VA_ARGS__); exit(1); }
 #define SCREENW 384
 #define SCREENH 216
