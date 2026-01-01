@@ -7,13 +7,14 @@
 # include <stdlib.h>
 # include <string.h>
 # include <ctype.h>
-# include <math.h>
+# include <stdint.h> 
+# include <stdbool.h>
 
-#ifdef OS_MAC
-# include "../minilibx_opengl_20191021/mlx.h"
+#ifdef __APPLE__
+# define OS_MAC
+# include "../../minilibx_opengl_20191021/mlx.h"
 #else
-# include "../minilibx-linux/mlx.h"
-# include "../minilibx-linux/mlx_int.h"
+# include "../../minilibx-linux/mlx.h"
 #endif
 
 # define SENSI 0.0005f
@@ -41,7 +42,7 @@ typedef size_t usize;
 typedef size_t isize;
 
 # define PI 3.14159265359f
-# define TAU (2.0f  PI)
+# define TAU (2.0f * PI)
 # define PI_2 (PI / 2.0f)
 # define PI_4 (PI / 4.0f)
 # define DEG2RAD(_d) ((_d) * (PI / 180.0f))
@@ -53,6 +54,8 @@ typedef size_t isize;
 # define VFOV 0.5f // facteur du FOV vertical
 # define ZNEAR 0.0001f  // avoid dist = 0
 # define ZFAR 128.0f // clipping (proche / loin) projection des rayon
+# define SECTOR_NONE 0
+# define SECTOR_MAX 128 // to adapt after stabilisations
 
 // vecteur en decimal (ex (123.45f, 456.78f) = pos du joueuer + direction du regard)
 typedef struct s_v2 {
@@ -74,21 +77,59 @@ typedef struct s_v2i {
 # define normalize(_vn) ( {__typeof__(_vn) __vn = (_vn); const f32 1 = lenght(__vn; (__typeof__(_vn)) {__vn.x / 1, __vn.y / 1})}; )
 # define min(_a, _b) ( {__typeof__(_a) __a = (_a), __b = (_b); __a < __b ? __a : __b; } )
 # define max(_a, _b) ( {__typeof__(_a) __a = (_a), __b = (_b); __a > __b ? __a : __b; } )
-# define clamp(_x. _mi, _ma) (min(max(_x, _mi), _ma))
+# define clamp(_x, _mi, _ma) (min(max(_x, _mi), _ma))
 # define ifnan(_x, _alt) ( {__typeof__(_x) __x = (_x); isnan(__x) ? (_alt) : __x; } )
 
-# define point_side 
+// -1right, 0 on, 1 left
+// # define point_side (_p, _a, _b) ( { __typeof__(_p) __p = (_p), __a = (_a), __b = (_b); -(((__p.x - __a.x) * (__b.y - __a.y)) - ((__p.y - __a.y) * (__b.x - __a.x))); } )
+
+typedef struct s_wall {
+    t_v2i   a;
+    t_v2i   b;
+    u32     color;
+    int     portal;
+}              t_wall;
+
+typedef struct s_sector {
+    int     id;
+    usize   firstWall;
+    usize   nWalls;
+    f32     zFloor;
+    f32     zCeil;
+    u32     floorCol;
+    u32     ceilCol;
+}              t_sector;
+
+typedef struct s_camera {
+    t_v2    pos;
+    f32     angle;
+    f32     cosA;
+    f32     sinA;
+    int     sector;
+}              t_camera;
 
 typedef struct s_render {
-    void *mlx;
-    void *win;
-    void *img;
-    char *addr;
-    int bpp;
-    int line_len;
-    int endian;
-}       t_render;
+    void    *mlx;
+    void    *win;
+    void    *img;
+    u32     *pixels;
+    i32     bpp;
+    i32     lineLen;
+    i32     endian;
+}              t_render;
 
+typedef struct s_engine {
+    t_render    render;
+    t_sector    sectors[SECTOR_MAX];
+    usize       nSectors;
+    t_wall      walls[512];
+    usize       nWalls; 
+    t_camera    camera;
+    i32         yLo[SCREENW];
+    i32         yHi[SCREENW];
+    bool        isRunning;
+    bool        debugMode;
+} t_engine;
 
 
 #endif
