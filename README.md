@@ -12,6 +12,9 @@ link usefule finish or not :
   https://tronche.com/gui/x/xlib/events/
   https://github.com/Neo677/cub3d/tree/main
 
+# The math by the cook ⚗️
+  DooM-Nukem_3D/schema/sector_based.png    
+  DooM-Nukem_3D/schema/doom-nukem_explained.png
 
 # Sprite
 Also i sort a considerable number of sprite for the animation such as
