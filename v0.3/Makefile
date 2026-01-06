@@ -2,38 +2,40 @@ NAME = doom-nukem
 
 OBJDIR = obj
 
-SRCS = main.c
-#        map_test_arena.c \
-#        srcs/key.c \
-#        srcs/collision_vector.c \
-#        srcs/texture.c \
-#        srcs/rasterize.c \
-#        srcs/ceiling_render.c \
-#        srcs/draw_utils.c \
-#        srcs/ui_overlay.c \
-#        srcs/input_handler.c \
-#        srcs/player_physics.c \
-#        srcs/map_manager.c \
-#        srcs/skybox.c \
-#        srcs/math_utils.c \
-#        srcs/render_engine.c \
-#        srcs/game_loop.c
+SRCS = main.c \
+       srcs/render.c \
+       srcs/maths.c \
+       srcs/map.c \
+       srcs/collision.c
 
-$(OBJDIR)/%.o: %.c
-	@mkdir -p $(dir $@)
-	$(CC) $(CFLAGS) $(INCLUDES) -c $< -o $@
-
-OBJS := $(SRCS:%.c=$(OBJDIR)/%.o)
+OBJS = $(SRCS:%.c=$(OBJDIR)/%.o)
 
 CC = gcc
-CFLAGS = -Wall -Wextra -Werror -D OS_LINUX
-INCLUDES = -I../minilibx-linux
-LIBS = -L../minilibx-linux -lmlx -lXext -lX11 -lm
+CFLAGS = -Wall -Wextra -Werror -O2
+INCLUDES = -Iheader
+
+# Détection OS
+UNAME := $(shell uname)
+ifeq ($(UNAME), Darwin)
+    # macOS
+    MLX_DIR = ../minilibx_opengl_20191021
+    MLX_LIB = -L$(MLX_DIR) -lmlx -framework OpenGL -framework AppKit
+else
+    # Linux
+    MLX_DIR = ../minilibx-linux
+    MLX_LIB = -L$(MLX_DIR) -lmlx -lXext -lX11 -lm
+endif
+
+MLX_INC = -I$(MLX_DIR)
 
 all: $(NAME)
 
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(dir $@)
+	$(CC) $(CFLAGS) $(INCLUDES) $(MLX_INC) -c $< -o $@
+
 $(NAME): $(OBJS)
-	$(CC) $(CFLAGS) $(OBJS) $(INCLUDES) $(LIBS) -o $(NAME)
+	$(CC) $(CFLAGS) $(OBJS) $(MLX_LIB) -lm -o $(NAME)
 
 clean:
 	rm -rf $(OBJDIR)

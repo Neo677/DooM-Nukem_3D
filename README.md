@@ -15,7 +15,7 @@ link usefule finish or not :
 # The math by the cook ⚗️
   DooM-Nukem_3D/schema/sector_based.png    
   DooM-Nukem_3D/schema/doom-nukem_explained.png
-
+5
 # Sprite
 Also i sort a considerable number of sprite for the animation such as
   - a LOT of weapon + reaload (no projectile)

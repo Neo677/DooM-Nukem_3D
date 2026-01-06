@@ -59,7 +59,7 @@ int load_sectors(t_engine *engine, const char *path)
                     break;
                 }
                 t_wall *w = &engine->walls[engine->nWalls++];
-                w->color = 0xFFFFFFFF;
+                w->color = 0x00FFFFFF;
                 if (sscanf(p, "%d %d %d %d %d", &w->a.x, &w->a.y, &w->b.x, &w->b.y, &w->portal) != 5) {
                     retVal = -5; 
                     break;
@@ -72,8 +72,8 @@ int load_sectors(t_engine *engine, const char *path)
                     break;
                 }
                 t_sector *s = &engine->sectors[engine->nSectors++];
-                s->floorCol = 0xFF202020;
-                s->ceilCol = 0xFF404040;
+                s->floorCol = 0x00222222;  // Gris très foncé
+                s->ceilCol = 0x00404040; 
                 if (sscanf(p, "%d %zu %zu %f %f", &s->id, &s->firstWall, &s->nWalls, &s->zFloor, &s->zCeil) != 5) {
                     retVal = -6;
                     break;

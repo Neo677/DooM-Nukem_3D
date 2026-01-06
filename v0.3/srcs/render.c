@@ -1,5 +1,5 @@
 #include "../header/render.h"
-#include "../header/math.h"
+#include "../header/maths.h"
 #include "../header/collision.h"
 
 float point_side(t_v2 point, t_v2 a, t_v2 b)
@@ -40,7 +40,7 @@ int clipToNear(t_v2 *a, t_v2 *b)
         a->y += (b->y - a->y) * t;
     } else {
         b->x += (a->x - b->x) * t;
-        b->y += (b->y - b->y) * t;
+        b->y += (a->y - b->y) * t;
     }
     return (1);
 }
@@ -63,7 +63,6 @@ void render(t_engine *engine)
 
     for (int y = 0; y < SCREENH; ++y) {
         u32 col = (y < SCREENH / 2) ? 0xFF303030 : 0xFF181818;
-        
         for (int x = 0; x < SCREENW; ++x) {
             engine->render.pixels[y * SCREENW + x] = col;
         }
@@ -101,14 +100,14 @@ void render(t_engine *engine)
                 continue;
             
             int sx0 = (int)(SCREENW * 0.5f - a.y * fovScaleX / a.x);
-            int sx1 = (int)(SCREENW * 0.5f - a.y * fovScaleX / b.x);
+            int sx1 = (int)(SCREENW * 0.5f - b.y * fovScaleX / b.x);
             if (sx0 == sx1)
                 continue;
             
             float top0 = SCREENH * 0.5f - ceilH * fovScaleY / a.x;
             float top1 = SCREENH * 0.5f - ceilH * fovScaleY / b.x;
-            float bot0 = SCREENW * 0.5f - floorH * fovScaleY / a.x;
-            float bot1 = SCREENW * 0.5f - floorH * fovScaleY / b.x;
+            float bot0 = SCREENH * 0.5f - floorH * fovScaleY / a.x;
+            float bot1 = SCREENH * 0.5f - floorH * fovScaleY / b.x;
 
             const t_sector *nbr = NULL;
             float nt0 = 0, nt1 = 0, nb0 = 0, nb1 = 1;
@@ -166,13 +165,19 @@ void render(t_engine *engine)
                     int portalHi = (int)floorf(nyBot);
 
                     portalLo = portalLo < engine->yLo[x] ? engine->yLo[x] : portalLo;
-                    portalHi = portalHi < engine->yHi[x] ? engine->yHi[x] : portalHi;
+                    portalHi = portalHi > engine->yHi[x] ? engine->yHi[x] : portalHi;
                     if (portalLo <= portalHi) {
                         engine->yLo[x] = portalLo;
                         engine->yHi[x] = portalHi;
                     }
                 } else {
-                    verLine(engine, x, ya, yb, w->color ? w->color : 0xFFFFFFFF);
+                        if (ya > engine->yLo[x])
+                            verLine(engine, x, engine->yLo[x], ya - 1, sec->ceilCol);
+                        verLine(engine, x, ya, yb, w->color ? w->color : 0x00FFFFFF);
+                        if (yb < engine->yHi[x])
+                            verLine(engine, x, yb + 1, engine->yHi[x], sec->floorCol);                        
+                        engine->yLo[x] = SCREENH;
+                        engine->yHi[x] = -1;
                 }
             }
             if (isPortal && nbr && !visited[w->portal]) {

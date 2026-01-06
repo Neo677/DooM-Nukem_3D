@@ -25,8 +25,8 @@
 # define MAX_STEP_HEIGHT  24.0f
 # define STEP_SMOOTH_SPEED 150.0f
 # define MAX_FALL_VELOCITY 1000.0f
-# define SCREENW 800
-# define SCREENH 600
+// # define SCREENW 800
+// # define SCREENH 600
 
 typedef float       f32;
 typedef double      f64;
@@ -47,8 +47,8 @@ typedef size_t isize;
 # define PI_4 (PI / 4.0f)
 # define DEG2RAD(_d) ((_d) * (PI / 180.0f))
 # define RAD2DEG(_d) ((_d) * (180.0f / PI))
-# define SCREENH 220
-# define SCREENW 380
+# define SCREENH 600
+# define SCREENW 800
 # define EYE_Z 1.65f // hauteut des yeux du joueuer
 # define HFOV DEG2RAD(90.0f) // champ de vision horizontal en radians
 # define VFOV 0.5f // facteur du FOV vertical
@@ -56,6 +56,44 @@ typedef size_t isize;
 # define ZFAR 128.0f // clipping (proche / loin) projection des rayon
 # define SECTOR_NONE 0
 # define SECTOR_MAX 128 // to adapt after stabilisations
+
+#ifdef OS_MAC
+    // macOS keycodes
+    # define W 13
+    # define A 0
+    # define S 1
+    # define D 2
+    # define LEFT 123
+    # define RIGHT 124
+    # define PRESS_E 14
+    # define V 9
+    # define SPACE 49
+    # define ESC 53
+    # define F1 122
+    # define F2 120
+    # define F3 99
+    # define F4 118
+    # define V 9
+    # define LSHIFT 56
+#else
+    // Linux keycodes (default)
+    # define W 119
+    # define A 97
+    # define S 115
+    # define D 100
+    # define LEFT 65361
+    # define RIGHT 65363
+    # define PRESS_E 101
+    # define V 118
+    # define SPACE 32
+    # define ESC 65307
+    # define F1 65470
+    # define F2 65471
+    # define F3 65472
+    # define F4 65473
+    # define V 118
+    # define LSHIFT 65505
+#endif
 
 // vecteur en decimal (ex (123.45f, 456.78f) = pos du joueuer + direction du regard)
 typedef struct s_v2 {
@@ -108,6 +146,10 @@ typedef struct s_camera {
     int     sector;
 }              t_camera;
 
+typedef struct s_keys {
+    bool up, down, left, right, f1;
+}               t_keys;
+
 typedef struct s_render {
     void    *mlx;
     void    *win;
@@ -129,7 +171,10 @@ typedef struct s_engine {
     i32         yHi[SCREENW];
     bool        isRunning;
     bool        debugMode;
+    t_keys key;
 } t_engine;
+
+void present(t_engine *engine);
 
 
 #endif
