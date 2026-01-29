@@ -65,6 +65,8 @@ typedef size_t isize;
     # define D 2
     # define LEFT 123
     # define RIGHT 124
+    # define UP 126          // Arrow up
+    # define DOWN 125        // Arrow down
     # define PRESS_E 14
     # define V 9
     # define SPACE 49
@@ -81,17 +83,21 @@ typedef size_t isize;
     # define A 97
     # define S 115
     # define D 100
+    # define Z 122
+    # define Q 113
     # define LEFT 65361
     # define RIGHT 65363
+    # define UP 65362        // Arrow up
+    # define DOWN 65364      // Arrow down
     # define PRESS_E 101
     # define V 118
     # define SPACE 32
     # define ESC 65307
+    # define ESC_RAW 9
     # define F1 65470
     # define F2 65471
     # define F3 65472
     # define F4 65473
-    # define V 118
     # define LSHIFT 65505
 #endif
 
@@ -139,16 +145,28 @@ typedef struct s_sector {
 }              t_sector;
 
 typedef struct s_camera {
-    t_v2    pos;
+    t_v2    pos;            // Position 2D (X, Y)
+    f32     z;              // Hauteur des yeux (eye height)
     f32     angle;
     f32     cosA;
     f32     sinA;
     int     sector;
+    
+    // Pitch (look up/down)
+    f32     pitch;          // Vertical angle (radians)
+    f32     pitch_cos;      // Precomputed cos(pitch)
+    f32     pitch_sin;      // Precomputed sin(pitch)
+    f32     horizon;        // Horizon line position (pixels)
 }              t_camera;
+
+
 
 typedef struct s_keys {
     bool up, down, left, right, f1;
+    bool strafeLeft, strafeRight;
+    bool lookUp, lookDown;      // Look up/down keys
 }               t_keys;
+
 
 typedef struct s_render {
     void    *mlx;
@@ -159,6 +177,13 @@ typedef struct s_render {
     i32     lineLen;
     i32     endian;
 }              t_render;
+
+typedef struct s_debug_log {
+    FILE    *file;
+    bool    enabled;
+    u64     frame;
+    bool    first_event;
+} t_debug_log;
 
 typedef struct s_engine {
     t_render    render;
@@ -171,7 +196,12 @@ typedef struct s_engine {
     i32         yHi[SCREENW];
     bool        isRunning;
     bool        debugMode;
-    t_keys key;
+    t_keys      key;
+    f64         lastTime;
+    f64         currentTime;
+    f32         deltaTime;
+    u64         frameCount;
+    t_debug_log debugLog;
 } t_engine;
 
 void present(t_engine *engine);

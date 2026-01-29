@@ -1,5 +1,7 @@
 #include "../header/collision.h"
 #include "../header/render.h"
+#include "../header/debug_log.h"
+
 
 bool pointInSector(const t_engine *engine, const t_sector *sector, t_v2 point)
 {
@@ -9,11 +11,13 @@ bool pointInSector(const t_engine *engine, const t_sector *sector, t_v2 point)
         const t_wall *w = &engine->walls[sector->firstWall + i];
         t_v2 a = v2i_2_v2(w->a);
         t_v2 b = v2i_2_v2(w->b);
-        if (point_side(point, a, b) > 0.0f)
+        // After winding fix (swap a<->b), positive = inside, negative = outside
+        if (point_side(point, a, b) <= 0.0f)
             return (false);
     }
     return (true);
 }
+
 
 int findSectorAt(const t_engine *engine, t_v2 p)
 {
@@ -39,7 +43,13 @@ bool tryMove(t_engine *engine, t_v2 *pos, t_v2 newPos, f32 radius)
 
         if (wall->portal > SECTOR_NONE) {
             if (pointInSector(engine, &engine->sectors[wall->portal], newPos)) {
+                    int oldSector = engine->camera.sector;
                     *pos = newPos;
+                    engine->camera.sector = wall->portal;
+                    // Log sector change
+                    debug_log_sector_change(&engine->debugLog, engine->frameCount,
+                                           engine->currentTime, oldSector, 
+                                           wall->portal, (int)(sec->firstWall + i));
                     return (true);
             }
         }
@@ -52,7 +62,7 @@ bool tryMove(t_engine *engine, t_v2 *pos, t_v2 newPos, f32 radius)
         t_v2 b = v2i_2_v2(wall->b);
 
         t_v2 wallDir = { b.x - a.x, b.y - a.y };
-        f32 wallLen = sqrtf(wallDir.x * wallDir.x + wallDir.y + wallDir.y);
+        f32 wallLen = sqrtf(wallDir.x * wallDir.x + wallDir.y * wallDir.y);
         if (wallLen < 0.001f)
             continue;
         wallDir.x /= wallLen;
@@ -75,7 +85,14 @@ bool tryMove(t_engine *engine, t_v2 *pos, t_v2 newPos, f32 radius)
             
             if (pointInSector(engine, sec, slidePos)) {
                 *pos = slidePos;
+                // Log collision with slide
+                debug_log_collision(&engine->debugLog, engine->frameCount,
+                                   engine->currentTime, wall, *pos, newPos, "slide");
                 return (true);
+            } else {
+                // Log collision blocked
+                debug_log_collision(&engine->debugLog, engine->frameCount,
+                                   engine->currentTime, wall, *pos, newPos, "blocked");
             }
         }
     }

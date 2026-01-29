@@ -16,12 +16,15 @@ void verLine(t_engine *engine, int x, int y0, int y1, u32 color)
         y0 = y1;
         y1 = tmp;
     }
-    if (y0 < 0)
-        y0 = 0;
-    if (y1 >= SCREENH)
-        y1 = SCREENH - 1;
+    y0 = max(0, y0);
+    y1 = min(SCREENH - 1, y1);
+
+    if (y0 > y1) return;
+
+    u32 *dst = &engine->render.pixels[y0 * SCREENW + x];
     for (int y = y0; y <= y1; y++) {
-        engine->render.pixels[y * SCREENW + x] = color;
+        *dst = color;
+        dst += SCREENW;
     }
 }
 
@@ -61,8 +64,12 @@ void render(t_engine *engine)
     engine->camera.cosA = cosf(engine->camera.angle);
     engine->camera.sinA = sinf(engine->camera.angle);
 
+
+    // Draw background (sky above horizon, floor below)
+    // TEMP: Force fixed horizon for debugging
+    int horizonY = SCREENH / 2;  // Fixed at 300
     for (int y = 0; y < SCREENH; ++y) {
-        u32 col = (y < SCREENH / 2) ? 0xFF303030 : 0xFF181818;
+        u32 col = (y < horizonY) ? 0xFF303030 : 0xFF181818;
         for (int x = 0; x < SCREENW; ++x) {
             engine->render.pixels[y * SCREENW + x] = col;
         }
@@ -86,8 +93,10 @@ void render(t_engine *engine)
 
     while (qh != qt) {
         const t_sector *sec = &engine->sectors[queue[qh++]];
+        // TEMP: Use hardcoded EYE_Z instead of camera.z for debugging  
         float ceilH = sec->zCeil - EYE_Z;
         float floorH = sec->zFloor - EYE_Z;
+
 
         for (usize wi = 0; wi < sec->nWalls; ++wi) {
             const t_wall *w = &engine->walls[sec->firstWall + wi];
@@ -104,23 +113,31 @@ void render(t_engine *engine)
             if (sx0 == sx1)
                 continue;
             
-            float top0 = SCREENH * 0.5f - ceilH * fovScaleY / a.x;
-            float top1 = SCREENH * 0.5f - ceilH * fovScaleY / b.x;
-            float bot0 = SCREENH * 0.5f - floorH * fovScaleY / a.x;
-            float bot1 = SCREENH * 0.5f - floorH * fovScaleY / b.x;
+            
+            // TEMP: Use fixed horizon for debugging
+            float fixed_horizon = SCREENH * 0.5f;
+            float top0 = fixed_horizon - ceilH * fovScaleY / a.x;
+            float top1 = fixed_horizon - ceilH * fovScaleY / b.x;
+            float bot0 = fixed_horizon - floorH * fovScaleY / a.x;
+            float bot1 = fixed_horizon - floorH * fovScaleY / b.x;
+
 
             const t_sector *nbr = NULL;
             float nt0 = 0, nt1 = 0, nb0 = 0, nb1 = 1;
             bool isPortal = (w->portal > SECTOR_NONE && w->portal < (int)engine->nSectors);
             if (isPortal) {
                 nbr = &engine->sectors[w->portal];
+                // TEMP: Use hardcoded EYE_Z for debugging
                 float nCeil = nbr->zCeil - EYE_Z;
                 float nFloor = nbr->zFloor - EYE_Z;
 
-                nt0 = SCREENH * 0.5f - nCeil * fovScaleY / a.x;
-                nt1 = SCREENH * 0.5f - nCeil * fovScaleY / b.x;
-                nb0 = SCREENH * 0.5f - nFloor * fovScaleY / a.x;
-                nb1 = SCREENH * 0.5f - nFloor * fovScaleY / b.x;
+
+
+
+                nt0 = fixed_horizon - nCeil * fovScaleY / a.x;
+                nt1 = fixed_horizon - nCeil * fovScaleY / b.x;
+                nb0 = fixed_horizon - nFloor * fovScaleY / a.x;
+                nb1 = fixed_horizon - nFloor * fovScaleY / b.x;
             }
 
             if (sx0 > sx1) {
@@ -136,6 +153,10 @@ void render(t_engine *engine)
 
             int xStart = sx0 < 0 ? 0 : sx0;
             int xEnd = sx1 >= SCREENW ? SCREENW - 1 : sx1;
+            
+            if (xStart > xEnd) continue;
+            if (sx1 == sx0) continue;
+            
             float invDx = 1.0f / (float)(sx1 - sx0);
 
             for (int x = xStart; x <= xEnd; ++x) {
@@ -148,6 +169,7 @@ void render(t_engine *engine)
                 yb = yb > engine->yHi[x] ? engine->yHi[x] : yb;
                 if (ya > yb)
                     continue;
+
                 
                 if (isPortal) {
                     float nyTop = nt0 + (nt1 - nt0) * t;

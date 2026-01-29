@@ -6,7 +6,8 @@ SRCS = main.c \
        srcs/render.c \
        srcs/maths.c \
        srcs/map.c \
-       srcs/collision.c
+       srcs/collision.c \
+       srcs/debug_log.c
 
 OBJS = $(SRCS:%.c=$(OBJDIR)/%.o)
 

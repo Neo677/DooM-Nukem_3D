@@ -9,6 +9,35 @@ const char* skipWs(const char* p) {
     }
     return (p);
 }
+
+// Fix sector winding order: ensure all sectors are CCW (counter-clockwise)
+void fixSectorWinding(t_engine *engine)
+{
+    for (usize s = 1; s < engine->nSectors; s++) {
+        t_sector *sector = &engine->sectors[s];
+        
+        // Calculate signed area using shoelace formula
+        f32 signedArea = 0.0f;
+        for (usize i = 0; i < sector->nWalls; i++) {
+            t_wall *wall = &engine->walls[sector->firstWall + i];
+            signedArea += (f32)(wall->b.x - wall->a.x) * (f32)(wall->b.y + wall->a.y);
+        }
+        
+        // If area > 0, sector is clockwise → reverse all walls
+        if (signedArea > 0.0f) {
+            printf("Sector %d is CW (area=%.2f), reversing to CCW\n", sector->id, signedArea);
+            for (usize i = 0; i < sector->nWalls; i++) {
+                t_wall *wall = &engine->walls[sector->firstWall + i];
+                // Swap a and b
+                t_v2i tmp = wall->a;
+                wall->a = wall->b;
+                wall->b = tmp;
+            }
+        } else {
+            printf("Sector %d is CCW (area=%.2f), OK\n", sector->id, signedArea);
+        }
+    }
+}
  
 int load_sectors(t_engine *engine, const char *path)
 {
@@ -93,6 +122,9 @@ int load_sectors(t_engine *engine, const char *path)
     fclose(f);
 
     if (!retVal) {
+        // Fix winding order before validation
+        fixSectorWinding(engine);
+        
         for (usize i = 1; i < engine->nSectors; i++) {
             const t_sector *s = &engine->sectors[i];
             if ((s->firstWall + s->nWalls) > engine->nWalls) {
