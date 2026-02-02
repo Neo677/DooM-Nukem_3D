@@ -6,7 +6,7 @@ INC_DIR = includes
 SRC = main_game.c init_game.c init_sdl.c clear_image.c \
       draw_line.c draw_circle.c draw_rectangle.c bitmap_font.c \
       menu.c game_loop.c frame_limiter.c init_map.c init_player.c \
-      handle_input.c render_3d.c draw_wall_slice.c \
+      handle_input.c render_3d.c render_2d.c minimap.c render_floor_ceiling.c draw_wall_slice.c \
       bmp_parser.c texture.c init_textures.c raycasting_dda.c \
       draw_textured_wall.c
 

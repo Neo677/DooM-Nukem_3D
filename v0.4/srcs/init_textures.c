@@ -1,35 +1,39 @@
 #include "env.h"
 #include <stdio.h>
+#include <stdlib.h>
+
+// Déclaration externe
+extern int load_bmp_texture(const char *path, t_texture *texture);
 
 int init_textures(t_env *env)
 {
-    // Textures murales (déjà existant)
+    printf("Chargement des textures...\n");
+    
+    // Charger textures de murs
     env->num_textures = 2;
-    env->wall_textures = (t_texture*)malloc(sizeof(t_texture) * env->num_textures);
+    env->wall_textures = malloc(sizeof(t_texture) * env->num_textures);
     
     if (!env->wall_textures)
     {
-        printf("Erreur: allocation textures échouée\n");
+        printf("Erreur malloc wall_textures\n");
         return -1;
     }
     
-    for (int i = 0; i < env->num_textures; i++)
+    // Charger wall1.bmp
+    if (load_bmp_texture("textures/wall1.bmp", &env->wall_textures[0]) != 0)
     {
-        env->wall_textures[i].pixels = NULL;
-        env->wall_textures[i].width = 0;
-        env->wall_textures[i].height = 0;
+        printf("Erreur: impossible de charger wall1.bmp\n");
+        return -1;
     }
     
-    printf("Chargement des textures...\n");
-    
-    // Murs
-    if (load_bmp_texture("textures/wall1.bmp", &env->wall_textures[0]) != 0)
-        printf("⚠️  Texture wall1.bmp non trouvée\n");
-    
+    // Charger wall2.bmp
     if (load_bmp_texture("textures/wall2.bmp", &env->wall_textures[1]) != 0)
-        printf("⚠️  Texture wall2.bmp non trouvée\n");
+    {
+        printf("Erreur: impossible de charger wall2.bmp\n");
+        return -1;
+    }
     
-    // NOUVEAU : Initialiser textures floor/ceiling
+    // IMPORTANT : Initialiser floor_texture et ceiling_texture à zéro
     env->floor_texture.pixels = NULL;
     env->floor_texture.width = 0;
     env->floor_texture.height = 0;
@@ -39,50 +43,67 @@ int init_textures(t_env *env)
     env->ceiling_texture.height = 0;
     
     // Charger sol
-    if (load_bmp_texture("textures/floor1.bmp", &env->floor_texture) != 0)
+    if (load_bmp_texture("textures/floor1.bmp", &env->floor_texture) == 0)
     {
-        printf("⚠️  Texture floor1.bmp non trouvée\n");
+        printf("✅ Texture de sol chargée (pixels=%p, %dx%d)\n", 
+               (void*)env->floor_texture.pixels,
+               env->floor_texture.width,
+               env->floor_texture.height);
     }
     else
     {
-        printf("✅ Texture de sol chargée\n");
+        printf("⚠️  Texture floor1.bmp non chargée\n");
     }
     
-    // Charger plafond (vous pouvez utiliser une autre texture)
-    if (load_bmp_texture("textures/ceiling1.bmp", &env->ceiling_texture) != 0)
+    // Charger plafond
+    if (load_bmp_texture("textures/ceiling1.bmp", &env->ceiling_texture) == 0)
     {
-        // Fallback : utiliser la même que le sol
-        printf("ℹ️  Pas de texture plafond, utilisation texture sol\n");
-        if (env->floor_texture.pixels)
-        {
-            env->ceiling_texture = env->floor_texture;  // Réutiliser
-        }
+        printf("✅ Texture de plafond chargée (pixels=%p, %dx%d)\n",
+               (void*)env->ceiling_texture.pixels,
+               env->ceiling_texture.width,
+               env->ceiling_texture.height);
     }
     else
     {
-        printf("✅ Texture de plafond chargée\n");
+        printf("⚠️  Texture ceiling1.bmp non chargée\n");
+        // Fallback : utiliser la même que le sol si disponible
+        if (env->floor_texture.pixels)
+        {
+            printf("ℹ️  Utilisation texture sol pour plafond\n");
+            env->ceiling_texture = env->floor_texture;
+        }
     }
     
     printf("✅ Système de textures initialisé (%d murs + sol + plafond)\n", 
            env->num_textures);
+    
     return 0;
 }
 
-// Libérer les textures
 void free_textures(t_env *env)
 {
+    // Libérer textures de murs
     if (env->wall_textures)
     {
         for (int i = 0; i < env->num_textures; i++)
         {
             if (env->wall_textures[i].pixels)
-            {
                 free(env->wall_textures[i].pixels);
-                env->wall_textures[i].pixels = NULL;
-            }
         }
         free(env->wall_textures);
-        env->wall_textures = NULL;
     }
-    env->num_textures = 0;
+    
+    // Libérer floor
+    if (env->floor_texture.pixels && 
+        env->floor_texture.pixels != env->ceiling_texture.pixels)
+    {
+        free(env->floor_texture.pixels);
+    }
+    
+    // Libérer ceiling (seulement si différent du floor)
+    if (env->ceiling_texture.pixels && 
+        env->ceiling_texture.pixels != env->floor_texture.pixels)
+    {
+        free(env->ceiling_texture.pixels);
+    }
 }

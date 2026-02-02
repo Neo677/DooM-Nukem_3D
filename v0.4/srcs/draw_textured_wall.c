@@ -35,12 +35,7 @@ void draw_wall_slice_textured(t_env *env, int x, t_ray_hit *hit)
     if (tex_x < 0) tex_x = 0;
     if (tex_x >= tex->width) tex_x = tex->width - 1;
     
-    // Dessiner plafond
-    for (int y = 0; y < draw_start; y++)
-    {
-        if (x >= 0 && x < env->w && y >= 0 && y < env->h)
-            env->sdl.texture_pixels[x + y * env->w] = 0xFF333333;  // Gris foncé
-    }
+    // Le plafond est déjà rendu par render_floor_ceiling() - ne pas écraser!
     
     // Dessiner le mur texturing avec perspective
     for (int y = draw_start; y <= draw_end; y++)
@@ -80,10 +75,5 @@ void draw_wall_slice_textured(t_env *env, int x, t_ray_hit *hit)
             env->sdl.texture_pixels[x + y * env->w] = color;
     }
     
-    // Dessiner sol
-    for (int y = draw_end + 1; y < env->h; y++)
-    {
-        if (x >= 0 && x < env->w && y >= 0 && y < env->h)
-            env->sdl.texture_pixels[x + y * env->w] = 0xFF666666;  // Gris
-    }
+    // Le sol est déjà rendu par render_floor_ceiling() - ne pas écraser!
 }

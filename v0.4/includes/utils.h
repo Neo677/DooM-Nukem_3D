@@ -50,4 +50,8 @@ static inline t_v3 new_v3(double x, double y, double z) {
     return (t_v3){x, y, z};
 }
 
+static inline t_circle new_circle(Uint32 line_color, Uint32 color, t_point center, int radius) {
+    return (t_circle){color, line_color, center, radius};
+}
+
 #endif

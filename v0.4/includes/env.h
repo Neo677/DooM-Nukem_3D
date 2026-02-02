@@ -40,6 +40,22 @@ typedef struct s_ray_hit {
     int     map_y;
 } t_ray_hit;
 
+// Mode de rendu
+typedef enum {
+    MODE_3D,      // Vue FPS normale
+    MODE_2D,      // Vue top-down
+    MODE_BOTH     // Split-screen (avancé)
+} t_render_mode;
+
+// Vue 2D
+typedef struct {
+    double  zoom;           // Pixels par unité (ex: 50.0)
+    t_v2    offset;         // Décalage caméra (pour pan)
+    int     show_rays;      // Afficher les rayons ?
+    int     show_grid;      // Afficher la grille ?
+    int     show_minimap;   // Afficher minimap en overlay ?
+} t_view_2d;
+
 
 typedef struct {
     t_sdl       sdl;
@@ -66,6 +82,13 @@ typedef struct {
     // NOUVEAU : Textures de sol/plafond
     t_texture   floor_texture;      // Texture du sol
     t_texture   ceiling_texture;    // Texture du plafond
+    
+    // NOUVEAU : Mode 2D
+    t_render_mode   render_mode;    // Mode actuel
+    t_view_2d       view_2d;         // Paramètres vue 2D
+    
+    // NOUVEAU : Capture de souris
+    int             mouse_captured;  // 1 si souris capturée, 0 sinon
 } t_env;
 
 
@@ -85,6 +108,9 @@ void    init_map(t_env *env);
 void    init_player(t_env *env);
 void    handle_input(t_env *env);
 void    render_3d(t_env *env);
+void    render_2d(t_env *env);  // NOUVEAU
+void    draw_minimap(t_env *env);  // NOUVEAU minimap overlay
+void    render_floor_ceiling(t_env *env);  // NOUVEAU floor/ceiling
 void    draw_wall_slice(t_env *env, int x, double wall_dist, int wall_type);
 
 // DDA Raycasting optimisé
