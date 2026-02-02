@@ -57,6 +57,15 @@ static void render_horizontal_line(t_env *env, int y, int is_floor)
         double world_x = left_x + (right_x - left_x) * t;
         double world_z = left_z + (right_z - left_z) * t;
         
+        // FENÊTRE SUR LE CIEL (SKYLIGHT)
+        // Si c'est le plafond, que la skybox est active, et qu'on est au centre de la map (3.0-7.0)
+        // On ne dessine pas le pixel -> la skybox (déjà dessinée derrière) sera visible
+        if (!is_floor && env->skybox.enabled)
+        {
+            if (world_x > 3.0 && world_x < 7.0 && world_z > 3.0 && world_z < 7.0)
+                continue;
+        }
+        
         // Échantillonner texture
         int tex_x = (int)(fabs(world_x * 64.0)) % texture->width;
         int tex_y = (int)(fabs(world_z * 64.0)) % texture->height;
@@ -98,6 +107,7 @@ void render_floor_ceiling(t_env *env)
     }
     
     // CEILING
+    // On dessine toujours le plafond, render_horizontal_line gère le trou pour la skybox
     for (int y = 0; y < half_h; y++)
     {
         render_horizontal_line(env, y, 0);

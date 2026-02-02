@@ -39,8 +39,8 @@ t_ray_hit cast_ray_dda(t_env *env, double ray_angle)
     
     // DDA loop - sauter directement aux intersections de grille
     int hit_wall = 0;
-    while (!hit_wall && map_x >= 0 && map_x < MAP_WIDTH && 
-           map_y >= 0 && map_y < MAP_HEIGHT)
+    while (!hit_wall && map_x >= 0 && map_x < env->map.width && 
+           map_y >= 0 && map_y < env->map.height)
     {
         // Avancer à la prochaine intersection (X ou Y selon le plus proche)
         if (side_dist_x < side_dist_y)
@@ -56,9 +56,9 @@ t_ray_hit cast_ray_dda(t_env *env, double ray_angle)
             hit.side = 1;  // Hit sur mur horizontal
         }
         
-        // Vérifier si on touche un mur
-        if (map_x >= 0 && map_x < MAP_WIDTH && 
-            map_y >= 0 && map_y < MAP_HEIGHT)
+        // Vérifier si un mur est touché
+        if (map_x >= 0 && map_x < env->map.width && 
+            map_y >= 0 && map_y < env->map.height)
         {
             if (env->map.grid[map_y][map_x] != 0)
             {

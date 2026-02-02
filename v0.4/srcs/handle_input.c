@@ -113,50 +113,29 @@ void handle_input(t_env *env)
     // Avancer/reculer
     if (keys[SDL_SCANCODE_W] || keys[SDL_SCANCODE_UP])
     {
-        double new_x = env->player.pos.x + cos(env->player.angle) * speed;
-        double new_y = env->player.pos.y + sin(env->player.angle) * speed;
-        
-        // Collision basique
-        if (env->map.grid[(int)new_y][(int)new_x] == 0)
-        {
-            env->player.pos.x = new_x;
-            env->player.pos.y = new_y;
-        }
+        double dx = cos(env->player.angle) * speed;
+        double dy = sin(env->player.angle) * speed;
+        player_move(env, dx, dy);
     }
     if (keys[SDL_SCANCODE_S] || keys[SDL_SCANCODE_DOWN])
     {
-        double new_x = env->player.pos.x - cos(env->player.angle) * speed;
-        double new_y = env->player.pos.y - sin(env->player.angle) * speed;
-        
-        if (env->map.grid[(int)new_y][(int)new_x] == 0)
-        {
-            env->player.pos.x = new_x;
-            env->player.pos.y = new_y;
-        }
+        double dx = -cos(env->player.angle) * speed;
+        double dy = -sin(env->player.angle) * speed;
+        player_move(env, dx, dy);
     }
     
     // Strafe gauche/droite
     if (keys[SDL_SCANCODE_A])
     {
-        double new_x = env->player.pos.x + cos(env->player.angle - PI / 2) * speed;
-        double new_y = env->player.pos.y + sin(env->player.angle - PI / 2) * speed;
-        
-        if (env->map.grid[(int)new_y][(int)new_x] == 0)
-        {
-            env->player.pos.x = new_x;
-            env->player.pos.y = new_y;
-        }
+        double dx = cos(env->player.angle - PI / 2) * speed;
+        double dy = sin(env->player.angle - PI / 2) * speed;
+        player_move(env, dx, dy);
     }
     if (keys[SDL_SCANCODE_D])
     {
-        double new_x = env->player.pos.x + cos(env->player.angle + PI / 2) * speed;
-        double new_y = env->player.pos.y + sin(env->player.angle + PI / 2) * speed;
-        
-        if (env->map.grid[(int)new_y][(int)new_x] == 0)
-        {
-            env->player.pos.x = new_x;
-            env->player.pos.y = new_y;
-        }
+        double dx = cos(env->player.angle + PI / 2) * speed;
+        double dy = sin(env->player.angle + PI / 2) * speed;
+        player_move(env, dx, dy);
     }
     
     // Rotation (flèches gauche/droite)
@@ -170,4 +149,22 @@ void handle_input(t_env *env)
         env->player.angle += 2 * PI;
     while (env->player.angle >= 2 * PI)
         env->player.angle -= 2 * PI;
+    // ========== CONTROLES SKYBOX (B, 1, 2, 3) ==========
+    static int b_pressed = 0;
+    if (keys[SDL_SCANCODE_B])
+    {
+        if (!b_pressed)
+        {
+            toggle_skybox(env);
+            b_pressed = 1;
+        }
+    }
+    else
+    {
+        b_pressed = 0;
+    }
+    
+    if (keys[SDL_SCANCODE_1]) switch_skybox(env, 0);
+    if (keys[SDL_SCANCODE_2]) switch_skybox(env, 1);
+    if (keys[SDL_SCANCODE_3]) switch_skybox(env, 2);
 }

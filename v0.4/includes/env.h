@@ -4,6 +4,14 @@
 # include "utils.h"
 # include "texture.h"
 # include "bmp_parser.h"
+# include "sector.h"
+# include "geometry.h"
+# include "collision.h"
+# include "debug.h"
+# include "collision.h"
+# include "debug.h"
+# include "collision.h"
+# include "debug.h"
 
 #define MAP_WIDTH 8
 #define MAP_HEIGHT 8
@@ -23,11 +31,14 @@ typedef struct {
     t_v2    pos;            // Position 2D (x, y)
     double  angle;          // Angle de vue (radians)
     double  height;         // Hauteur des yeux (pour le rendu)
+    int     current_sector; // Secteur actuel du joueur
 } t_player;
 
-// Map simple (grid)
+// Map dynamique
 typedef struct {
-    int     grid[MAP_HEIGHT][MAP_WIDTH];  // 0 = vide, 1+ = mur
+    int     **grid;         // Grille 2D dynamique
+    int     width;          // Largeur de la map
+    int     height;         // Hauteur de la map
 } t_map;
 
 // Ray hit info (pour DDA raycasting)
@@ -57,10 +68,22 @@ typedef struct {
 } t_view_2d;
 
 
+// NOUVEAU : Skybox
+typedef struct {
+    t_texture   *textures;      // Array of loaded skybox textures
+    int         num_textures;   // Number of loaded textures
+    int         current_id;     // ID of the currently active skybox
+    int         enabled;        // 1 = skybox visible, 0 = black background
+    double      offset;         // Optional: rotation offset
+} t_skybox;
+
 typedef struct {
     t_sdl       sdl;
     t_player    player;
     t_map       map;
+    
+    // NOUVEAU : Phase 3 Sectors
+    t_map_sectors sector_map;
     
     int         w;              // Largeur fenêtre
     int         h;              // Hauteur fenêtre
@@ -83,6 +106,9 @@ typedef struct {
     t_texture   floor_texture;      // Texture du sol
     t_texture   ceiling_texture;    // Texture du plafond
     
+    // NOUVEAU : Skybox system
+    t_skybox        skybox;
+    
     // NOUVEAU : Mode 2D
     t_render_mode   render_mode;    // Mode actuel
     t_view_2d       view_2d;         // Paramètres vue 2D
@@ -103,6 +129,9 @@ void    draw_fps(t_env *env);
 void    limit_fps(t_env *env, Uint32 frame_start);
 void    game_loop(t_env *env);
 
+// Menu
+int     show_menu(t_env *env);
+
 // Nouvelles fonctions Phase 2
 void    init_map(t_env *env);
 void    init_player(t_env *env);
@@ -121,12 +150,23 @@ void    draw_wall_slice_textured(t_env *env, int x, t_ray_hit *hit);
 int     init_textures(t_env *env);
 void    free_textures(t_env *env);
 
+// Sectors (Phase 3)
+int     init_sectors(t_env *env);
+void    free_sectors(t_env *env);
+void    print_sector_info(t_sector *s);
+int     find_sector(t_env *env, double x, double y);
+void    player_move(t_env *env, double dx, double dy);
+
 // Bitmap font
 void    draw_text(t_env *env, const char *text, int x, int y, Uint32 color);
 void    draw_fps_on_screen(t_env *env);
 
-// Menu
-int     show_menu(t_env *env);
+// Skybox
+int     init_skybox(t_env *env);
+void    render_skybox(t_env *env);
+void    switch_skybox(t_env *env, int id);
+void    toggle_skybox(t_env *env);
+void    free_skybox(t_env *env);
 
 // Helpers
 t_rectangle new_rectangle(Uint32 inside_color, Uint32 line_color, int filled, int line_size);

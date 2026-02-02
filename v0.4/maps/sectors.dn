@@ -1,0 +1,39 @@
+# Doom-Nukem Sector Map v1
+
+# Vertices section
+# Format: id x y
+Vertices 6
+0 0.0 0.0
+1 10.0 0.0
+2 10.0 10.0
+3 0.0 10.0
+4 20.0 0.0
+5 20.0 10.0
+
+# Sectors section
+# Format:
+# Sector [id]
+# num_vertices
+# v1 v2 v3 ... (vertex indices)
+# n1 n2 n3 ... (neighbor sector ids, -1 for wall)
+# floor_height ceiling_height
+# floor_texture ceiling_texture
+# w1 w2 w3 ... (wall textures)
+
+Sectors 2
+
+Sector 0
+4
+0 1 2 3
+-1 1 -1 -1
+0.0 3.0
+1 2
+0 0 0 0
+
+Sector 1
+4
+1 4 5 2
+0 -1 -1 -1
+0.5 4.0
+1 2
+0 0 0 0

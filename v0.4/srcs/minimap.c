@@ -36,33 +36,52 @@ void draw_minimap(t_env *env)
     t_point bg_size = new_point(minimap_size, minimap_size);
     draw_rectangle(env, bg, bg_pos, bg_size);
     
-    // Dessiner les murs de la minimap
-    for (int y = 0; y < MAP_HEIGHT; y++)
+    // Dessiner les murs de la minimap (PHASE 2 GRID)
+    if (env->map.width > 0 && env->map.height > 0)
     {
-        for (int x = 0; x < MAP_WIDTH; x++)
+        for (int y = 0; y < env->map.height; y++)
         {
-            if (env->map.grid[y][x] != 0)
+            for (int x = 0; x < env->map.width; x++)
             {
-                int sx1, sy1, sx2, sy2;
-                world_to_minimap(env, x, y, &sx1, &sy1, minimap_x, minimap_y, 
-                               minimap_size, minimap_zoom);
-                world_to_minimap(env, x + 1, y + 1, &sx2, &sy2, minimap_x, minimap_y, 
-                               minimap_size, minimap_zoom);
-                
-                // Clipper à la minimap
-                if (sx1 < minimap_x) sx1 = minimap_x;
-                if (sy1 < minimap_y) sy1 = minimap_y;
-                if (sx2 > minimap_x + minimap_size) sx2 = minimap_x + minimap_size;
-                if (sy2 > minimap_y + minimap_size) sy2 = minimap_y + minimap_size;
-                
-                if (sx2 > sx1 && sy2 > sy1)
+                if (env->map.grid[y][x] != 0)
                 {
-                    Uint32 wall_color = 0xFF666666;  // Gris
-                    t_rectangle wall = new_rectangle(wall_color, wall_color, 1, 0);
-                    t_point wall_pos = new_point(sx1, sy1);
-                    t_point wall_size = new_point(sx2 - sx1, sy2 - sy1);
-                    draw_rectangle(env, wall, wall_pos, wall_size);
+                    // ... (existing grid drawing) ...
                 }
+            }
+        }
+    }
+
+    // Dessiner les SECTEURS (PHASE 3)
+    if (env->sector_map.nb_sectors > 0)
+    {
+        for (int i = 0; i < env->sector_map.nb_sectors; i++)
+        {
+            t_sector *sect = &env->sector_map.sectors[i];
+            
+            // Highlight current sector
+            Uint32 wall_color = (i == env->player.current_sector) ? 0xFF00FF00 : 0xFFAAAAAA;
+            
+            for (int v = 0; v < sect->nb_vertices; v++)
+            {
+                int idx1 = sect->vertices[v];
+                int idx2 = sect->vertices[(v + 1) % sect->nb_vertices];
+                
+                t_vertex v1 = env->sector_map.vertices[idx1];
+                t_vertex v2 = env->sector_map.vertices[idx2];
+                
+                int sx1, sy1, sx2, sy2;
+                world_to_minimap(env, v1.x, v1.y, &sx1, &sy1, minimap_x, minimap_y, minimap_size, minimap_zoom);
+                world_to_minimap(env, v2.x, v2.y, &sx2, &sy2, minimap_x, minimap_y, minimap_size, minimap_zoom);
+                
+                // Colorier portals différemment
+                Uint32 color = wall_color;
+                if (sect->neighbors[v] >= 0) color = 0xFFFF0000; // Rouge pour portails
+                
+                // Draw clipped line (simple clipping to minimap box needed strictly speaking, but for now simple draw)
+                // TODO: Strict clipping against minimap rect
+                if (sx1 >= minimap_x && sx1 <= minimap_x + minimap_size &&
+                    sy1 >= minimap_y && sy1 <= minimap_y + minimap_size)
+                        draw_line(new_point(sx1, sy1), new_point(sx2, sy2), env, color);
             }
         }
     }

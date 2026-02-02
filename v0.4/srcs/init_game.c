@@ -1,9 +1,11 @@
 #include "env.h"
+#include "loader_sectors.h"
 
 static void free_all(t_env *env)
 {
     // Libérer textures
     free_textures(env);
+    free_skybox(env);
     
     if (env->zbuffer)
         free(env->zbuffer);
@@ -72,9 +74,43 @@ int init_game(int ac, char **av)
         return (1);
     }
     
+    // NOUVEAU : Init Skybox
+    if (init_skybox(&env) != 0)
+    {
+        printf("Erreur initialisation skybox\n");
+        // Non-fatal, on peut continuer sans skybox
+        env.skybox.enabled = 0;
+    }
+    
     // Initialiser map et joueur
     init_map(&env);
     init_player(&env);
+    
+    // Charger la map de secteurs (Phase 3 Test)
+    printf("\n=== Phase 3: Loading Sectors ===\n");
+    if (load_sectors(&env, "maps/sectors.dn") == 0)
+    {
+        printf("Sectors loaded successfully.\n");
+        // Print debug info
+        for(int i=0; i<env.sector_map.nb_sectors; i++) {
+            printf("Sector %d: %d vertices\n", i, env.sector_map.sectors[i].nb_vertices);
+        }
+        
+        // Trouver le secteur de départ du joueur
+        // (Position joueur init_player.c est 3.5, 3.5 par defaut, verifier si dans secteur 0)
+        env.player.current_sector = find_sector(&env, env.player.pos.x, env.player.pos.y);
+        printf("Player Start Sector: %d\n", env.player.current_sector);
+        
+        // Si hors map, force secteur 0 pour eviter crash (Debug)
+        if (env.player.current_sector == -1 && env.sector_map.nb_sectors > 0) {
+             printf("Warning: Player outside sectors. Forcing Sector 0.\n");
+             env.player.current_sector = 0;
+        }
+    }
+    else
+    {
+        printf("Failed to load sectors.\n");
+    }
     
     // Afficher le menu de démarrage
     int menu_result = show_menu(&env);

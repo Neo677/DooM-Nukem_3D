@@ -1,24 +1,27 @@
 #include "env.h"
 
+// Prototype
+int load_map(t_env *env, const char *filename);
+
 void init_map(t_env *env)
 {
-    // Map 8x8 simple (1 = mur)
-    int map_data[MAP_HEIGHT][MAP_WIDTH] = {
-        {1, 1, 1, 1, 1, 1, 1, 1},
-        {1, 0, 0, 0, 0, 0, 0, 1},
-        {1, 0, 1, 0, 0, 1, 0, 1},
-        {1, 0, 0, 0, 0, 0, 0, 1},
-        {1, 0, 0, 1, 1, 0, 0, 1},
-        {1, 0, 0, 0, 0, 0, 0, 1},
-        {1, 0, 0, 0, 0, 0, 0, 1},
-        {1, 1, 1, 1, 1, 1, 1, 1}
-    };
-
-    for (int y = 0; y < MAP_HEIGHT; y++)
+    // Charger la map par défaut
+    // TODO: Gérer argv[1] pour map custom plus tard
+    if (load_map(env, "maps/default.map") != 0)
     {
-        for (int x = 0; x < MAP_WIDTH; x++)
-        {
-            env->map.grid[y][x] = map_data[y][x];
+        printf("Failed to load map. Creating fallback 8x8 map.\n");
+        // Fallback simple si echec
+        env->map.width = 8;
+        env->map.height = 8;
+        env->map.grid = malloc(sizeof(int*) * 8);
+        for(int i=0; i<8; i++) {
+            env->map.grid[i] = calloc(8, sizeof(int));
+            if(i==0 || i==7) {
+                for(int j=0; j<8; j++) env->map.grid[i][j] = 1;
+            } else {
+                env->map.grid[i][0] = 1;
+                env->map.grid[i][7] = 1;
+            }
         }
     }
 }

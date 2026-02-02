@@ -26,11 +26,11 @@ static void draw_grid(t_env *env)
     Uint32 grid_color = 0xFF333333;  // Gris très foncé
     
     // Lignes verticales
-    for (int x = 0; x <= MAP_WIDTH; x++)
+    for (int x = 0; x <= env->map.width; x++)
     {
         int sx1, sy1, sx2, sy2;
         world_to_screen(env, x, 0, &sx1, &sy1);
-        world_to_screen(env, x, MAP_HEIGHT, &sx2, &sy2);
+        world_to_screen(env, x, env->map.height, &sx2, &sy2);
         
         t_point p1 = new_point(sx1, sy1);
         t_point p2 = new_point(sx2, sy2);
@@ -38,11 +38,11 @@ static void draw_grid(t_env *env)
     }
     
     // Lignes horizontales
-    for (int y = 0; y <= MAP_HEIGHT; y++)
+    for (int y = 0; y <= env->map.height; y++)
     {
         int sx1, sy1, sx2, sy2;
         world_to_screen(env, 0, y, &sx1, &sy1);
-        world_to_screen(env, MAP_WIDTH, y, &sx2, &sy2);
+        world_to_screen(env, env->map.width, y, &sx2, &sy2);
         
         t_point p1 = new_point(sx1, sy1);
         t_point p2 = new_point(sx2, sy2);
@@ -54,30 +54,67 @@ static void draw_grid(t_env *env)
 
 static void draw_walls(t_env *env)
 {
-    for (int y = 0; y < MAP_HEIGHT; y++)
-    {
-        for (int x = 0; x < MAP_WIDTH; x++)
+    // PHASE 2 GRID
+    if (env->map.width > 0 && env->map.height > 0) {
+        for (int y = 0; y < env->map.height; y++)
         {
-            if (env->map.grid[y][x] != 0)
+             // ... Phase 2 logic skipped for brevity if needed inside checks ...
+             // Keeping original loop logic wrapped
+             for (int x = 0; x < env->map.width; x++) {
+                 if (env->map.grid[y][x] != 0) {
+                    Uint32 wall_color = (env->map.grid[y][x] == 1) ? 0xFF888888 : 0xFF666666;
+                    int sx1, sy1, sx2, sy2;
+                    world_to_screen(env, x, y, &sx1, &sy1);
+                    world_to_screen(env, x + 1, y + 1, &sx2, &sy2);
+                    draw_rectangle(env, new_rectangle(wall_color, 0xFF444444, 1, 1), new_point(sx1, sy1), new_point(sx2 - sx1, sy2 - sy1));
+                 }
+             }
+        }
+    }
+
+    // PHASE 3 SECTORS
+    if (env->sector_map.nb_sectors > 0)
+    {
+        for (int i = 0; i < env->sector_map.nb_sectors; i++)
+        {
+            t_sector *sect = &env->sector_map.sectors[i];
+            Uint32 wall_color = (i == env->player.current_sector) ? 0xFF00FF00 : 0xFFAAAAAA;
+            
+            for (int v = 0; v < sect->nb_vertices; v++)
             {
-                // Choisir couleur selon type de mur
-                Uint32 wall_color;
-                if (env->map.grid[y][x] == 1)
-                    wall_color = 0xFF888888;  // Gris clair
-                else
-                    wall_color = 0xFF666666;  // Gris moyen
+                int idx1 = sect->vertices[v];
+                int idx2 = sect->vertices[(v + 1) % sect->nb_vertices];
                 
-                // Dessiner un carré rempli pour chaque mur
+                t_vertex v1 = env->sector_map.vertices[idx1];
+                t_vertex v2 = env->sector_map.vertices[idx2];
+                
                 int sx1, sy1, sx2, sy2;
-                world_to_screen(env, x, y, &sx1, &sy1);
-                world_to_screen(env, x + 1, y + 1, &sx2, &sy2);
+                world_to_screen(env, v1.x, v1.y, &sx1, &sy1);
+                world_to_screen(env, v2.x, v2.y, &sx2, &sy2);
                 
-                // Rectangle plein
-                t_rectangle r = new_rectangle(wall_color, 0xFF444444, 1, 1);
-                t_point pos = new_point(sx1, sy1);
-                t_point size = new_point(sx2 - sx1, sy2 - sy1);
-                draw_rectangle(env, r, pos, size);
+                Uint32 color = wall_color;
+                if (sect->neighbors[v] >= 0) color = 0xFFFF0000; // Portail rouge
+                
+                draw_line(new_point(sx1, sy1), new_point(sx2, sy2), env, color);
+                
+                // Draw vertex
+                draw_circle(new_circle(0xFFFFFFFF, 0xFFFFFFFF, new_point(sx1, sy1), 2), env);
             }
+            
+            // Draw Sector ID center (approx)
+            // Calculer centroid
+            double cx=0, cy=0;
+            for(int k=0; k<sect->nb_vertices; k++) {
+                 cx += env->sector_map.vertices[sect->vertices[k]].x;
+                 cy += env->sector_map.vertices[sect->vertices[k]].y;
+            }
+            cx /= sect->nb_vertices;
+            cy /= sect->nb_vertices;
+            int scx, scy;
+            world_to_screen(env, cx, cy, &scx, &scy);
+            char buf[16];
+            snprintf(buf, 16, "S%d", i);
+            draw_text(env, buf, scx, scy, 0xFF00FFFF);
         }
     }
 }

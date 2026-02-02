@@ -8,7 +8,9 @@ SRC = main_game.c init_game.c init_sdl.c clear_image.c \
       menu.c game_loop.c frame_limiter.c init_map.c init_player.c \
       handle_input.c render_3d.c render_2d.c minimap.c render_floor_ceiling.c draw_wall_slice.c \
       bmp_parser.c texture.c init_textures.c raycasting_dda.c \
-      draw_textured_wall.c
+      draw_textured_wall.c skybox.c map_loader.c sector_utils.c \
+      geometry.c collision.c debug.c loader_sectors.c render_sector.c \
+      player_movement.c
 
 OBJ = $(addprefix $(OBJ_DIR)/, $(SRC:.c=.o))
 CC = gcc
