@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-// Déclaration externe
+// Declaration externe
 extern int load_bmp_texture(const char *path, t_texture *texture);
 
 int init_textures(t_env *env)
@@ -33,7 +33,7 @@ int init_textures(t_env *env)
         return -1;
     }
     
-    // IMPORTANT : Initialiser floor_texture et ceiling_texture à zéro
+    // IMPORTANT : Initialiser floor_texture et ceiling_texture a zero
     env->floor_texture.pixels = NULL;
     env->floor_texture.width = 0;
     env->floor_texture.height = 0;
@@ -45,27 +45,27 @@ int init_textures(t_env *env)
     // Charger sol
     if (load_bmp_texture("textures/floor1.bmp", &env->floor_texture) == 0)
     {
-        printf("✅ Texture de sol chargée (pixels=%p, %dx%d)\n", 
+        printf("✅ Texture de sol chargee (pixels=%p, %dx%d)\n", 
                (void*)env->floor_texture.pixels,
                env->floor_texture.width,
                env->floor_texture.height);
     }
     else
     {
-        printf("⚠️  Texture floor1.bmp non chargée\n");
+        printf("⚠️  Texture floor1.bmp non chargee\n");
     }
     
     // Charger plafond
     if (load_bmp_texture("textures/ceiling1.bmp", &env->ceiling_texture) == 0)
     {
-        printf("✅ Texture de plafond chargée (pixels=%p, %dx%d)\n",
+        printf("✅ Texture de plafond chargee (pixels=%p, %dx%d)\n",
                (void*)env->ceiling_texture.pixels,
                env->ceiling_texture.width,
                env->ceiling_texture.height);
     }
     else
     {
-        printf("⚠️  Texture ceiling1.bmp non chargée\n");
+        printf("⚠️  Texture ceiling1.bmp non chargee\n");
         // Fallback : utiliser la même que le sol si disponible
         if (env->floor_texture.pixels)
         {
@@ -74,7 +74,7 @@ int init_textures(t_env *env)
         }
     }
     
-    printf("✅ Système de textures initialisé (%d murs + sol + plafond)\n", 
+    printf("✅ Systeme de textures initialise (%d murs + sol + plafond)\n", 
            env->num_textures);
     
     return 0;
@@ -82,7 +82,7 @@ int init_textures(t_env *env)
 
 void free_textures(t_env *env)
 {
-    // Libérer textures de murs
+    // Liberer textures de murs
     if (env->wall_textures)
     {
         for (int i = 0; i < env->num_textures; i++)
@@ -93,14 +93,14 @@ void free_textures(t_env *env)
         free(env->wall_textures);
     }
     
-    // Libérer floor
+    // Liberer floor
     if (env->floor_texture.pixels && 
         env->floor_texture.pixels != env->ceiling_texture.pixels)
     {
         free(env->floor_texture.pixels);
     }
     
-    // Libérer ceiling (seulement si différent du floor)
+    // Liberer ceiling (seulement si different du floor)
     if (env->ceiling_texture.pixels && 
         env->ceiling_texture.pixels != env->floor_texture.pixels)
     {

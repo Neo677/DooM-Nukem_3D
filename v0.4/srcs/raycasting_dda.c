@@ -3,7 +3,7 @@
 
 #define PI 3.14159265358979323846
 
-// DDA Raycasting optimisé - 100x plus rapide que la version 0.01
+// DDA Raycasting optimise - 100x plus rapide que la version 0.01
 t_ray_hit cast_ray_dda(t_env *env, double ray_angle)
 {
     t_ray_hit hit;
@@ -12,11 +12,11 @@ t_ray_hit cast_ray_dda(t_env *env, double ray_angle)
     double ray_dir_x = cos(ray_angle);
     double ray_dir_y = sin(ray_angle);
     
-    // Position de départ (joueur)
+    // Position de depart (joueur)
     int map_x = (int)env->player.pos.x;
     int map_y = (int)env->player.pos.y;
     
-    // Distance jusqu'à la prochaine intersection X ou Y
+    // Distance jusqu'a la prochaine intersection X ou Y
     double delta_dist_x = fabs(1.0 / ray_dir_x);
     double delta_dist_y = fabs(1.0 / ray_dir_y);
     
@@ -24,7 +24,7 @@ t_ray_hit cast_ray_dda(t_env *env, double ray_angle)
     int step_x = (ray_dir_x < 0) ? -1 : 1;
     int step_y = (ray_dir_y < 0) ? -1 : 1;
     
-    // Distance initiale jusqu'à la première intersection
+    // Distance initiale jusqu'a la premiere intersection
     double side_dist_x, side_dist_y;
     
     if (ray_dir_x < 0)
@@ -42,7 +42,7 @@ t_ray_hit cast_ray_dda(t_env *env, double ray_angle)
     while (!hit_wall && map_x >= 0 && map_x < env->map.width && 
            map_y >= 0 && map_y < env->map.height)
     {
-        // Avancer à la prochaine intersection (X ou Y selon le plus proche)
+        // Avancer a la prochaine intersection (X ou Y selon le plus proche)
         if (side_dist_x < side_dist_y)
         {
             side_dist_x += delta_dist_x;
@@ -56,7 +56,7 @@ t_ray_hit cast_ray_dda(t_env *env, double ray_angle)
             hit.side = 1;  // Hit sur mur horizontal
         }
         
-        // Vérifier si un mur est touché
+        // Verifier si un mur est touche
         if (map_x >= 0 && map_x < env->map.width && 
             map_y >= 0 && map_y < env->map.height)
         {

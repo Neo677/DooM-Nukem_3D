@@ -21,7 +21,7 @@ player_t P_Init(double x, double y, double z, double angle)
 
 void P_Update(player_t *player, double delta_time)
 {
-    // Mise à jour de la physique
+    // Mise a jour de la physique
     P_UpdatePhysics(player, delta_time);
     
     // Limites de la hauteur de vue
@@ -44,13 +44,13 @@ void P_Jump(player_t *player)
 
 void P_UpdatePhysics(player_t *player, double delta_time)
 {
-    // Mise à jour de la position verticale
+    // Mise a jour de la position verticale
     player->z += player->z_velocity * delta_time;
     
-    // Application de la gravité
+    // Application de la gravite
     player->z_velocity -= PLAYER_GRAVITY * delta_time;
     
-    // Détection du sol
+    // Detection du sol
     double ground = P_GetGroundHeight(player);
     
     // Collision avec le sol
@@ -78,7 +78,7 @@ double P_GetGroundHeight(player_t *player)
 
 void P_TakeDamage(player_t *player, int damage)
 {
-    // L'armure absorbe 2/3 des dégâts
+    // L'armure absorbe 2/3 des degâts
     if (player->armor > 0)
     {
         int armor_damage = (damage * 2) / 3;

@@ -47,7 +47,7 @@ static int parse_dimensions(int fd, t_env *env)
     int w_found = 0;
     int h_found = 0;
     
-    // Valeurs par défaut
+    // Valeurs par defaut
     env->map.width = 0;
     env->map.height = 0;
     
@@ -66,7 +66,7 @@ static int parse_dimensions(int fd, t_env *env)
         else if (strncmp(line, "Grid:", 5) == 0)
         {
             free(line);
-            break; // Début des données
+            break; // Debut des donnees
         }
         free(line);
         if (w_found && h_found && env->map.width > 0 && env->map.height > 0)
@@ -168,8 +168,8 @@ int load_map(t_env *env, const char *filename)
     }
     
     // Rewind pas possible facilement avec read(), on continue la lecture
-    // On suppose que parse_dimensions s'est arrêté juste avant les data
-    // OU on réouvre le fichier pour être safe et skip le header
+    // On suppose que parse_dimensions s'est arrête juste avant les data
+    // OU on reouvre le fichier pour être safe et skip le header
     close(fd);
     fd = open(filename, O_RDONLY);
     

@@ -8,7 +8,7 @@ typedef struct s_vertex {
     int num;
 } t_vertex;
 
-// Structure secteur (simplifié Phase 3)
+// Structure secteur (simplifie Phase 3)
 typedef struct s_sector {
     int     *vertices;          // Indices vers vertices globaux
     int     nb_vertices;
@@ -26,8 +26,8 @@ typedef struct s_sector {
     // Slopes (Phase 3)
     double  floor_slope;        // Inclinaison sol (0.0 = plat)
     double  ceiling_slope;      // Inclinaison plafond
-    int     floor_slope_ref_wall;   // Indice du mur de référence (pivot bas)
-    int     ceiling_slope_ref_wall; // Indice du mur de référence
+    int     floor_slope_ref_wall;   // Indice du mur de reference (pivot bas)
+    int     ceiling_slope_ref_wall; // Indice du mur de reference
     
     // Rendering
     int     rendered;           // Flag pour portal rendering

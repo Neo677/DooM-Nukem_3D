@@ -259,14 +259,14 @@ void GameLoop(game_state_t *game_state, player_t *player)
 
 int main()
 {
-    // Initialisation des systèmes de base
+    // Initialisation des systemes de base
     game_state_t game_state = G_Init(SCRNW, SCRNH, FPS);
     K_InitKeymap();
     W_Init(SCRNW, SCRNH);
     R_Init(W_Get(), &game_state);
 
-    // Création de la map (Map de référence du tutoriel)
-    // Cette fonction génère les 16 secteurs et gère les connexions
+    // Creation de la map (Map de reference du tutoriel)
+    // Cette fonction genere les 16 secteurs et gere les connexions
     map_t game_map = M_CreateMap();
     
     // Initialisation du joueur au point de spawn de la map
@@ -277,13 +277,13 @@ int main()
         game_map.spawn_angle
     );
 
-    // === MAP DE RÉFÉRENCE ===
+    // === MAP DE ReFeRENCE ===
     // Reproduction de la map du tutoriel Doom-like Part I
-    // 16 secteurs interconnectés avec différentes hauteurs et couleurs.
+    // 16 secteurs interconnectes avec differentes hauteurs et couleurs.
     
-    printf("=== MAP DE RÉFÉRENCE (DOOM-like Part I) ===\n");
+    printf("=== MAP DE ReFeRENCE (DOOM-like Part I) ===\n");
     printf("Joueur: rayon=%.1f, hauteur=%.1f\n", PLAYER_RADIUS, PLAYER_HEIGHT);
-    printf("Map chargée: 16 secteurs interconnectés (générée par M_CreateMap)\n");
+    printf("Map chargee: 16 secteurs interconnectes (generee par M_CreateMap)\n");
     printf("Position spawn: (%.1f, %.1f, %.1f)\n", player.position.x, player.position.y, player.z);
     printf("==========================================\n");
 

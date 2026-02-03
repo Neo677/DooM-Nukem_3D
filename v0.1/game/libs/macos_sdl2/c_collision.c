@@ -2,11 +2,11 @@
 #include "types.h"
 #include <math.h>
 
-// PLAYER_RADIUS et PLAYER_HEIGHT définis dans typedefs.h
+// PLAYER_RADIUS et PLAYER_HEIGHT definis dans typedefs.h
 
 // ========== FONCTIONS UTILITAIRES ==========
 
-// Calcule la distance d'un point à une ligne
+// Calcule la distance d'un point a une ligne
 double C_pointToLineDistance(vec2_t point, vec2_t line_a, vec2_t line_b)
 {
     double A = point.x - line_a.x;
@@ -40,7 +40,7 @@ double C_pointToLineDistance(vec2_t point, vec2_t line_a, vec2_t line_b)
 
 // ========== FONCTIONS DE COLLISION 3D CYLINDRE-MUR ==========
 
-// Crée un cylindre représentant le joueur
+// Cree un cylindre representant le joueur
 player_cylinder_t C_CreatePlayerCylinder(player_t *player)
 {
     player_cylinder_t cylinder;
@@ -55,7 +55,7 @@ player_cylinder_t C_CreatePlayerCylinder(player_t *player)
     return cylinder;
 }
 
-// Crée un mur vertical à partir d'un wall_t et de son secteur
+// Cree un mur vertical a partir d'un wall_t et de son secteur
 wall_vertical_t C_CreateWallVertical(wall_t *wall, sector_t *sector)
 {
     wall_vertical_t wall_vert;
@@ -70,7 +70,7 @@ wall_vertical_t C_CreateWallVertical(wall_t *wall, sector_t *sector)
     return wall_vert;
 }
 
-// Vérifie la collision 2D entre cylindre et mur (projection XY)
+// Verifie la collision 2D entre cylindre et mur (projection XY)
 bool C_CheckCylinderWallCollision2D(player_cylinder_t cylinder, wall_vertical_t wall)
 {
     double distance = C_pointToLineDistance(cylinder.center, wall.a, wall.b);
@@ -84,7 +84,7 @@ bool C_CheckCylinderWallCollision2D(player_cylinder_t cylinder, wall_vertical_t 
     return collision;
 }
 
-// Vérifie la collision en hauteur entre cylindre et mur
+// Verifie la collision en hauteur entre cylindre et mur
 bool C_CheckCylinderWallCollisionHeight(player_cylinder_t cylinder, wall_vertical_t wall)
 {
     // Le cylindre chevauche-t-il la hauteur du mur ?
@@ -104,7 +104,7 @@ bool C_CheckCylinderWallCollisionHeight(player_cylinder_t cylinder, wall_vertica
     return height_overlap;
 }
 
-// Vérifie la collision 3D complète (XY + hauteur)
+// Verifie la collision 3D complete (XY + hauteur)
 bool C_CheckCylinderWallCollision3D(player_cylinder_t cylinder, wall_vertical_t wall)
 {
     bool xy_collision = C_CheckCylinderWallCollision2D(cylinder, wall);
@@ -209,7 +209,7 @@ vec2_t C_CalculateSlideDirection(vec2_t player_pos, vec2_t desired_pos, wall_t *
     // Point le plus proche sur le mur
     vec2_t closest_on_wall = C_ClosestPointOnLine(player_pos, wall->a, wall->b);
     
-    // Direction du mur (normalisée)
+    // Direction du mur (normalisee)
     double wall_dx = wall->b.x - wall->a.x;
     double wall_dy = wall->b.y - wall->a.y;
     double wall_length = sqrt(wall_dx * wall_dx + wall_dy * wall_dy);
@@ -220,10 +220,10 @@ vec2_t C_CalculateSlideDirection(vec2_t player_pos, vec2_t desired_pos, wall_t *
     // Direction unitaire du mur
     vec2_t wall_dir = {wall_dx / wall_length, wall_dy / wall_length};
     
-    // Direction perpendiculaire au mur (vers l'extérieur)
+    // Direction perpendiculaire au mur (vers l'exterieur)
     vec2_t wall_normal = {-wall_dir.y, wall_dir.x};
     
-    // Vérifier si on est du bon côté du mur
+    // Verifier si on est du bon côte du mur
     vec2_t to_player = {player_pos.x - closest_on_wall.x, player_pos.y - closest_on_wall.y};
     double dot_product = to_player.x * wall_normal.x + to_player.y * wall_normal.y;
     
@@ -233,18 +233,18 @@ vec2_t C_CalculateSlideDirection(vec2_t player_pos, vec2_t desired_pos, wall_t *
         wall_normal.y = -wall_normal.y;
     }
     
-    // Position glissée le long du mur
+    // Position glissee le long du mur
     vec2_t slide_pos = {closest_on_wall.x + wall_normal.x * player_radius, 
                         closest_on_wall.y + wall_normal.y * player_radius};
     
-    // Direction de glissement (parallèle au mur)
+    // Direction de glissement (parallele au mur)
     vec2_t slide_direction = {wall_dir.x, wall_dir.y};
     
-    // Projeter le mouvement désiré sur la direction de glissement
+    // Projeter le mouvement desire sur la direction de glissement
     vec2_t desired_movement = {desired_pos.x - player_pos.x, desired_pos.y - player_pos.y};
     double slide_amount = desired_movement.x * slide_direction.x + desired_movement.y * slide_direction.y;
     
-    // Position finale glissée
+    // Position finale glissee
     vec2_t final_slide_pos = {
         slide_pos.x + slide_direction.x * slide_amount,
         slide_pos.y + slide_direction.y * slide_amount
@@ -263,7 +263,7 @@ bool C_CheckWallCollision(vec2_t player_pos, double player_radius, wall_t *wall)
     return (distance < player_radius);
 }
 
-// Test de collision 3D complète (position XY + hauteur Z)
+// Test de collision 3D complete (position XY + hauteur Z)
 collision_result_t C_TestPlayer3DCollision(player_t *player, vec2_t new_position, double new_z, sector_t *sectors, int num_sector)
 {
     collision_result_t rsl;
@@ -368,10 +368,10 @@ collision_result_t C_TestPlayer3DCollision(player_t *player, vec2_t new_position
     return rsl;
 }
 
-// Test de mouvement 3D simplifié et fonctionnel
+// Test de mouvement 3D simplifie et fonctionnel
 collision_result_t C_TestPlayerMovement3D(player_t *player, vec2_t new_pos, sector_t *sectors, int num_sector)
 {
-    // Utiliser la fonction complète avec la hauteur actuelle du joueur
+    // Utiliser la fonction complete avec la hauteur actuelle du joueur
     return C_TestPlayer3DCollision(player, new_pos, player->z, sectors, num_sector);
 }
 
@@ -405,7 +405,7 @@ void C_Apply3DMovement(player_t *player, vec2_t new_position, double new_z, sect
     }
 }
 
-// Fonction de debug pour vérifier la position de spawn
+// Fonction de debug pour verifier la position de spawn
 void C_CheckSpawnPosition(player_t *player, sector_t *sectors, int num_sector)
 {
     printf("=== SPAWN POSITION CHECK ===\n");

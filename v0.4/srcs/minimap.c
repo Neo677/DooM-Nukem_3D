@@ -13,7 +13,7 @@ static void world_to_minimap(t_env *env, double wx, double wy, int *sx, int *sy,
     double rel_x = wx - env->player.pos.x;
     double rel_y = wy - env->player.pos.y;
     
-    // Appliquer zoom et décaler dans le coin
+    // Appliquer zoom et decaler dans le coin
     *sx = (int)(rel_x * zoom + minimap_x + minimap_size / 2);
     *sy = (int)(rel_y * zoom + minimap_y + minimap_size / 2);
 }
@@ -24,7 +24,7 @@ void draw_minimap(t_env *env)
     if (!env->view_2d.show_minimap)
         return;
     
-    // Paramètres minimap
+    // Parametres minimap
     int minimap_size = 200;  // 200x200 pixels
     int minimap_x = env->w - minimap_size - 20;  // 20px du bord droit
     int minimap_y = 20;  // 20px du haut
@@ -60,7 +60,7 @@ void draw_minimap(t_env *env)
                 world_to_minimap(env, v1.x, v1.y, &sx1, &sy1, minimap_x, minimap_y, minimap_size, minimap_zoom);
                 world_to_minimap(env, v2.x, v2.y, &sx2, &sy2, minimap_x, minimap_y, minimap_size, minimap_zoom);
                 
-                // Colorier portals différemment
+                // Colorier portals differemment
                 Uint32 color = wall_color;
                 if (sect->neighbors[v] >= 0) color = 0xFFFF0000; // Rouge pour portails
                 
@@ -78,7 +78,7 @@ void draw_minimap(t_env *env)
     world_to_minimap(env, env->player.pos.x, env->player.pos.y, &px, &py, 
                     minimap_x, minimap_y, minimap_size, minimap_zoom);
     
-    // Vérifier que le joueur est dans la minimap
+    // Verifier que le joueur est dans la minimap
     if (px >= minimap_x && px <= minimap_x + minimap_size &&
         py >= minimap_y && py <= minimap_y + minimap_size)
     {

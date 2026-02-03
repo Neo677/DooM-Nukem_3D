@@ -6,7 +6,7 @@ void    draw_wall_slice(t_env *env, int x, double wall_dist, int wall_type)
     int     draw_end;
     Uint32  color;
     int     y;
-    // Calculer hauteur du mur à l'écran
+    // Calculer hauteur du mur a l'ecran
     if (wall_dist < 0.1)
         wall_dist = 0.1;
     
@@ -35,11 +35,11 @@ void    draw_wall_slice(t_env *env, int x, double wall_dist, int wall_type)
     
     // Pour mur rouge
     if (wall_type == 1)
-        color = 0xFF000000 | (brightness << 16);  // Rouge modulé
+        color = 0xFF000000 | (brightness << 16);  // Rouge module
     else
-        color = 0xFF000000 | (brightness << 8);   // Vert modulé
+        color = 0xFF000000 | (brightness << 8);   // Vert module
     
-    // Dessiner plafond (gris foncé)
+    // Dessiner plafond (gris fonce)
     for (y = 0; y < draw_start; y++)
     {
         if (x >= 0 && x < env->w && y >= 0 && y < env->h)

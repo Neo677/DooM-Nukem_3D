@@ -3,7 +3,7 @@
 
 #define PI 3.14159265358979323846
 
-// ============ TRANSFORMATION MONDE → ÉCRAN ============
+// ============ TRANSFORMATION MONDE → eCRAN ============
 
 static void world_to_screen(t_env *env, double wx, double wy, int *sx, int *sy)
 {
@@ -202,7 +202,7 @@ void render_2d(t_env *env)
     draw_rays(env);      // Rayons en dessous du joueur
     draw_player(env);
     
-    // FPS (en haut à gauche)
+    // FPS (en haut a gauche)
     draw_fps_on_screen(env);
     
     // Texte debug

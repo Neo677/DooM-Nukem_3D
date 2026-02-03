@@ -27,12 +27,19 @@ void free_sectors(t_env *env)
             if (s->wall_textures) free(s->wall_textures);
         }
         free(env->sector_map.sectors);
+        env->sector_map.sectors = NULL;
     }
     
     if (env->sector_map.vertices)
+    {
         free(env->sector_map.vertices);
-        
-    printf("Sector system freed\n");
+        env->sector_map.vertices = NULL;
+    }
+    
+    env->sector_map.nb_sectors = 0;
+    env->sector_map.nb_vertices = 0;
+    
+    DEBUG_LOG("Sector system freed\n");
 }
 
 void print_sector_info(t_sector *s)

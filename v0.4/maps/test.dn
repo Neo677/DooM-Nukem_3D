@@ -1,0 +1,81 @@
+# Doom-Nukem Test Map - Features Showcase
+# Ce fichier démontre toutes les fonctionnalités du moteur
+
+Vertices 20
+# Salle principale (centrale)
+0 0.0 0.0
+1 15.0 0.0
+2 15.0 15.0
+3 0.0 15.0
+
+# Salle Est (step up)
+4 15.0 2.0
+5 25.0 2.0
+6 25.0 13.0
+7 15.0 13.0
+
+# Salle Nord (plafond bas)
+8 2.0 15.0
+9 13.0 15.0
+10 13.0 25.0
+11 2.0 25.0
+
+# Salle Ouest (avec rampe/slope)
+12 -10.0 2.0
+13 0.0 2.0
+14 0.0 13.0
+15 -10.0 13.0
+
+# Salle Sud (fosse/pit)
+16 2.0 -8.0
+17 13.0 -8.0
+18 13.0 0.0
+19 2.0 0.0
+
+Sectors 5
+
+# Secteur 0: Hub Central (4 portails)
+Sector 0
+4
+0 1 2 3
+4 1 2 3
+0.0 5.0
+1 2
+0 0 0 0
+
+# Secteur 1: Salle Est - Step Up (marchable H=0.8)
+Sector 1
+4
+4 5 6 7
+0 -1 -1 -1
+0.8 6.0
+1 2
+1 0 0 1
+
+# Secteur 2: Salle Nord - Plafond Bas (H=3.0)
+Sector 2
+4
+8 9 10 11
+0 -1 -1 -1
+0.0 3.0
+1 2
+1 0 0 1
+
+# Secteur 3: Salle Ouest - Rampe (slope 0.3)
+Sector 3
+4
+12 13 14 15
+-1 0 -1 -1
+0.0 5.0
+0.3 0.0 1 0
+1 2
+1 0 0 1
+
+# Secteur 4: Salle Sud - Fosse/Pit (H=-3.0)
+Sector 4
+4
+16 17 18 19
+-1 -1 0 -1
+-3.0 5.0
+1 2
+0 0 1 0

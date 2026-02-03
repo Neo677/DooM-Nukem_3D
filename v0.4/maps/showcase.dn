@@ -1,78 +1,65 @@
-# Doom-Nukem Showcase Map v1
+# Doom-Nukem Simple Showcase
+# Map simple pour tester les features de base
 
-Vertices 12
+Vertices 16
+# Salle principale
 0 0.0 0.0
-1 10.0 0.0
-2 10.0 10.0
-3 0.0 10.0
-4 20.0 0.0
-5 20.0 10.0
-6 10.0 20.0
-7 0.0 20.0
-8 -10.0 0.0
-9 -10.0 10.0
-10 0.0 -10.0
-11 10.0 -10.0
+1 20.0 0.0
+2 20.0 20.0
+3 0.0 20.0
 
-# Sectors section
-# Format:
-# Sector [id]
-# num_vertices
-# v1 v2 v3 ... (vertex indices)
-# n1 n2 n3 ... (neighbor sector ids, -1 for wall)
-# floor_height ceiling_height
-# floor_slope ceiling_slope ref_wall_floor ref_wall_ceil (Optional)
-# floor_texture ceiling_texture
-# w1 w2 w3 ... (wall textures)
+# Salle connectée (Est)
+4 20.0 5.0
+5 30.0 5.0
+6 30.0 15.0
+7 20.0 15.0
 
-Sectors 5
+# Salle avec step (Nord)
+8 5.0 20.0
+9 15.0 20.0
+10 15.0 30.0
+11 5.0 30.0
 
-# Sector 0: Central Hub
+# Fosse (Sud)
+12 5.0 -6.0
+13 15.0 -6.0
+14 15.0 0.0
+15 5.0 0.0
+
+Sectors 4
+
+# Secteur 0: Salle Principale
 Sector 0
 4
 0 1 2 3
--1 1 2 3
-0.0 4.0
-0.0 0.0 0 0
+3 1 2 -1
+0.0 5.0
 1 2
 0 0 0 0
 
-# Sector 1: Step Up (East) -> Crossable (H=0.5)
+# Secteur 1: Salle Est (step up 1m)
 Sector 1
 4
-1 4 5 2
+4 5 6 7
 0 -1 -1 -1
-0.5 4.5
-0.0 0.0 0 0
+1.0 6.0
 1 2
-0 0 0 0
+1 0 0 1
 
-# Sector 2: High Step / Block (North) -> Uncrossable (H=1.5)
+# Secteur 2: Salle Nord (plafond haut)
 Sector 2
 4
-3 2 6 7
+8 9 10 11
 0 -1 -1 -1
-1.5 5.5
-0.0 0.0 0 0
+0.0 8.0
 1 2
-0 0 0 0
+1 0 0 1
 
-# Sector 3: Slope (West) -> Ramp up (Slope=0.2)
+# Secteur 3: Fosse Sud (profonde)
 Sector 3
 4
-8 0 3 9
--1 0 -1 -1
-0.0 4.0
-0.2 0.0 1 0
-1 2
-0 0 0 0
-
-# Sector 4: Pit (South) -> Fall down (H=-2.0)
-Sector 4
-4
-10 11 1 0
+12 13 14 15
 -1 -1 0 -1
--2.0 4.0
-0.0 0.0 0 0
+-4.0 5.0
 1 2
-0 0 0 0
+0 0 1 0

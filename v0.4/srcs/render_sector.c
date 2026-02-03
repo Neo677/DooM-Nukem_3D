@@ -3,7 +3,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define MAX_RECURSION_DEPTH 32
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
 #define MIN(a,b) ((a) < (b) ? (a) : (b))
 
@@ -38,7 +37,7 @@ static int transform_vertex(t_env *env, t_vertex v, double *rx, double *rz)
     *rx = tx * sn - ty * cs;
     
     // Z-Near clipping tolerance
-    return (*rz > 0.01);
+    return (*rz > Z_NEAR_PLANE);
 }
 
 // Fonction de dessin verticale simple (remplace draw_line pour le rasterizer)
@@ -57,18 +56,17 @@ static void vline(t_env *env, int x, int y1, int y2, Uint32 color, int *ytop, in
     }
 }
 
-// Dessiner une colonne texturée
+// Dessiner une colonne texturee
 
 
 
 // Basic fog shading
 static Uint32 apply_fog(Uint32 color, double dist)
 {
-    double max_dist = 20.0; // Distance of darkness
     if (dist < 0.0) dist = 0.0;
     
-    double intensity = 1.0 - (dist / max_dist);
-    if (intensity < 0.1) intensity = 0.1; // Ambiance min
+    double intensity = 1.0 - (dist / FOG_MAX_DISTANCE);
+    if (intensity < FOG_MIN_INTENSITY) intensity = FOG_MIN_INTENSITY;
     if (intensity > 1.0) intensity = 1.0;
     
     Uint8 r = (color >> 16) & 0xFF;
@@ -82,7 +80,7 @@ static Uint32 apply_fog(Uint32 color, double dist)
     return (0xFF000000 | (r << 16) | (g << 8) | b);
 }
 
-// Dessiner une colonne de sol texturée (Raycasting vertical avec Pentes)
+// Dessiner une colonne de sol texturee (Raycasting vertical avec Pentes)
 static void draw_floor_vertical(t_env *env, int x, int y1, int y2, double ray_angle, t_sector *sect)
 {
     if (y2 < y1) return;
@@ -96,7 +94,8 @@ static void draw_floor_vertical(t_env *env, int x, int y1, int y2, double ray_an
     // Constants for flat floor
     double floor_h_flat = sect->floor_height;
     double rel_h_flat = cam_z - floor_h_flat; 
-    if (rel_h_flat <= 0.1 && fabs(sect->floor_slope) < 0.001) rel_h_flat = 0.1;
+    if (rel_h_flat <= Z_NEAR_PLANE && fabs(sect->floor_slope) < COLLISION_EPSILON)
+        rel_h_flat = Z_NEAR_PLANE;
 
     double cos_a = cos(ray_angle);
     double sin_a = sin(ray_angle);
@@ -214,13 +213,19 @@ static void draw_floor_vertical(t_env *env, int x, int y1, int y2, double ray_an
     }
 }
 
-// Dessiner une colonne de plafond texturée
+// Dessiner une colonne de plafond texturee
 static void draw_ceiling_vertical(t_env *env, int x, int y1, int y2, double ray_angle, t_sector *sect)
 {
     if (y2 < y1) return;
     
-    // Skybox override
-    if (env->skybox.enabled && !sect->ceiling_texture) return; // Let skybox be visible
+    // NOUVEAU: Skybox override (utilise le nouveau système 3D box)
+    if (env->skybox.enabled && env->skybox.computed)
+    {
+        // Pour l'instant, on active skybox sur tous les plafonds
+        // TODO: Ajouter un flag sect->has_skybox pour contrôler par secteur
+        draw_skybox_column(env, x, y1, y2, ray_angle);
+        return;
+    }
 
     t_texture *tex = &env->ceiling_texture;
     int has_texture = (tex->pixels != NULL);
@@ -231,7 +236,8 @@ static void draw_ceiling_vertical(t_env *env, int x, int y1, int y2, double ray_
     // Constants for flat ceiling
     double ceil_h_flat = sect->ceiling_height;
     double rel_h_flat = ceil_h_flat - cam_z; 
-    if (rel_h_flat <= 0.1 && fabs(sect->ceiling_slope) < 0.001) rel_h_flat = 0.1;
+    if (rel_h_flat <= Z_NEAR_PLANE && fabs(sect->ceiling_slope) < COLLISION_EPSILON)
+        rel_h_flat = Z_NEAR_PLANE;
 
     double cos_a = cos(ray_angle);
     double sin_a = sin(ray_angle);
@@ -324,7 +330,7 @@ static void draw_ceiling_vertical(t_env *env, int x, int y1, int y2, double ray_
     }
 }
 
-// Dessiner une colonne texturée mur
+// Dessiner une colonne texturee mur
 static void vline_textured(t_env *env, int x, int y1, int y2, int y_ceil_unclipped, int y_floor_unclipped, double u, t_texture *tex, int *ytop, int *ybottom, double depth)
 {
     // Apply global clipping
@@ -359,11 +365,11 @@ static void vline_textured(t_env *env, int x, int y1, int y2, int y_ceil_unclipp
 void init_portal_renderer(t_env *env)
 {
     (void)env;
-    // Cette fonction pourrait être utilisée pour allouer des buffers si besoin
-    // Pour l'instant on passera les buffers sur la stack ou alloués dans render_3d
+    // Cette fonction pourrait être utilisee pour allouer des buffers si besoin
+    // Pour l'instant on passera les buffers sur la stack ou alloues dans render_3d
 }
 
-// Cœur du rendu récursif
+// Cœur du rendu recursif
 void render_sectors_recursive(t_env *env, int sector_id, int xmin, int xmax, int *ytop, int *ybottom, int depth)
 {
     if (sector_id < 0 || sector_id >= env->sector_map.nb_sectors) return;
@@ -378,7 +384,7 @@ void render_sectors_recursive(t_env *env, int sector_id, int xmin, int xmax, int
     // Rendering chaque mur
     for (int i = 0; i < sect->nb_vertices; i++)
     {
-        // 1. Récupérer les sommets
+        // 1. Recuperer les sommets
         int idx1 = sect->vertices[i];
         int idx2 = sect->vertices[(i + 1) % sect->nb_vertices];
         
@@ -390,21 +396,20 @@ void render_sectors_recursive(t_env *env, int sector_id, int xmin, int xmax, int
         transform_vertex(env, v1, &rx1, &rz1);
         transform_vertex(env, v2, &rx2, &rz2);
         
-        // 3. Clipping Z-Near (Doit être fait avant la projection écran !)
-        if (rz1 <= 0.1 && rz2 <= 0.1) continue; // Mur entièrement derrière
+        // 3. Clipping Z-Near (Doit être fait avant la projection ecran !)
+        if (rz1 <= Z_NEAR_PLANE && rz2 <= Z_NEAR_PLANE) continue; // Mur entierement derriere
         
-        // Clipping 'Near Plane' basique (point derrière -> intersecté à z=0.1)
-        if (rz1 <= 0.1 || rz2 <= 0.1)
+        // Clipping 'Near Plane' basique (point derriere -> intersecte a z=near)
+        if (rz1 <= Z_NEAR_PLANE || rz2 <= Z_NEAR_PLANE)
         {
-            double near_z = 0.1;
-            double alpha = (near_z - rz1) / (rz2 - rz1);
+            double alpha = (Z_NEAR_PLANE - rz1) / (rz2 - rz1);
             double int_rx = rx1 + (rx2 - rx1) * alpha;
             
-            if (rz1 <= 0.1) { rz1 = near_z; rx1 = int_rx; }
-            else           { rz2 = near_z; rx2 = int_rx; }
+            if (rz1 <= Z_NEAR_PLANE) { rz1 = Z_NEAR_PLANE; rx1 = int_rx; }
+            else                     { rz2 = Z_NEAR_PLANE; rx2 = int_rx; }
         }
         
-        // 4. Projection Écran
+        // 4. Projection ecran
         double scale1 = (env->w / 2.0) / tan(30.0 * 3.14159 / 180.0); // FOVH
         double scale2 = scale1;
         
@@ -419,7 +424,7 @@ void render_sectors_recursive(t_env *env, int sector_id, int xmin, int xmax, int
         double ceil_h = sect->ceiling_height - env->player.height;
         double floor_h = sect->floor_height - env->player.height;
         
-        // Projection Y (similaire à Doom)
+        // Projection Y (similaire a Doom)
         // Yscreen = (H / 2) - (Height / Z) * Scale
         int sy1_ceil = (env->h / 2) - (int)(ceil_h / rz1 * scale1);
         int sy1_floor = (env->h / 2) - (int)(floor_h / rz1 * scale1);
@@ -446,8 +451,8 @@ void render_sectors_recursive(t_env *env, int sector_id, int xmin, int xmax, int
         
         for (int x = begin_x; x < end_x; x++)
         {
-            // Interpolation linéaire (Simple mais pas perspective-correct pour textures, ok pour géométrie)
-            // Pour être précis, il faut interpoler 1/z
+            // Interpolation lineaire (Simple mais pas perspective-correct pour textures, ok pour geometrie)
+            // Pour être precis, il faut interpoler 1/z
             double t = (double)(x - sx1) / (sx2 - sx1);
             
             // Hauteur plafond/sol actuels
@@ -491,11 +496,11 @@ void render_sectors_recursive(t_env *env, int sector_id, int xmin, int xmax, int
             
             // -- Rendu --
             
-            // Plafond Texturé
+            // Plafond Texture
             if (c_y_ceil > ytop[x])
                 draw_ceiling_vertical(env, x, ytop[x], c_y_ceil, ray_angle_col, sect);
 
-            // Sol Texturé
+            // Sol Texture
             if (c_y_floor < ybottom[x])
                 draw_floor_vertical(env, x, c_y_floor, ybottom[x], ray_angle_col, sect);
             
@@ -520,7 +525,7 @@ void render_sectors_recursive(t_env *env, int sector_id, int xmin, int xmax, int
                      else vline(env, x, c_ny_floor, c_y_floor, apply_fog(0xFF666666, z_current), ytop, ybottom);
                 }
                 
-                // Ne PAS mettre à jour ytop/ybottom ici directement pour la suite de CE secteur
+                // Ne PAS mettre a jour ytop/ybottom ici directement pour la suite de CE secteur
                 // car cela affecterait les murs suivants.
                 // Par contre, pour la RECURSION, on doit calculer la nouvelle fenêtre.
             }
@@ -549,8 +554,8 @@ void render_sectors_recursive(t_env *env, int sector_id, int xmin, int xmax, int
                 // Application de la fenêtre du portail SUR LA COPIE
                 for (int x = begin_x; x < end_x; x++)
                 {
-                     // Recalcul nécessaire des hauteurs (on pourrait les stocker, mais recalculer 
-                     // est plus simple et moins gourmand en mémoire heap/stack arrays)
+                     // Recalcul necessaire des hauteurs (on pourrait les stocker, mais recalculer 
+                     // est plus simple et moins gourmand en memoire heap/stack arrays)
                      double t = (double)(x - sx1) / (sx2 - sx1);
                      
                      int y_ceil = sy1_ceil + (sy2_ceil - sy1_ceil) * t;
@@ -559,15 +564,15 @@ void render_sectors_recursive(t_env *env, int sector_id, int xmin, int xmax, int
                      int ny_ceil = n_sy1_ceil + (n_sy2_ceil - n_sy1_ceil) * t;
                      int ny_floor = n_sy1_floor + (n_sy2_floor - n_sy1_floor) * t;
                      
-                     // Clipping écran actuel
+                     // Clipping ecran actuel
                      int c_y_ceil = clamp(y_ceil, ytop[x], ybottom[x]);
                      int c_y_floor = clamp(y_floor, ytop[x], ybottom[x]);
                      int c_ny_ceil = clamp(ny_ceil, ytop[x], ybottom[x]);
                      int c_ny_floor = clamp(ny_floor, ytop[x], ybottom[x]);
 
-                     // La fenêtre visible à travers le portail est l'intersection de :
+                     // La fenêtre visible a travers le portail est l'intersection de :
                      // 1. Fenêtre courante (new_ytop[x], new_ybottom[x])
-                     // 2. Le trou géométrique du portail (max des ceilings, min des floors)
+                     // 2. Le trou geometrique du portail (max des ceilings, min des floors)
                      
                      int portal_top = MAX(c_y_ceil, c_ny_ceil);
                      int portal_bot = MIN(c_y_floor, c_ny_floor);
@@ -576,7 +581,7 @@ void render_sectors_recursive(t_env *env, int sector_id, int xmin, int xmax, int
                      new_ybottom[x] = clamp(portal_bot, new_ytop[x], new_ybottom[x]);
                 }
                 
-                // Appel récursif
+                // Appel recursif
                 render_sectors_recursive(env, neighbor, begin_x, end_x, new_ytop, new_ybottom, depth + 1);
                 
                 free(new_ytop);

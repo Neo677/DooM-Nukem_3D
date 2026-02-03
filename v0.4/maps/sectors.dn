@@ -1,49 +1,52 @@
-# Doom-Nukem Sector Map v1
+# Doom-Nukem Basic Sectors Test
+# Map de base pour tests simples
 
-# Vertices section
-# Format: id x y
-Vertices 8
+Vertices 12
+# Trois salles rectangulaires connectées
+
+# Salle 0 (Gauche)
 0 0.0 0.0
 1 10.0 0.0
 2 10.0 10.0
 3 0.0 10.0
-4 20.0 0.0
-5 20.0 10.0
-6 10.0 20.0
-7 0.0 20.0
 
-# Sectors section
-# Format:
-# Sector [id]
-# num_vertices
-# v1 v2 v3 ... (vertex indices)
-# n1 n2 n3 ... (neighbor sector ids, -1 for wall)
-# floor_height ceiling_height
-# floor_texture ceiling_texture
-# w1 w2 w3 ... (wall textures)
+# Salle 1 (Centre)
+4 10.0 2.0
+5 20.0 2.0
+6 20.0 8.0
+7 10.0 8.0
+
+# Salle 2 (Droite)
+8 20.0 0.0
+9 30.0 0.0
+10 30.0 10.0
+11 20.0 10.0
 
 Sectors 3
 
+# Secteur 0: Salle Gauche (normal)
 Sector 0
 4
 0 1 2 3
--1 1 2 -1
-0.0 3.0
+-1 1 -1 -1
+0.0 4.0
 1 2
 0 0 0 0
 
+# Secteur 1: Salle Centre (surélevée)
 Sector 1
 4
-1 4 5 2
-0 -1 -1 -1
-0.5 4.0
+4 5 6 7
+0 2 -1 -1
+0.5 4.5
 1 2
-0 0 0 0
+1 0 0 1
 
+# Secteur 2: Salle Droite (normale)
 Sector 2
 4
-3 2 6 7
-0 -1 -1 -1
-1.2 4.0
+8 9 10 11
+1 -1 -1 -1
+0.0 4.0
 1 2
 0 0 0 0

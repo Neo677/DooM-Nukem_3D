@@ -28,6 +28,10 @@ int init_skybox(t_env *env)
     env->skybox.enabled = 1;
     env->skybox.offset = 0.0;
     
+    // NOUVEAU : Paramètres pour la box 3D
+    env->skybox.box_size = 10.0;
+    env->skybox.computed = 0;
+    
     return (0);
 }
 
@@ -63,7 +67,7 @@ void render_skybox(t_env *env)
 {
     if (!env->skybox.enabled)
     {
-        // Si désactivé, remplir avec couleur noire ou ciel simple
+        // Si desactive, remplir avec couleur noire ou ciel simple
         for (int i = 0; i < env->w * env->h; i++)
             env->sdl.texture_pixels[i] = 0xFF000000;
         return;
@@ -73,18 +77,18 @@ void render_skybox(t_env *env)
     if (!tex->pixels) return;
 
     // Calcul de l'angle initial
-    // On mappe 2*PI à tex->width
-    // angle de 0 à 2*PI
+    // On mappe 2*PI a tex->width
+    // angle de 0 a 2*PI
     
     double fov_rad = (FOV * PI) / 180.0;
     
-    // Rendu sur TOUT l'écran (fond global)
+    // Rendu sur TOUT l'ecran (fond global)
     // Les murs et sols viendront par dessus
     int grid_bottom = env->h; 
     
     for (int x = 0; x < env->w; x++)
     {
-        // Angle correspondant à la colonne x
+        // Angle correspondant a la colonne x
         double ray_angle = env->player.angle - (fov_rad / 2.0) + ((double)x / env->w) * fov_rad;
         
         // Normaliser l'angle entre 0 et 2*PI
@@ -98,7 +102,7 @@ void render_skybox(t_env *env)
         // Dessiner la colonne verticale pour le ciel
         for (int y = 0; y < grid_bottom; y++)
         {
-            // On mappe la hauteur de l'écran sur la hauteur de la texture
+            // On mappe la hauteur de l'ecran sur la hauteur de la texture
             // Horizon (H/2) correspond au milieu de la texture
             int tex_y = (y * tex->height) / env->h;
             

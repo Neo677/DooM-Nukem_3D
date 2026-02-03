@@ -101,7 +101,7 @@ int load_sectors(t_engine *engine, const char *path)
                     break;
                 }
                 t_sector *s = &engine->sectors[engine->nSectors++];
-                s->floorCol = 0x00222222;  // Gris très foncé
+                s->floorCol = 0x00222222;  // Gris tres fonce
                 s->ceilCol = 0x00404040; 
                 if (sscanf(p, "%d %zu %zu %f %f", &s->id, &s->firstWall, &s->nWalls, &s->zFloor, &s->zCeil) != 5) {
                     retVal = -6;

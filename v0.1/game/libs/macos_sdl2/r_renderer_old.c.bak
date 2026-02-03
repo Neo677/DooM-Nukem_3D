@@ -242,13 +242,13 @@ void R_RenderSectors(player_t *player, game_state_t *game_state)
         {
             wall_t *wall = &s->walls[w];
 
-            // Transformation caméra
+            // Transformation camera
             double dx1 = wall->a.x - player->position.x;
             double dy1 = wall->a.y - player->position.y;
             double dx2 = wall->b.x - player->position.x;
             double dy2 = wall->b.y - player->position.y;
 
-            // Rotation caméra
+            // Rotation camera
             double cs = cos(player->dir_angle);
             double sn = sin(player->dir_angle);
             
@@ -276,7 +276,7 @@ void R_RenderSectors(player_t *player, game_state_t *game_state)
             double wh1 = (s->height * fov) / rz1;
             double wh2 = (s->height * fov) / rz2;
 
-            // Créer et rendre le quad
+            // Creer et rendre le quad
             rquad_t quad = {
                 .ax = (int)sx1, .bx = (int)sx2,
                 .at = (int)(sy1 - wh1), .ab = (int)sy1,
@@ -287,7 +287,7 @@ void R_RenderSectors(player_t *player, game_state_t *game_state)
             unsigned int wall_color = R_ApplyFog(s->color, dist_factor);
             R_DrawVerticalWall(&quad, wall_color);
             
-            // Mettre à jour les lookup tables pour sols/plafonds
+            // Mettre a jour les lookup tables pour sols/plafonds
             UpdateLookupTables(&quad, s);
         }
 
@@ -302,4 +302,4 @@ void R_Render(player_t *player, game_state_t *game_state)
     R_UpdateScreen();
 }
 
-// Les autres fonctions restent inchangées (R_CreateSector, R_SectorAddWall, etc.)
+// Les autres fonctions restent inchangees (R_CreateSector, R_SectorAddWall, etc.)

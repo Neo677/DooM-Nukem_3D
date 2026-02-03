@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// Helper pour lire ligne par ligne (simplifié)
+// Helper pour lire ligne par ligne (simplifie)
 static int get_next_line(int fd, char **line)
 {
     char    buf[1];
@@ -36,7 +36,7 @@ static int parse_vertices(int fd, t_env *env)
     char *line;
     int count = 0;
     
-    // Lire jusqu'à trouver "Vertices N"
+    // Lire jusqu'a trouver "Vertices N"
     while (get_next_line(fd, &line) > 0)
     {
         if (strncmp(line, "Vertices", 8) == 0)
@@ -52,6 +52,8 @@ static int parse_vertices(int fd, t_env *env)
     
     env->sector_map.nb_vertices = count;
     env->sector_map.vertices = malloc(sizeof(t_vertex) * count);
+    if (!env->sector_map.vertices)
+        return (-1);
     
     for (int i = 0; i < count; i++)
     {
@@ -86,6 +88,15 @@ static int parse_one_sector(int fd, t_sector *sector)
     sector->vertices = malloc(sizeof(int) * sector->nb_vertices);
     sector->neighbors = malloc(sizeof(int) * sector->nb_vertices);
     sector->wall_textures = malloc(sizeof(int) * sector->nb_vertices);
+    
+    if (!sector->vertices || !sector->neighbors || !sector->wall_textures)
+    {
+        if (sector->vertices) free(sector->vertices);
+        if (sector->neighbors) free(sector->neighbors);
+        if (sector->wall_textures) free(sector->wall_textures);
+        return (-1);
+    }
+    
     sector->rendered = 0;
     
     // 2. Vertex indices
@@ -116,7 +127,7 @@ static int parse_one_sector(int fd, t_sector *sector)
        slope_floor slope_ceil ref_wall_floor ref_wall_ceil
     */
     
-    // Initialisation par défaut
+    // Initialisation par defaut
     sector->floor_slope = 0.0;
     sector->ceiling_slope = 0.0;
     sector->floor_slope_ref_wall = 0;

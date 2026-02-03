@@ -1,6 +1,6 @@
 #include "env.h"
 
-// Helper pour créer un rectangle
+// Helper pour creer un rectangle
 t_rectangle new_rectangle(Uint32 inside_color, Uint32 line_color, int filled, int line_size)
 {
     t_rectangle r;
@@ -29,7 +29,7 @@ void    draw_rectangle(t_env *env, t_rectangle r, t_point pos, t_point size)
         x = ft_max(0, pos.x);
         while (x <= pos.x + size.x && x < env->w)
         {
-            // Déterminer si on est sur la bordure
+            // Determiner si on est sur la bordure
             int on_border = (y < pos.y + r.line_size ||
                            y > pos.y + size.y - r.line_size ||
                            x < pos.x + r.line_size ||

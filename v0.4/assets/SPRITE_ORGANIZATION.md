@@ -1,11 +1,11 @@
 # 📦 Organisation des Sprites - DooM-Nukem 3D v0.4
 
-## ✅ Résumé de l'Organisation
+## ✅ Resume de l'Organisation
 
-**Total de sprites traités : 3,697**
-- ✅ Sprites organisés automatiquement : 274
-- 📋 Sprites copiés (structure préservée) : 527
-- ❓ Sprites non reconnus (besoin révision manuelle) : 2,896
+**Total de sprites traites : 3,697**
+- ✅ Sprites organises automatiquement : 274
+- 📋 Sprites copies (structure preservee) : 527
+- ❓ Sprites non reconnus (besoin revision manuelle) : 2,896
 
 ---
 
@@ -18,7 +18,7 @@ v0.4/assets/sprites_organized/
 ├── projectile/         # 4 types (96 sprites)
 ├── effect/             # Effets visuels (38 sprites)
 ├── player/             # Sprites joueur (157 sprites)
-├── decorations/        # Objets déco (11 sprites)
+├── decorations/        # Objets deco (11 sprites)
 ├── ui/                 # Interface (219 sprites)
 └── logo/               # Logos (6 sprites)
 ```
@@ -27,7 +27,7 @@ v0.4/assets/sprites_organized/
 
 ## 🎮 Monstres Disponibles (22 types)
 
-### Monstres Bien Organisés ✨
+### Monstres Bien Organises ✨
 
 #### Cyberdemon (334 sprites) 🏆
 Le plus complet avec animations 8 directions :
@@ -49,10 +49,10 @@ Cyberdemon/
     └── ...             # (8 directions)
 ```
 
-**Utilisation recommandée** : Boss de fin de niveau, nécessite calcul d'angle pour sprite rotation.
+**Utilisation recommandee** : Boss de fin de niveau, necessite calcul d'angle pour sprite rotation.
 
 #### Nazi / SS Trooper (65 sprites) ⭐ SIMPLE
-Le plus simple à implémenter en premier :
+Le plus simple a implementer en premier :
 ```
 Nazi/
 └── misc/
@@ -62,29 +62,29 @@ Nazi/
     └── ...               # (8 directions)
 ```
 
-**Utilisation recommandée** : Premier ennemi à implémenter pour tester le système.
+**Utilisation recommandee** : Premier ennemi a implementer pour tester le systeme.
 
 ### Autres Monstres Disponibles
 
-| Monstre | Sprites | Complexité | Notes |
+| Monstre | Sprites | Complexite | Notes |
 |---------|---------|------------|-------|
-| **BaronOfHell** | 193 | Moyenne | Ennemi tank, attaque mêlée |
+| **BaronOfHell** | 193 | Moyenne | Ennemi tank, attaque mêlee |
 | **Cacodemon** | 110 | Moyenne | Volant, projectiles |
-| **Cuiball** | 96 | Simple | Petite créature |
-| **Demon** | 140 | Moyenne | Mêlée rapide |
+| **Cuiball** | 96 | Simple | Petite creature |
+| **Demon** | 140 | Moyenne | Mêlee rapide |
 | **DoomImp** | 150 | Moyenne | Basique, projectiles |
 | **Gargoyle** | 158 | Haute | Volant complexe |
 | **Harvester** | 87 | Moyenne | Ennemi unique |
-| **HellRazer** | 126 | Haute | Laser spécial |
+| **HellRazer** | 126 | Haute | Laser special |
 | **Lost Soul** | 30 | Simple | Charge suicide |
-| **Mancubus** | 134 | Haute | Boss intermédiaire |
-| **Mecha Zombie** | 142 | Moyenne | Soldat amélioré |
+| **Mancubus** | 134 | Haute | Boss intermediaire |
+| **Mecha Zombie** | 142 | Moyenne | Soldat ameliore |
 | **Pain Elemental** | 105 | Haute | Spawn Lost Souls |
-| **Revenant** | 158 | Haute | Missiles guidés |
+| **Revenant** | 158 | Haute | Missiles guides |
 | **Scientist Zombie** | 126 | Simple | Variante zombie |
 | **Shotgunguy** | 142 | Simple | Shotgun basique |
 | **Tyrant** | 182 | Haute | Boss puissant |
-| **Whiplash** | 214 | Haute | Très mobile |
+| **Whiplash** | 214 | Haute | Tres mobile |
 | **Zombie Earth** | 126 | Simple | Zombie standard |
 | **Zombie Hell** | 126 | Simple | Variante zombie |
 | **Zombieman** | 142 | Simple | Ennemi de base |
@@ -93,14 +93,14 @@ Nazi/
 
 ## 🔫 Armes Disponibles (11 types)
 
-### Armes Bien Organisées ✨
+### Armes Bien Organisees ✨
 
 #### Pistol (28 sprites)
 ```
 pistol/
 ├── attack/     # 6 frames - Animation de tir
 ├── idle/       # 3 frames - Au repos
-├── raise/      # 8 frames - Équipement
+├── raise/      # 8 frames - equipement
 ├── toss/       # 6 frames - Lancer arme
 └── misc/       # 5 autres
 ```
@@ -128,7 +128,7 @@ rocketlauncher/
 | **Super Shotgun** | 20 | Attack (reload double canon) |
 | **Shotgun** | 16 | Attack basique |
 | **Chainsaw** | 15 | Attack continu |
-| **Canon Bolt** | 13 | Attack électrique |
+| **Canon Bolt** | 13 | Attack electrique |
 | **Pickupweapon** | 10 | Ramassage au sol |
 | **Plasma Rifle** | 5 | Attack plasma |
 | **Heavy Assault Rifle** | 4 | Attack auto |
@@ -142,7 +142,7 @@ rocketlauncher/
 
 ```
 projectile/
-├── plasma/              # 32 sprites - Boules énergie bleue
+├── plasma/              # 32 sprites - Boules energie bleue
 ├── rocket/              # 20 sprites - Roquettes explosives
 ├── bfg/                 # 25 sprites - Projectile BFG ultime
 └── externe_projectile/  # 19 sprites - Projectiles ennemis
@@ -160,7 +160,7 @@ effect/
 └── explosion/  # 26 sprites - Explosions roquettes
 ```
 
-**Utilisation** : Particules éphémères, z-buffer prioritaire.
+**Utilisation** : Particules ephemeres, z-buffer prioritaire.
 
 ---
 
@@ -180,7 +180,7 @@ player/
 
 ---
 
-## 🎯 Décorations & Items (11 sprites)
+## 🎯 Decorations & Items (11 sprites)
 
 ```
 decorations/
@@ -197,40 +197,40 @@ decorations/
 
 ```
 ui/
-├── alerte/     # Écrans d'alerte
+├── alerte/     # ecrans d'alerte
 ├── BFGXHR      # Crosshair BFG
 ├── CHGXHR      # Crosshair chaingun
 ├── GAUSXHR     # Crosshair gauss
-└── ...         # Autres éléments HUD
+└── ...         # Autres elements HUD
 ```
 
 ---
 
-## 📋 Guide d'Implémentation Recommandé
+## 📋 Guide d'Implementation Recommande
 
 ### Phase 1 : Objets Statiques (1-2 jours)
-1. Charger 1 sprite PNG (baril déco)
-2. Implémenter billboarding basique
+1. Charger 1 sprite PNG (baril deco)
+2. Implementer billboarding basique
 3. Afficher avec distance sorting
 
-**Fichiers à utiliser** :
+**Fichiers a utiliser** :
 - `decorations/barrel.png` (exemple)
 
 ### Phase 2 : Ennemi Simple (3-4 jours)
 1. Charger Nazi (sprites simples)
-2. Animation walk (1 direction pour débuter)
+2. Animation walk (1 direction pour debuter)
 3. Calcul angle joueur → ennemi
-4. Sélection sprite selon angle
+4. Selection sprite selon angle
 
-**Fichiers à utiliser** :
+**Fichiers a utiliser** :
 - `monsters/Nazi/misc/front/frame_*.png`
 
 ### Phase 3 : Ennemi Complet 8 Directions (1 semaine)
-1. Implémenter sélection des 8 rotations
+1. Implementer selection des 8 rotations
 2. Animations multiples (walk, attack, pain, death)
 3. State machine IA basique
 
-**Fichiers à utiliser** :
+**Fichiers a utiliser** :
 - `monsters/Nazi/misc/*/frame_*.png` (toutes directions)
 
 ### Phase 4 : Arme FPS (3-5 jours)
@@ -239,34 +239,34 @@ ui/
 3. Animation attack
 4. Synchroniser avec tir
 
-**Fichiers à utiliser** :
+**Fichiers a utiliser** :
 - `weapons/pistol/idle/frame_01.png`
 - `weapons/pistol/attack/frame_*.png`
 
 ### Phase 5 : Projectiles (2-3 jours)
 1. Billboarding projectile
 2. Animation en loop
-3. Collision détection
+3. Collision detection
 
-**Fichiers à utiliser** :
+**Fichiers a utiliser** :
 - `projectile/plasma/frame_*.png`
 
 ### Phase 6 : Effets (2 jours)
 1. Particules sang (impact)
 2. Explosions
-3. Particules éphémères (disparaissent après N frames)
+3. Particules ephemeres (disparaissent apres N frames)
 
-**Fichiers à utiliser** :
+**Fichiers a utiliser** :
 - `effect/blood/*.png`
 - `effect/explosion/*.png`
 
 ### Phase 7 : Boss Cyberdemon (1 semaine)
 1. Charger toutes les animations
-2. Système de rotation 8 directions complexe
-3. IA avancée
-4. Projectiles spéciaux
+2. Systeme de rotation 8 directions complexe
+3. IA avancee
+4. Projectiles speciaux
 
-**Fichiers à utiliser** :
+**Fichiers a utiliser** :
 - `monsters/Cyberdemon/**/*.png` (334 sprites)
 
 ---
@@ -321,7 +321,7 @@ t_anim *load_animation(SDL_Renderer *renderer, const char *path) {
     return anim;
 }
 
-// Mettre à jour l'animation
+// Mettre a jour l'animation
 void update_animation(t_anim *anim, double delta_time) {
     anim->frame_time += delta_time;
     
@@ -360,7 +360,7 @@ t_rotation get_sprite_rotation(t_v2 enemy_pos, t_v2 player_pos, double player_an
     // Angle vers le joueur
     double angle_to_player = atan2(dy, dx);
     
-    // Différence avec l'angle de vue du joueur
+    // Difference avec l'angle de vue du joueur
     double relative_angle = angle_to_player - player_angle;
     
     // Normaliser [-PI, PI]
@@ -395,32 +395,32 @@ SDL_Texture *sprite = get_current_frame(rotations[rot]);
 ## 📝 Notes Importantes
 
 ### Sprites Non Reconnus (2,896)
-Beaucoup de sprites n'ont pas été automatiquement classés car :
+Beaucoup de sprites n'ont pas ete automatiquement classes car :
 - Noms non standard
 - Manque de metadata
-- Variations spécifiques du jeu original
+- Variations specifiques du jeu original
 
-**Action recommandée** : Trier manuellement au fur et à mesure des besoins.
+**Action recommandee** : Trier manuellement au fur et a mesure des besoins.
 
 ### Format des Fichiers
 - **Tous les sprites sont en PNG**
-- **Transparence alpha préservée**
-- **Noms standardisés** : `frame_01.png`, `frame_02.png`, etc.
+- **Transparence alpha preservee**
+- **Noms standardises** : `frame_01.png`, `frame_02.png`, etc.
 
 ### Performance
 - **3,697 sprites au total** → Utiliser un atlas de textures
-- Précharger uniquement les sprites nécessaires par niveau
-- Implémenter un cache LRU pour les textures
+- Precharger uniquement les sprites necessaires par niveau
+- Implementer un cache LRU pour les textures
 
 ---
 
-## 🎬 Ordre d'Implémentation Optimal
+## 🎬 Ordre d'Implementation Optimal
 
 ```
 ✅ Phase 1 (FAIT) : Organisation sprites
 ⬜ Phase 2 : Billboarding basique (objets statiques)
 ⬜ Phase 3 : Ennemi simple (Nazi, 1 direction)
-⬜ Phase 4 : Système 8 rotations
+⬜ Phase 4 : Systeme 8 rotations
 ⬜ Phase 5 : Arme FPS (pistol)
 ⬜ Phase 6 : Animations ennemis (walk, attack, death)
 ⬜ Phase 7 : Projectiles
@@ -433,12 +433,12 @@ Beaucoup de sprites n'ont pas été automatiquement classés car :
 
 ## 📚 Ressources
 
-- **Sprites organisés** : `v0.4/assets/sprites_organized/`
-- **README détaillé** : `v0.4/assets/sprites_organized/README.md`
-- **Script d'organisation** : `organize_sprites.py` (réutilisable)
-- **Textures** : `sprite_selection/texture/` (non touché)
-- **Skybox** : `sprite_selection/skybox/` (non touché)
+- **Sprites organises** : `v0.4/assets/sprites_organized/`
+- **README detaille** : `v0.4/assets/sprites_organized/README.md`
+- **Script d'organisation** : `organize_sprites.py` (reutilisable)
+- **Textures** : `sprite_selection/texture/` (non touche)
+- **Skybox** : `sprite_selection/skybox/` (non touche)
 
 ---
 
-**🎮 Bon courage pour l'implémentation !**
+**🎮 Bon courage pour l'implementation !**

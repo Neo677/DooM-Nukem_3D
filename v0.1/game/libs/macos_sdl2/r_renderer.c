@@ -58,7 +58,7 @@ static void R_ClipBehindPlayer(double *ax, double *ay, double bx, double by)
 static void R_DrawVerticalWall(rquad_t *quad, unsigned int color)
 {
     if (quad->ax > quad->bx)
-        return;  // Mur dos à la caméra
+        return;  // Mur dos a la camera
 
     for (int x = quad->ax; x <= quad->bx; x++)
     {
@@ -88,13 +88,13 @@ static void UpdateLookupTables(rquad_t *quad, sector_t *sector)
         int ceiling_y = quad->at + t * (quad->bt - quad->at);
         int floor_y = quad->ab + t * (quad->bb - quad->ab);
 
-        // Mise à jour des lookup tables pour le plafond
+        // Mise a jour des lookup tables pour le plafond
         if (ceiling_y < sector->ceilx_ylut.t[x] || sector->ceilx_ylut.t[x] == 0)
             sector->ceilx_ylut.t[x] = ceiling_y;
         if (ceiling_y > sector->ceilx_ylut.b[x])
             sector->ceilx_ylut.b[x] = ceiling_y;
 
-        // Mise à jour des lookup tables pour le sol
+        // Mise a jour des lookup tables pour le sol
         if (floor_y < sector->floorx_ylut.t[x] || sector->floorx_ylut.t[x] == 0)
             sector->floorx_ylut.t[x] = floor_y;
         if (floor_y > sector->floorx_ylut.b[x])
@@ -246,7 +246,7 @@ void R_Render(player_t *player, game_state_t *game_state)
     sector_t *start_sector = player->current_sector;
     if (!start_sector) 
     {
-        // Fallback: trouver le secteur du joueur si non défini
+        // Fallback: trouver le secteur du joueur si non defini
         // Pour l'instant, on prend le premier secteur ou on cherche
         if (map_sectors.num_sectors > 0) {
              start_sector = &map_sectors.sectors[0]; // Fallback temporaire
@@ -283,7 +283,7 @@ void R_Render(player_t *player, game_state_t *game_state)
         
         if (!current_sector) continue;
 
-        // Initialiser les lookup tables pour ce secteur si nécessaire
+        // Initialiser les lookup tables pour ce secteur si necessaire
         // (Simplification: on reset juste pour le rendu actuel)
         for(int x=0; x<scrnw; x++) {
             current_sector->ceilx_ylut.t[x] = 0; current_sector->ceilx_ylut.b[x] = scrnh;
@@ -296,13 +296,13 @@ void R_Render(player_t *player, game_state_t *game_state)
         {
             wall_t *wall = &current_sector->walls[i];
             
-            // Transformation caméra
+            // Transformation camera
             double dx1 = wall->a.x - player->position.x;
             double dy1 = wall->a.y - player->position.y;
             double dx2 = wall->b.x - player->position.x;
             double dy2 = wall->b.y - player->position.y;
 
-            // Rotation caméra
+            // Rotation camera
             double cs = cos(player->dir_angle);
             double sn = sin(player->dir_angle);
             
@@ -340,11 +340,11 @@ void R_Render(player_t *player, game_state_t *game_state)
 
             rquad_t quad = {
                 .ax = x1, .bx = x2,
-                .at = sy1b, .ab = sy1a, // Top/Bottom inversés car Y vers le bas ? Non, Y augmente vers le bas.
+                .at = sy1b, .ab = sy1a, // Top/Bottom inverses car Y vers le bas ? Non, Y augmente vers le bas.
                                         // sy1a = sol (bas), sy1b = plafond (haut).
                                         // En SDL Y=0 est en haut. Donc plafond < sol.
                                         // sy1b devrait être plus petit que sy1a si height > 0.
-                                        // Vérifions: z_ceil > z_floor.
+                                        // Verifions: z_ceil > z_floor.
                                         // (z_ceil - pz) / z. Si z_ceil > pz, c'est positif.
                                         // + scrn_half_h.
                                         // Attends, Y screen: 0 = haut, H = bas.
@@ -352,11 +352,11 @@ void R_Render(player_t *player, game_state_t *game_state)
                                         // Formule: Y = H/2 - (Z * fov / depth).
                                         // Ici on a: Y = (Z * fov / depth) + H/2.
                                         // C'est l'inverse. Si Z est positif (au dessus des yeux), Y augmente (vers le bas).
-                                        // Donc Z positif = bas de l'écran.
+                                        // Donc Z positif = bas de l'ecran.
                                         // C'est bizarre.
-                                        // Supposons que le code original était correct.
+                                        // Supposons que le code original etait correct.
                                         // sy1a = elevation (sol). sy1b = elevation + height (plafond).
-                                        // Si elevation < player.z (sol sous les pieds), (elev - pz) est négatif.
+                                        // Si elevation < player.z (sol sous les pieds), (elev - pz) est negatif.
                                         // Donc sy1a < H/2 (vers le haut).
                                         // C'est l'inverse de ce qu'on veut.
                                         // On veut sol en bas (Y grand).
@@ -381,7 +381,7 @@ void R_Render(player_t *player, game_state_t *game_state)
 
             if (wall->is_portal)
             {
-                // Ajouter le secteur voisin à la queue
+                // Ajouter le secteur voisin a la queue
                 if (render_queue.tail < 1024)
                 {
                     render_queue.items[render_queue.tail++] = (render_item_t){
@@ -393,7 +393,7 @@ void R_Render(player_t *player, game_state_t *game_state)
                 
                 // Dessiner les parties haut/bas du portail (steps)
                 
-                // Trouver le secteur voisin pour connaître ses hauteurs
+                // Trouver le secteur voisin pour connaitre ses hauteurs
                 sector_t *neighbor = NULL;
                 for(int k=0; k<map_sectors.num_sectors; k++) {
                     if(map_sectors.sectors[k].id == wall->neighbor_sector_id) {
@@ -408,7 +408,7 @@ void R_Render(player_t *player, game_state_t *game_state)
                     // On dessine du sol actuel jusqu'au sol du voisin
                     if (neighbor->elevation > current_sector->elevation)
                     {
-                        // Calculer Y écran pour le sol du voisin
+                        // Calculer Y ecran pour le sol du voisin
                         double neighbor_floor_z = neighbor->elevation;
                         double sy_step_floor = scrn_half_h - ((neighbor_floor_z - player->z) * fov / rz1);
                         double sy_step_floor2 = scrn_half_h - ((neighbor_floor_z - player->z) * fov / rz2);
@@ -423,7 +423,7 @@ void R_Render(player_t *player, game_state_t *game_state)
                         unsigned int step_color = R_ApplyFog(0x505050, dist_factor);
                         R_DrawVerticalWall(&step_quad, step_color);
                         
-                        // Mettre à jour le bas du portail pour la suite (on ne voit pas à travers le step)
+                        // Mettre a jour le bas du portail pour la suite (on ne voit pas a travers le step)
                         quad.ab = sy_step_floor;
                         quad.bb = sy_step_floor2;
                     }
@@ -435,7 +435,7 @@ void R_Render(player_t *player, game_state_t *game_state)
                     
                     if (neighbor_ceil_z < current_ceil_z)
                     {
-                        // Calculer Y écran pour le plafond du voisin
+                        // Calculer Y ecran pour le plafond du voisin
                         double sy_step_ceil = scrn_half_h - ((neighbor_ceil_z - player->z) * fov / rz1);
                         double sy_step_ceil2 = scrn_half_h - ((neighbor_ceil_z - player->z) * fov / rz2);
                         
@@ -448,7 +448,7 @@ void R_Render(player_t *player, game_state_t *game_state)
                         unsigned int step_color = R_ApplyFog(0x505050, dist_factor);
                         R_DrawVerticalWall(&step_quad, step_color);
                         
-                        // Mettre à jour le haut du portail
+                        // Mettre a jour le haut du portail
                         quad.at = sy_step_ceil;
                         quad.bt = sy_step_ceil2;
                     }
@@ -462,14 +462,14 @@ void R_Render(player_t *player, game_state_t *game_state)
                 R_DrawVerticalWall(&quad, wall_color);
             }
             
-            // Mettre à jour les tables pour le sol/plafond
+            // Mettre a jour les tables pour le sol/plafond
             UpdateLookupTables(&quad, current_sector);
         }
         
         // Rendu des sols et plafonds
-        // Note: C'est une simplification, idéalement on le fait après avoir tout dessiné ou par scanline
+        // Note: C'est une simplification, idealement on le fait apres avoir tout dessine ou par scanline
         // Mais pour ce moteur "Doom-like" simple, on peut le faire ici
-        double dist_factor = 1.0; // Simplifié pour le sol/plafond
+        double dist_factor = 1.0; // Simplifie pour le sol/plafond
         R_RenderFlatsForSector(current_sector, player, fov, dist_factor);
     }
 

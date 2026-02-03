@@ -5,7 +5,7 @@ void    game_loop(t_env *env)
     SDL_Event event;
     Uint32    frame_start;
     env->running = 1;
-    // Capture souris désactivée par défaut - utiliser touche C pour l'activer
+    // Capture souris desactivee par defaut - utiliser touche C pour l'activer
     while (env->running)
     {
         frame_start = SDL_GetTicks();

@@ -1,6 +1,6 @@
 #include "env.h"
 
-// Générer mipmaps (LOD) - downsampling simple
+// Generer mipmaps (LOD) - downsampling simple
 void generate_mipmaps(t_texture *base, t_texture_mipmap *mip)
 {
     mip->levels[0] = *base;  // Niveau 0 = texture originale
@@ -51,7 +51,7 @@ void generate_mipmaps(t_texture *base, t_texture_mipmap *mip)
     }
 }
 
-// Sélectionner le bon niveau de mipmap selon distance
+// Selectionner le bon niveau de mipmap selon distance
 t_texture* select_mip_level(t_texture_mipmap *mip, double distance)
 {
     int level = 0;
@@ -69,7 +69,7 @@ t_texture* select_mip_level(t_texture_mipmap *mip, double distance)
     return &mip->levels[level];
 }
 
-// Libérer une texture
+// Liberer une texture
 void free_texture(t_texture *tex)
 {
     if (tex->pixels)

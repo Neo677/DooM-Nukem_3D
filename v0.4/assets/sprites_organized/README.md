@@ -1,10 +1,10 @@
-# Sprites Organisés - DooM-Nukem 3D
+# Sprites Organises - DooM-Nukem 3D
 
 ## Structure
 
 ```
 sprites_organized/
-├── monsters/           # Monstres organisés par type
+├── monsters/           # Monstres organises par type
 │   ├── Cyberdemon/
 │   │   ├── walk/      # Animation de marche
 │   │   │   ├── front/
@@ -32,14 +32,14 @@ sprites_organized/
 │   └── explosion/
 │
 ├── player/             # Sprites du joueur
-├── decorations/        # Objets décoratifs
+├── decorations/        # Objets decoratifs
 ├── ui/                 # Interface utilisateur
 └── logo/               # Logos et splash screens
 ```
 
 ## Conventions de Nommage
 
-Chaque sprite est renommé en `frame_XX.png` où XX est le numéro séquentiel.
+Chaque sprite est renomme en `frame_XX.png` où XX est le numero sequentiel.
 
 ### Rotations (8 directions)
 
@@ -58,15 +58,15 @@ Chaque sprite est renommé en `frame_XX.png` où XX est le numéro séquentiel.
 - `walk` - Marche
 - `idle` - Au repos
 - `attack` - Attaque
-- `pain` - Réaction aux dégâts
+- `pain` - Reaction aux degâts
 - `death` - Mort
-- `see` - Détection du joueur
+- `see` - Detection du joueur
 
 **Armes:**
 - `idle` - Au repos
 - `attack` - Tir
 - `reload` - Rechargement
-- `raise` - Équipement
+- `raise` - equipement
 - `toss` - Lancer
 
 ## Utilisation en Code
@@ -85,5 +85,5 @@ load_sprite("effect/explosion/frame_01.png");
 ## Notes
 
 - Les sprites omnidirectionnels (rotation 0) sont dans le dossier d'animation sans sous-dossier de direction
-- Les frames sont triées par ordre alphabétique original (A→Z)
+- Les frames sont triees par ordre alphabetique original (A→Z)
 - Format: PNG avec transparence alpha

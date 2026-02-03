@@ -3,7 +3,7 @@
 static void R_DrawVerticalWall(rquad_t *quad, unsigned int color)
 {
     if (quad->ax > quad->bx)
-        return;  // Mur dos à la caméra
+        return;  // Mur dos a la camera
 
     for (int x = quad->ax; x <= quad->bx; x++)
     {
@@ -33,13 +33,13 @@ static void UpdateLookupTables(rquad_t *quad, sector_t *sector)
         int ceiling_y = quad->at + t * (quad->bt - quad->at);
         int floor_y = quad->ab + t * (quad->bb - quad->ab);
 
-        // Mise à jour des lookup tables pour le plafond
+        // Mise a jour des lookup tables pour le plafond
         if (ceiling_y < sector->ceilx_ylut.t[x] || sector->ceilx_ylut.t[x] == 0)
             sector->ceilx_ylut.t[x] = ceiling_y;
         if (ceiling_y > sector->ceilx_ylut.b[x])
             sector->ceilx_ylut.b[x] = ceiling_y;
 
-        // Mise à jour des lookup tables pour le sol
+        // Mise a jour des lookup tables pour le sol
         if (floor_y < sector->floorx_ylut.t[x] || sector->floorx_ylut.t[x] == 0)
             sector->floorx_ylut.t[x] = floor_y;
         if (floor_y > sector->floorx_ylut.b[x])

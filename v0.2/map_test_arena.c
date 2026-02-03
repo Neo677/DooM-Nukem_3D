@@ -1,9 +1,9 @@
 // ================================================================================
 // GRANDE MAP DE TEST: "DOOM TEST ARENA"
-// 14 secteurs pour tester: portails, hauteurs variables, escaliers, extérieur
+// 14 secteurs pour tester: portails, hauteurs variables, escaliers, exterieur
 //
 // INSTRUCTIONS:
-// 1. Changer MAX_POLYS de 10 à 15 dans header/types.h
+// 1. Changer MAX_POLYS de 10 a 15 dans header/types.h
 // 2. Remplacer le contenu de la fonction init() dans main.c par ce code
 //
 // ================================================================================
@@ -11,13 +11,13 @@
 // LAYOUT DE LA MAP:
 //
 //                    ┌─────────────────────────────────────────┐
-//                    │          S9: Cour extérieure            │
+//                    │          S9: Cour exterieure            │
 //                    │              (Skybox)                   │
 //                    └──────────────┬──────┬───────────────────┘
 //                                   │Portal│
 //              ┌────────────────────┴──────┴────────────────────┐
-//              │           S7: Mezzanine surélevée              │
-//              │        (floorHeight élevé, vue panoramique)    │
+//              │           S7: Mezzanine surelevee              │
+//              │        (floorHeight eleve, vue panoramique)    │
 //              └───────────────┬────────────┬───────────────────┘
 //                              │   Portal   │
 //    ┌─────────────────────────┴────────────┴─────────────────────┐
@@ -43,8 +43,8 @@
 //
 // ================================================================================
 
-// COPIE CE CODE DANS LA FONCTION init() (après l'initialisation de la caméra)
-// Remplace tout depuis "// Réinitialiser tous les polygones" jusqu'à "detectPortals();"
+// COPIE CE CODE DANS LA FONCTION init() (apres l'initialisation de la camera)
+// Remplace tout depuis "// Reinitialiser tous les polygones" jusqu'a "detectPortals();"
 
 #include "./header/game.h"
 #include "./header/types.h"
@@ -52,13 +52,13 @@
 
 void init_test_arena_map(void)
 {
-    // Réinitialiser tous les polygones
+    // Reinitialiser tous les polygones
     for (int i = 0; i < MAX_POLYS; i++)
         global.polys[i].vertCnt = 0;
 
     // ========================================
-    // SECTEUR 0 : Spawn Room (départ joueur)
-    // Hauteur: 60 unités
+    // SECTEUR 0 : Spawn Room (depart joueur)
+    // Hauteur: 60 unites
     // ========================================
     global.polys[0].vert[0].x = 350.00;
     global.polys[0].vert[0].y = 50.00;
@@ -72,8 +72,8 @@ void init_test_arena_map(void)
     global.polys[0].vertCnt = 4;
 
     // ========================================
-    // SECTEUR 1 : Couloir étroit (oppressant)
-    // Hauteur: 50 unités (plafond bas mais passable)
+    // SECTEUR 1 : Couloir etroit (oppressant)
+    // Hauteur: 50 unites (plafond bas mais passable)
     // ========================================
     global.polys[1].vert[0].x = 450.00;  // Portal ← S0
     global.polys[1].vert[0].y = 150.00;
@@ -88,7 +88,7 @@ void init_test_arena_map(void)
 
     // ========================================
     // SECTEUR 2 : Grande salle centrale (Hall)
-    // Hauteur: 100 unités (plafond haut)
+    // Hauteur: 100 unites (plafond haut)
     // ========================================
     global.polys[2].vert[0].x = 100.00;
     global.polys[2].vert[0].y = 300.00;
@@ -170,8 +170,8 @@ void init_test_arena_map(void)
     global.polys[6].vertCnt = 4;
 
     // ========================================
-    // SECTEUR 7 : Mezzanine (balcon surélevé)
-    // Hauteur: 3.5 unités, plateforme en hauteur
+    // SECTEUR 7 : Mezzanine (balcon sureleve)
+    // Hauteur: 3.5 unites, plateforme en hauteur
     // ========================================
     global.polys[7].vert[0].x = 700.00;  // Portal ← S2
     global.polys[7].vert[0].y = 750.00;
@@ -185,7 +185,7 @@ void init_test_arena_map(void)
     global.polys[7].vertCnt = 4;
 
     // ========================================
-    // SECTEUR 8 : Escalier Palier 1 (entrée)
+    // SECTEUR 8 : Escalier Palier 1 (entree)
     // ========================================
     global.polys[8].vert[0].x = 550.00;  // Portal ← S2
     global.polys[8].vert[0].y = 300.00;
@@ -199,8 +199,8 @@ void init_test_arena_map(void)
     global.polys[8].vertCnt = 4;
 
     // ========================================
-    // SECTEUR 9 : Cour extérieure (Skybox)
-    // Hauteur: très haute (zone avec ciel)
+    // SECTEUR 9 : Cour exterieure (Skybox)
+    // Hauteur: tres haute (zone avec ciel)
     // ========================================
     global.polys[9].vert[0].x = 700.00;  // Portal ← S7
     global.polys[9].vert[0].y = 850.00;
@@ -214,8 +214,8 @@ void init_test_arena_map(void)
     global.polys[9].vertCnt = 4;
 
     // ========================================
-    // SECTEUR 10 : Alcove secrète (sombre)
-    // Petite niche à gauche du hall
+    // SECTEUR 10 : Alcove secrete (sombre)
+    // Petite niche a gauche du hall
     // ========================================
     global.polys[10].vert[0].x = 100.00;  // Portal ← S2
     global.polys[10].vert[0].y = 500.00;
@@ -257,7 +257,7 @@ void init_test_arena_map(void)
     global.polys[12].vertCnt = 4;
 
     // ========================================
-    // SECTEUR 13 : Couloir latéral Est
+    // SECTEUR 13 : Couloir lateral Est
     // Connecte escaliers → mezzanine
     // ========================================
     global.polys[13].vert[0].x = 650.00;  // Portal ← S12
@@ -314,7 +314,7 @@ void init_test_arena_map(void)
     // COULEURS DES SECTEURS
     // ========================================
     global.polys[0].color = 0x8B4513;   // Spawn - Brun
-    global.polys[1].color = 0x4A3728;   // Couloir - Brun foncé
+    global.polys[1].color = 0x4A3728;   // Couloir - Brun fonce
     global.polys[2].color = 0x5A5A5A;   // Hall - Gris pierre
     global.polys[3].color = 0x2F4F4F;   // Piliers - Ardoise
     global.polys[4].color = 0x2F4F4F;
@@ -322,7 +322,7 @@ void init_test_arena_map(void)
     global.polys[6].color = 0x2F4F4F;
     global.polys[7].color = 0x8B7355;   // Mezzanine - Bois
     global.polys[8].color = 0x696969;   // Escaliers - Gris
-    global.polys[9].color = 0x228B22;   // Extérieur - Vert
+    global.polys[9].color = 0x228B22;   // Exterieur - Vert
     global.polys[10].color = 0x8B0000;  // Alcove - Rouge sombre
     global.polys[11].color = 0x708090;  // Escalier 2
     global.polys[12].color = 0x778899;  // Escalier 3

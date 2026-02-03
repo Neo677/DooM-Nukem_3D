@@ -5,7 +5,7 @@
 #include "p_player.h"
 #include "r_renderer.h"
 
-// Structure pour le résultat de collision 3D
+// Structure pour le resultat de collision 3D
 typedef struct _collision_result
 {
     vec2_t new_position;
@@ -16,7 +16,7 @@ typedef struct _collision_result
     struct _sector *new_sector; // Nouveau secteur si transition
 } collision_result_t;
 
-// Structure pour modéliser le cylindre du joueur
+// Structure pour modeliser le cylindre du joueur
 typedef struct _player_cylinder
 {
     vec2_t center;    // Position XY du centre
@@ -25,7 +25,7 @@ typedef struct _player_cylinder
     double radius;    // Rayon du cylindre
 } player_cylinder_t;
 
-// Structure pour modéliser un mur vertical
+// Structure pour modeliser un mur vertical
 typedef struct _wall_vertical
 {
     vec2_t a, b;      // Points XY du segment
@@ -41,7 +41,7 @@ bool C_CheckCylinderWallCollisionHeight(player_cylinder_t cylinder, wall_vertica
 bool C_CheckCylinderWallCollision3D(player_cylinder_t cylinder, wall_vertical_t wall);
 collision_result_t C_TestPlayer3DCollision(player_t *player, vec2_t new_position, double new_z, sector_t *sectors, int num_sectors);
 
-// Fonctions de collision 2D classique avec glissement (conservées)
+// Fonctions de collision 2D classique avec glissement (conservees)
 bool C_CheckWallCollision(vec2_t player_pos, double player_radius, wall_t *wall);
 vec2_t C_ClosestPointOnLine(vec2_t point, vec2_t line_a, vec2_t line_b);
 vec2_t C_CalculateSlideDirection(vec2_t player_pos, vec2_t desired_pos, wall_t *wall, double player_radius);

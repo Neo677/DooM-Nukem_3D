@@ -1,7 +1,7 @@
 #include "env.h"
 static void fill_img(t_point c, t_env *env, Uint32 color)
 {
-    // Vérifier les limites de l'écran
+    // Verifier les limites de l'ecran
     if (c.x >= 0 && c.x < env->w && c.y >= 0 && c.y < env->h)
         env->sdl.texture_pixels[c.x + c.y * env->w] = color;
 }

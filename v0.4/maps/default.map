@@ -2,7 +2,7 @@ Map format v1
 width 10
 height 10
 
-Grid: 0=vide 1=mur 2-9=types murs différents
+Grid: 0=vide 1=mur 2-9=types murs differents
 1 1 1 1 1 1 1 1 1 1
 1 0 0 0 0 0 0 0 0 1
 1 0 1 1 0 0 1 1 0 1

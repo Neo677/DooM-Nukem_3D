@@ -12,7 +12,7 @@ SRC_DIR = "../sprite_selection/texture/sol_mur"
 # Dossier destination
 DEST_DIR = "textures"
 
-# Textures à convertir (nom source → nom destination)
+# Textures a convertir (nom source → nom destination)
 TEXTURES = {
     "rrock01.png": "wall1.bmp",
     "flat1.png": "wall2.bmp",
@@ -39,7 +39,7 @@ def convert_texture(src_path, dest_path, size=(64, 64)):
 if __name__ == "__main__":
     print("🎨 Conversion PNG → BMP pour DooM-Nukem\n")
     
-    # Créer dossier destination si nécessaire
+    # Creer dossier destination si necessaire
     os.makedirs(DEST_DIR, exist_ok=True)
     
     success_count = 0

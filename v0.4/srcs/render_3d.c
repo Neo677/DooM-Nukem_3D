@@ -8,54 +8,37 @@ void render_2d(t_env *env);
 // Rendu 3D interne (anciennement render_3d)
 static void render_3d_internal(t_env *env)
 {
-    // Variables inutilisées pour le rendu portails
+    // Variables inutilisees pour le rendu portails
     // double  fov_rad = (FOV * PI) / 180.0;
     // double  ray_angle;
     // t_ray_hit hit;
     // int     x;
     
-    // NOUVEAU : Dessiner Skybox EN PREMIER
-    render_skybox(env);
+    // NOUVEAU : Precompute skybox (la box 3D)
+    precompute_skybox(env);
 
-    // MODE PORTAL (PHASE 3)
-    // On désactive l'ancien rendu raycasting pour le "Full Portal Rendering"
-    
-    /* ANCIEN RENDU RAYCASTING
-    // NOUVEAU : Dessiner floor et ceiling
-    render_floor_ceiling(env);
-    
-    // Ensuite dessiner les murs par-dessus
-    for (x = 0; x < env->w; x++)
-    {
-        // ... (code raycasting) ...
-    }
-    */
-    
-    // NOUVEAU RENDU SECTEURS
+    // Portal rendering with sectors
     if (env->sector_map.nb_sectors > 0 && env->player.current_sector != -1)
     {
-        // Allocation buffers clipping
-        int *ytop = (int *)malloc(sizeof(int) * env->w);
-        int *ybottom = (int *)malloc(sizeof(int) * env->w);
+        // Use pre-allocated buffers
+        int *ytop = env->ytop_buffer;
+        int *ybottom = env->ybottom_buffer;
         
         if (ytop && ybottom)
         {
-            // Init buffers (Tout l'écran visible)
+            // Init buffers (full screen visible)
             for (int i = 0; i < env->w; i++)
             {
                 ytop[i] = 0;
                 ybottom[i] = env->h - 1;
             }
             
-            // Lancer le rendu récursif depuis le secteur du joueur
+            // Launch recursive rendering from player's sector
             render_sectors_recursive(env, env->player.current_sector, 0, env->w - 1, ytop, ybottom, 0);
-            
-            free(ytop);
-            free(ybottom);
         }
     }
 
-    // NOUVEAU : Afficher minimap en overlay si activée
+    // NOUVEAU : Afficher minimap en overlay si activee
     draw_minimap(env);
     
     /* Old debug call removed */

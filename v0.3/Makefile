@@ -15,7 +15,7 @@ CC = gcc
 CFLAGS = -Wall -Wextra -Werror -O2
 INCLUDES = -Iheader
 
-# Détection OS
+# Detection OS
 UNAME := $(shell uname)
 ifeq ($(UNAME), Darwin)
     # macOS

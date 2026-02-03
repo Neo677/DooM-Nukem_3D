@@ -40,14 +40,14 @@ typedef struct screenSpacePoly_s
 typedef struct Camera_s
 {
     float camAngle;
-    float camPitch;      // Inclinaison verticale (-1 à 1)
-    float camZ;          // Hauteur de la caméra (yeux)
+    float camPitch;      // Inclinaison verticale (-1 a 1)
+    float camZ;          // Hauteur de la camera (yeux)
     float stepWave;
     Vec2_t camPos;
     Vec2_t oldCamPos;
     
-    // Propriétés pour step-up/down et gravité
-    float velZ;          // Vélocité verticale (gravité/saut)
+    // Proprietes pour step-up/down et gravite
+    float velZ;          // Velocite verticale (gravite/saut)
     float footZ;         // Hauteur des pieds (camZ - EYE_HEIGHT)
     float targetZ;       // Hauteur cible pour interpolation smooth
     int onGround;        // 1 = au sol, 0 = en l'air
@@ -124,7 +124,7 @@ typedef struct s_sector {
 
 }       t_sector;
 
-// Structure pour la pile de rendu récursif par portail
+// Structure pour la pile de rendu recursif par portail
 typedef struct s_render_entry {
     int sectorId;
     int clipLeft;
@@ -135,7 +135,7 @@ typedef struct s_render_entry {
 
 // Fenêtre de rendu pour le clipping horizontal des portails
 typedef struct s_render_window {
-    int xStart;      // Colonne de début (inclusive)
+    int xStart;      // Colonne de debut (inclusive)
     int xEnd;        // Colonne de fin (inclusive)
 }       t_render_window;
 
@@ -150,8 +150,8 @@ typedef struct s_render_window {
 # define SCREEN_W_MAX 1920
 
 typedef struct s_ybuffer {
-    int		yTop[SCREEN_W_MAX];      // Limite haute par colonne (init à 0)
-    int		yBottom[SCREEN_W_MAX];   // Limite basse par colonne (init à screenH)
+    int		yTop[SCREEN_W_MAX];      // Limite haute par colonne (init a 0)
+    int		yBottom[SCREEN_W_MAX];   // Limite basse par colonne (init a screenH)
     int		ceilingSector[SCREEN_W_MAX];  // Secteur visible au plafond
     int		floorSector[SCREEN_W_MAX];    // Secteur visible au sol
 }		t_ybuffer;
@@ -170,7 +170,7 @@ typedef struct s_ray_sample {
 
 typedef struct s_debug_overlay {
     // Toggles principaux
-    int enabled;           // F1 : ON/OFF général
+    int enabled;           // F1 : ON/OFF general
     int showPlayer;        // F2 : Panel joueur
     int showRender;        // F3 : Panel render/portal stats
     int showRaySamples;    // F4 : Panel ray samples

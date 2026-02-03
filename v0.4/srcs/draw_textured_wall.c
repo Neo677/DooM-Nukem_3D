@@ -10,7 +10,7 @@ void draw_wall_slice_textured(t_env *env, int x, t_ray_hit *hit)
         return;
     }
     
-    // Calculer hauteur du mur à l'écran
+    // Calculer hauteur du mur a l'ecran
     int wall_height = (int)(env->h / hit->distance);
     if (wall_height < 1) wall_height = 1;
     
@@ -20,22 +20,22 @@ void draw_wall_slice_textured(t_env *env, int x, t_ray_hit *hit)
     if (draw_start < 0) draw_start = 0;
     if (draw_end >= env->h) draw_end = env->h - 1;
     
-    // Récupérer la texture
+    // Recuperer la texture
     t_texture *tex = &env->wall_textures[hit->wall_type - 1];
     
     if (!tex->pixels)
     {
-        // Texture non chargée, fallback
+        // Texture non chargee, fallback
         draw_wall_slice(env, x, hit->distance, hit->wall_type);
         return;
     }
     
-    // Position X sur la texture (0 à tex->width)
+    // Position X sur la texture (0 a tex->width)
     int tex_x = (int)(hit->wall_x * tex->width);
     if (tex_x < 0) tex_x = 0;
     if (tex_x >= tex->width) tex_x = tex->width - 1;
     
-    // Le plafond est déjà rendu par render_floor_ceiling() - ne pas écraser!
+    // Le plafond est deja rendu par render_floor_ceiling() - ne pas ecraser!
     
     // Dessiner le mur texturing avec perspective
     for (int y = draw_start; y <= draw_end; y++)
@@ -48,7 +48,7 @@ void draw_wall_slice_textured(t_env *env, int x, t_ray_hit *hit)
         if (tex_y < 0) tex_y = 0;
         if (tex_y >= tex->height) tex_y = tex->height - 1;
         
-        // Récupérer le pixel de la texture
+        // Recuperer le pixel de la texture
         Uint32 color = tex->pixels[tex_y * tex->width + tex_x];
         
         // Distance fog (assombrir selon distance)
@@ -75,5 +75,5 @@ void draw_wall_slice_textured(t_env *env, int x, t_ray_hit *hit)
             env->sdl.texture_pixels[x + y * env->w] = color;
     }
     
-    // Le sol est déjà rendu par render_floor_ceiling() - ne pas écraser!
+    // Le sol est deja rendu par render_floor_ceiling() - ne pas ecraser!
 }

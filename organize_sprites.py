@@ -14,7 +14,7 @@ from collections import defaultdict
 SOURCE_DIR = "sprite_selection"
 OUTPUT_DIR = "v0.4/assets/sprites_organized"
 
-# Catégories à ignorer
+# Categories a ignorer
 SKIP_FOLDERS = ["texture", "skybox"]
 
 # Patterns de nommage Doom
@@ -54,7 +54,7 @@ class SpriteOrganizer:
         return None
     
     def categorize_by_animation(self, base_name):
-        """Détermine le type d'animation d'après le nom"""
+        """Determine le type d'animation d'apres le nom"""
         animations = {
             'walk': ['WLK', 'WALK', 'MOVE'],
             'idle': ['IDLE', 'STAN', 'STND'],
@@ -76,7 +76,7 @@ class SpriteOrganizer:
         return 'misc'
     
     def get_rotation_name(self, rotation):
-        """Convertit le numéro de rotation en nom"""
+        """Convertit le numero de rotation en nom"""
         rotations = {
             '0': 'omnidirectional',
             '1': 'front',
@@ -111,7 +111,7 @@ class SpriteOrganizer:
                 self.stats['unrecognized'] += 1
                 continue
             
-            # Déterminer le type d'animation
+            # Determiner le type d'animation
             anim_type = self.categorize_by_animation(info['base'])
             rotation = info['rotation']
             frame = info['frame']
@@ -123,13 +123,13 @@ class SpriteOrganizer:
             })
             self.stats['organized'] += 1
         
-        # Créer la structure
+        # Creer la structure
         for anim_type, rotations in animations.items():
             for rotation, frames in rotations.items():
                 # Trier par frame (A, B, C, ...)
                 frames.sort(key=lambda x: x['frame'])
                 
-                # Créer le dossier
+                # Creer le dossier
                 if rotation == '0':
                     dest_dir = output_path / anim_type
                 else:
@@ -141,7 +141,7 @@ class SpriteOrganizer:
                 # Copier les frames
                 for i, frame_data in enumerate(frames, 1):
                     file = frame_data['file']
-                    # Nom avec numéro séquentiel: frame_01.png, frame_02.png
+                    # Nom avec numero sequentiel: frame_01.png, frame_02.png
                     ext = file.suffix if file.suffix else '.png'
                     new_name = f"frame_{i:02d}{ext}"
                     dest = dest_dir / new_name
@@ -165,7 +165,7 @@ class SpriteOrganizer:
             filename_upper = file.stem.upper()
             anim_type = self.categorize_by_animation(filename_upper)
             
-            # Extraire le numéro de frame
+            # Extraire le numero de frame
             frame_match = re.search(r'(\d+)$', file.stem)
             frame_num = int(frame_match.group(1)) if frame_match else 0
             
@@ -180,9 +180,9 @@ class SpriteOrganizer:
                 # Copier tel quel si non reconnu
                 unmatched.append(file)
         
-        # Créer la structure
+        # Creer la structure
         for anim_type, frames in animations.items():
-            # Trier par numéro de frame
+            # Trier par numero de frame
             frames.sort(key=lambda x: x['frame'])
             
             dest_dir = output_path / anim_type
@@ -197,7 +197,7 @@ class SpriteOrganizer:
             
             print(f"  ✓ {anim_type}: {len(frames)} frames")
         
-        # Copier les fichiers non triés
+        # Copier les fichiers non tries
         if unmatched:
             misc_dir = output_path / 'misc'
             misc_dir.mkdir(parents=True, exist_ok=True)
@@ -222,11 +222,11 @@ class SpriteOrganizer:
                 count += 1
                 self.stats['simple_copy'] += 1
         
-        print(f"  ✓ {count} fichiers copiés")
+        print(f"  ✓ {count} fichiers copies")
     
     def organize_all(self):
-        """Lance l'organisation complète"""
-        print("🚀 Début de l'organisation des sprites")
+        """Lance l'organisation complete"""
+        print("🚀 Debut de l'organisation des sprites")
         print(f"📁 Source: {self.source}")
         print(f"📂 Destination: {self.output}")
         
@@ -237,19 +237,19 @@ class SpriteOrganizer:
         
         self.output.mkdir(parents=True, exist_ok=True)
         
-        # Parcourir les catégories principales
+        # Parcourir les categories principales
         for category in self.source.iterdir():
             if not category.is_dir():
                 continue
             
             category_name = category.name.lower()
             
-            # Ignorer les dossiers spécifiés
+            # Ignorer les dossiers specifies
             if category_name in SKIP_FOLDERS:
-                print(f"\n⏭️  Ignoré: {category.name}")
+                print(f"\n⏭️  Ignore: {category.name}")
                 continue
             
-            # Déterminer le type de traitement
+            # Determiner le type de traitement
             if category_name == 'monstre':
                 # Traiter chaque monstre individuellement
                 for monster_folder in category.iterdir():
@@ -265,7 +265,7 @@ class SpriteOrganizer:
                         self.organize_weapon(weapon_folder, output_path)
             
             elif category_name in ['projectile', 'effect']:
-                # Organiser par sous-catégories
+                # Organiser par sous-categories
                 for subcategory in category.iterdir():
                     if subcategory.is_dir():
                         output_path = self.output / category_name / subcategory.name
@@ -277,7 +277,7 @@ class SpriteOrganizer:
                 self.organize_simple(category, output_path)
             
             elif category_name == 'decorate':
-                # Items décoratifs
+                # Items decoratifs
                 output_path = self.output / 'decorations'
                 self.organize_simple(category, output_path)
             
@@ -295,12 +295,12 @@ class SpriteOrganizer:
         print("\n" + "="*60)
         print("📊 STATISTIQUES")
         print("="*60)
-        print(f"✅ Sprites organisés: {self.stats['organized']}")
+        print(f"✅ Sprites organises: {self.stats['organized']}")
         print(f"📋 Copies simples: {self.stats['simple_copy']}")
         print(f"❓ Non reconnus: {self.stats['unrecognized']}")
         print(f"📦 Total: {sum(self.stats.values())}")
-        print("\n✨ Organisation terminée !")
-        print(f"📂 Résultat disponible dans: {self.output}")
+        print("\n✨ Organisation terminee !")
+        print(f"📂 Resultat disponible dans: {self.output}")
 
 def main():
     organizer = SpriteOrganizer(SOURCE_DIR, OUTPUT_DIR)

@@ -1,35 +1,35 @@
-# Plan d'Implémentation Sector-Based - Guide Pratique
+# Plan d'Implementation Sector-Based - Guide Pratique
 
 ## 🎯 Vue d'Ensemble
 
-Nous allons transformer votre moteur actuel (polygones individuels) en un système sector-based (pièces avec sol/plafond) en **5 étapes progressives** qui gardent le moteur fonctionnel à chaque étape.
+Nous allons transformer votre moteur actuel (polygones individuels) en un systeme sector-based (pieces avec sol/plafond) en **5 etapes progressives** qui gardent le moteur fonctionnel a chaque etape.
 
 ---
 
-## 📋 ÉTAPE 1 : Ajout des Structures (30 min)
+## 📋 eTAPE 1 : Ajout des Structures (30 min)
 
 ### ✅ Fichier : [header/types.h](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/header/types.h)
 
-**Ajouter APRÈS la définition de `polygon_t` :**
+**Ajouter APReS la definition de `polygon_t` :**
 
 ```c
-// Nouveau : définition d'un mur
+// Nouveau : definition d'un mur
 typedef struct s_wall {
     int id;
-    Vec2_t p1, p2;              // Points début/fin du mur
+    Vec2_t p1, p2;              // Points debut/fin du mur
     
     int frontSectorId;          // Secteur devant ce mur
-    int backSectorId;           // Secteur derrière (-1 si mur solide)
+    int backSectorId;           // Secteur derriere (-1 si mur solide)
     
     int upperTextureId;         // Texture partie haute (entre 2 plafonds)
     int middleTextureId;        // Texture partie milieu (mur solide)
     int lowerTextureId;         // Texture partie basse (entre 2 sols)
     
     int isPortal;               // 1 = on peut passer, 0 = mur solide
-    int twoSided;               // 1 = mur à 2 faces
+    int twoSided;               // 1 = mur a 2 faces
 } t_wall;
 
-// Nouveau : définition d'un secteur
+// Nouveau : definition d'un secteur
 typedef struct s_sector {
     int id;
     
@@ -43,7 +43,7 @@ typedef struct s_sector {
     int wallCount;              // Nombre de murs
     int wallIds[MAX_VERTS];     // Indices des murs dans global.walls
     
-    int visited;                // Pour le rendu récursif
+    int visited;                // Pour le rendu recursif
 } t_sector;
 ```
 
@@ -58,32 +58,32 @@ typedef struct s_sector {
 
 ### ✅ Fichier : [header/game.h](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/header/game.h)
 
-**Dans la structure `t_global`, ajouter APRÈS `polyDistances` :**
+**Dans la structure `t_global`, ajouter APReS `polyDistances` :**
 
 ```c
 typedef struct s_global {
     // ... existant ...
     float polyDistances[MAX_POLYS];
     
-    // NOUVEAU : Système sector-based
+    // NOUVEAU : Systeme sector-based
     t_sector sectors[MAX_SECTORS];
     t_wall walls[MAX_WALLS];
     int sectorCount;
     int wallCount;
-    int currentSectorId;        // Secteur où se trouve la caméra
+    int currentSectorId;        // Secteur où se trouve la camera
 } t_global;
 ```
 
 ---
 
-## 📋 ÉTAPE 2 : Fonctions de Conversion (45 min)
+## 📋 eTAPE 2 : Fonctions de Conversion (45 min)
 
 ### ✅ Fichier : [main.c](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/main.c)
 
-**Ajouter APRÈS [init()](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/main.c#161-289) :**
+**Ajouter APReS [init()](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/main.c#161-289) :**
 
 ```c
-// Créer un mur et l'ajouter au tableau global
+// Creer un mur et l'ajouter au tableau global
 int createWall(Vec2_t p1, Vec2_t p2, int frontSectorId)
 {
     if (global.wallCount >= MAX_WALLS) {
@@ -98,8 +98,8 @@ int createWall(Vec2_t p1, Vec2_t p2, int frontSectorId)
     wall->p1 = p1;
     wall->p2 = p2;
     wall->frontSectorId = frontSectorId;
-    wall->backSectorId = -1;        // Mur solide par défaut
-    wall->middleTextureId = 0;      // Texture par défaut
+    wall->backSectorId = -1;        // Mur solide par defaut
+    wall->middleTextureId = 0;      // Texture par defaut
     wall->upperTextureId = -1;
     wall->lowerTextureId = -1;
     wall->isPortal = 0;
@@ -122,7 +122,7 @@ void convertPolysToSectors()
         if (global.polys[i].vertCnt < 3)
             continue;
         
-        // Créer un secteur
+        // Creer un secteur
         t_sector *sector = &global.sectors[global.sectorCount];
         sector->id = global.sectorCount;
         sector->floorHeight = 0.0f;
@@ -133,7 +133,7 @@ void convertPolysToSectors()
         sector->wallCount = global.polys[i].vertCnt;
         sector->visited = 0;
         
-        // Créer les murs à partir des vertices
+        // Creer les murs a partir des vertices
         for (int j = 0; j < global.polys[i].vertCnt; j++) {
             Vec2_t p1 = global.polys[i].vert[j];
             Vec2_t p2 = global.polys[i].vert[(j + 1) % global.polys[i].vertCnt];
@@ -146,20 +146,20 @@ void convertPolysToSectors()
             }
         }
         
-        printf("Secteur %d créé: %d murs, plafond=%.1f\n", 
+        printf("Secteur %d cree: %d murs, plafond=%.1f\n", 
                sector->id, sector->wallCount, sector->ceilingHeight);
         
         global.sectorCount++;
     }
     
-    printf("=== Conversion terminée: %d secteurs, %d murs ===\n\n", 
+    printf("=== Conversion terminee: %d secteurs, %d murs ===\n\n", 
            global.sectorCount, global.wallCount);
 }
 
-// Vérifier si 2 murs partagent les mêmes points (inversés)
+// Verifier si 2 murs partagent les mêmes points (inverses)
 int wallsAreConnected(t_wall *w1, t_wall *w2)
 {
-    float epsilon = 1.0f;  // Tolérance de 1 unité
+    float epsilon = 1.0f;  // Tolerance de 1 unite
     
     float dist_p1_p2_1 = len_vec(w1->p1, w2->p2);
     float dist_p2_p1_1 = len_vec(w1->p2, w2->p1);
@@ -167,12 +167,12 @@ int wallsAreConnected(t_wall *w1, t_wall *w2)
     return (dist_p1_p2_1 < epsilon && dist_p2_p1_1 < epsilon);
 }
 
-// Détecter les portals (murs partagés entre 2 secteurs)
+// Detecter les portals (murs partages entre 2 secteurs)
 void detectPortals()
 {
     int portalCount = 0;
     
-    printf("\n=== Détection des Portals ===\n");
+    printf("\n=== Detection des Portals ===\n");
     
     for (int i = 0; i < global.wallCount; i++) {
         for (int j = i + 1; j < global.wallCount; j++) {
@@ -189,7 +189,7 @@ void detectPortals()
                 global.walls[i].middleTextureId = -1;
                 global.walls[j].middleTextureId = -1;
                 
-                printf("Portal détecté: mur %d <-> mur %d (secteurs %d <-> %d)\n",
+                printf("Portal detecte: mur %d <-> mur %d (secteurs %d <-> %d)\n",
                        i, j, global.walls[i].frontSectorId, global.walls[i].backSectorId);
                 
                 portalCount++;
@@ -197,11 +197,11 @@ void detectPortals()
         }
     }
     
-    printf("=== %d portals détectés ===\n\n", portalCount);
+    printf("=== %d portals detectes ===\n\n", portalCount);
 }
 ```
 
-**Modifier la fonction [init()](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/main.c#161-289) - AJOUTER À LA FIN :**
+**Modifier la fonction [init()](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/main.c#161-289) - AJOUTER a LA FIN :**
 
 ```c
 void init()
@@ -219,14 +219,14 @@ void init()
 
 ---
 
-## 📋 ÉTAPE 3 : Collision par Secteur (30 min)
+## 📋 eTAPE 3 : Collision par Secteur (30 min)
 
 ### ✅ Fichier : [srcs/collision_vector.c](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/srcs/collision_vector.c)
 
-**Ajouter APRÈS les fonctions existantes :**
+**Ajouter APReS les fonctions existantes :**
 
 ```c
-// Vérifier si un point est dans un secteur
+// Verifier si un point est dans un secteur
 int pointInSector(t_sector *sector, Vec2_t point)
 {
     float vx[MAX_VERTS];
@@ -266,7 +266,7 @@ Vec2_t resolveCollision(Vec2_t newPos)
         return global.cam.camPos;
     }
     
-    // Mettre à jour le secteur actuel
+    // Mettre a jour le secteur actuel
     global.currentSectorId = targetSectorId;
     
     // Collision seulement avec les murs du secteur
@@ -332,21 +332,21 @@ Vec2_t resolveCollision(Vec2_t newPos)
 
 ---
 
-## 📋 ÉTAPE 4 : Rendu Simple (1h)
+## 📋 eTAPE 4 : Rendu Simple (1h)
 
 ### ✅ Fichier : [main.c](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/main.c)
 
 **Ajouter AVANT [render_scene()](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/main.c#496-627) :**
 
 ```c
-// Projeter un mur en 3D vers l'écran
+// Projeter un mur en 3D vers l'ecran
 int projectWallToScreen(t_wall *wall, int *screenX1, int *screenX2, 
                         float *z1_out, float *z2_out)
 {
     Vec2_t p1 = wall->p1;
     Vec2_t p2 = wall->p2;
     
-    // Transformer en espace caméra
+    // Transformer en espace camera
     float distX1 = p1.x - global.cam.camPos.x;
     float distY1 = p1.y - global.cam.camPos.y;
     float z1 = distX1 * cos(global.cam.camAngle) + distY1 * sin(global.cam.camAngle);
@@ -355,7 +355,7 @@ int projectWallToScreen(t_wall *wall, int *screenX1, int *screenX2,
     float distY2 = p2.y - global.cam.camPos.y;
     float z2 = distX2 * cos(global.cam.camAngle) + distY2 * sin(global.cam.camAngle);
     
-    // Derrière la caméra
+    // Derriere la camera
     if (z1 <= 0.1f && z2 <= 0.1f)
         return 0;
     
@@ -380,7 +380,7 @@ int projectWallToScreen(t_wall *wall, int *screenX1, int *screenX2,
     return 1;  // Visible
 }
 
-// Dessiner une tranche de mur (de bottomHeight à topHeight)
+// Dessiner une tranche de mur (de bottomHeight a topHeight)
 void drawWallSlice(t_render *render, t_wall *wall, int screenX1, int screenX2,
                    float z1, float z2, float bottomHeight, float topHeight, 
                    int textureId)
@@ -391,7 +391,7 @@ void drawWallSlice(t_render *render, t_wall *wall, int screenX1, int screenX2,
     float heightRatio = (screenW * screenH) / 60.0f;
     float centerScreenH = screenH / 2;
     
-    // Calculer les Y à l'écran
+    // Calculer les Y a l'ecran
     float y1_top = (bottomHeight - topHeight - heightRatio) / z1;
     float y1_bot = (bottomHeight - heightRatio) / z1;
     float y2_top = (bottomHeight - topHeight - heightRatio) / z2;
@@ -421,7 +421,7 @@ void drawWallSlice(t_render *render, t_wall *wall, int screenX1, int screenX2,
     }
 }
 
-// Rendre un secteur (version simple, sans récursion)
+// Rendre un secteur (version simple, sans recursion)
 void renderSectorSimple(t_render *render, int sectorId)
 {
     t_sector *sector = &global.sectors[sectorId];
@@ -469,7 +469,7 @@ void renderSectorSimple(t_render *render, int sectorId)
 ```c
 void render_scene(t_render *render)
 {
-    // Déterminer dans quel secteur se trouve la caméra
+    // Determiner dans quel secteur se trouve la camera
     if (global.currentSectorId < 0) {
         global.currentSectorId = findSectorContainingPoint(global.cam.camPos);
     }
@@ -482,7 +482,7 @@ void render_scene(t_render *render)
 
 ---
 
-## 📋 ÉTAPE 5 : Test et Debug (30 min)
+## 📋 eTAPE 5 : Test et Debug (30 min)
 
 ### ✅ Compilation et Test
 
@@ -495,7 +495,7 @@ make
 
 ### ✅ Ce Que Vous Devriez Voir
 
-✅ **Console** : Messages de conversion montrant les secteurs créés
+✅ **Console** : Messages de conversion montrant les secteurs crees
 ✅ **Rendu** : Les murs s'affichent (peut-être avec quelques glitches)
 ✅ **Mouvement** : Vous pouvez bouger (collision fonctionne)
 
@@ -507,31 +507,31 @@ make
 printf("Secteur actuel: %d\n", global.currentSectorId);
 ```
 
-**Si les murs sont à l'envers :**
+**Si les murs sont a l'envers :**
 - Inversez p1 et p2 dans `createWall()`
 
 **Si crash :**
-- Vérifiez que `global.sectorCount` et `global.wallCount` ne dépassent pas MAX
+- Verifiez que `global.sectorCount` et `global.wallCount` ne depassent pas MAX
 
 ---
 
-## 🎯 Ordre d'Exécution
+## 🎯 Ordre d'Execution
 
-1. **Étape 1** : Ajouter structures → Compile sans erreur
-2. **Étape 2** : Ajouter fonctions de conversion → Init crée secteurs
-3. **Étape 3** : Modifier collision → Performance amélio rée
-4. **Étape 4** : Modifier rendu → Visuel fonctionne
-5. **Étape 5** : Tester et corriger
+1. **etape 1** : Ajouter structures → Compile sans erreur
+2. **etape 2** : Ajouter fonctions de conversion → Init cree secteurs
+3. **etape 3** : Modifier collision → Performance amelio ree
+4. **etape 4** : Modifier rendu → Visuel fonctionne
+5. **etape 5** : Tester et corriger
 
 ---
 
 ## 📝 Checklist de Validation
 
-- [ ] [types.h](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/header/types.h) : Structures `t_wall` et `t_sector` ajoutées
+- [ ] [types.h](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/header/types.h) : Structures `t_wall` et `t_sector` ajoutees
 - [ ] [game.h](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/header/game.h) : `t_global` contient sectors/walls
 - [ ] [main.c](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/main.c) : Fonctions `createWall()`, `convertPolysToSectors()`, `detectPortals()`
-- [ ] [collision_vector.c](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/srcs/collision_vector.c) : `findSectorContainingPoint()` et [resolveCollision()](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/srcs/collision_vector.c#107-171) modifié
-- [ ] [main.c](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/main.c) : `renderSectorSimple()` et [render_scene()](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/main.c#496-627) modifié
+- [ ] [collision_vector.c](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/srcs/collision_vector.c) : `findSectorContainingPoint()` et [resolveCollision()](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/srcs/collision_vector.c#107-171) modifie
+- [ ] [main.c](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/main.c) : `renderSectorSimple()` et [render_scene()](file:///Users/benelgorch/Desktop/GitHub/DooM-Nukem_3D/v0.2/main.c#496-627) modifie
 - [ ] **Compile** sans erreur
 - [ ] **Lance** sans crash
 - [ ] **Affiche** les murs
@@ -539,16 +539,16 @@ printf("Secteur actuel: %d\n", global.currentSectorId);
 
 ---
 
-## 💡 Prochaines Améliorations
+## 💡 Prochaines Ameliorations
 
 Une fois que ça marche :
 
-1. **Rendu récursif** (portals visibles)
-2. **Sol/Plafond texturés** par secteur
-3. **Portals manuels** (créer des portes)
+1. **Rendu recursif** (portals visibles)
+2. **Sol/Plafond textures** par secteur
+3. **Portals manuels** (creer des portes)
 4. **Hauteurs variables** (plateformes, escaliers)
-5. **Effets** (ascenseurs, dégâts, etc.)
+5. **Effets** (ascenseurs, degâts, etc.)
 
 ---
 
-Bon courage ! Testez après chaque étape et n'hésitez pas si vous bloquez ! 🚀
+Bon courage ! Testez apres chaque etape et n'hesitez pas si vous bloquez ! 🚀

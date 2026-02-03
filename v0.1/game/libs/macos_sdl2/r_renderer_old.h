@@ -18,7 +18,7 @@
 
 // Constantes du renderer
 #define MAX_SECTORS 1024
-#define FOV_ANGLE (M_PI / 3.0)  // 60 degrés en radians
+#define FOV_ANGLE (M_PI / 3.0)  // 60 degres en radians
 #define NEAR_PLANE 0.1
 #define FAR_PLANE 1000.0
 

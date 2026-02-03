@@ -13,13 +13,13 @@ void    draw_fps(t_env *env)
     }
     env->fps_count++;
     
-    // Afficher les FPS à l'écran (version graphique)
+    // Afficher les FPS a l'ecran (version graphique)
     draw_fps_on_screen(env);
 }
 
 void    limit_fps(t_env *env, Uint32 frame_start)
 {
-    (void)env;  // Pas utilisé pour l'instant
+    (void)env;  // Pas utilise pour l'instant
     const int TARGET_FPS = 60;
     const int FRAME_TIME = 1000 / TARGET_FPS;  // 16ms pour 60 FPS
     

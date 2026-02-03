@@ -1,7 +1,7 @@
 #include "env.h"
 
 // Bitmap font 8x8 pour les chiffres 0-9 et lettres
-// Chaque caractère = 8 bytes, chaque bit = 1 pixel
+// Chaque caractere = 8 bytes, chaque bit = 1 pixel
 static const unsigned char font_8x8[128][8] = {
     // Chiffres 0x30-0x39
     [48] = {0x3C, 0x66, 0x66, 0x66, 0x66, 0x66, 0x3C, 0x00},  // '0'
@@ -42,17 +42,14 @@ static const unsigned char font_8x8[128][8] = {
     [58] = {0x00, 0x18, 0x18, 0x00, 0x18, 0x18, 0x00, 0x00},  // ':'
 };
 
-// Dessiner un caractère 8x8
+// Dessiner un caractere 8x8
 static void draw_char(t_env *env, char c, int x, int y, Uint32 color)
 {
     const unsigned char *glyph = font_8x8[(int)c];
     
-    for (int row = 0; row < 8; row++)
-    {
-        for (int col = 0; col < 8; col++)
-        {
-            if (glyph[row] & (1 << (7 - col)))  // Tester le bit
-            {
+    for (int row = 0; row < 8; row++) {
+        for (int col = 0; col < 8; col++) {
+            if (glyph[row] & (1 << (7 - col))) {
                 int px = x + col;
                 int py = y + row;
                 if (px >= 0 && px < env->w && py >= 0 && py < env->h)
@@ -62,7 +59,7 @@ static void draw_char(t_env *env, char c, int x, int y, Uint32 color)
     }
 }
 
-// Dessiner une chaîne de caractères
+// Dessiner une chaine de caracteres
 void    draw_text(t_env *env, const char *text, int x, int y, Uint32 color)
 {
     int offset = 0;
@@ -70,19 +67,17 @@ void    draw_text(t_env *env, const char *text, int x, int y, Uint32 color)
     while (*text)
     {
         draw_char(env, *text, x + offset, y, color);
-        offset += 8;  // 8 pixels de largeur par caractère
+        offset += 8;  // 8 pixels de largeur par caractere
         text++;
     }
 }
 
-// Afficher les FPS à l'écran (en haut à gauche)
+// FPS (en haut a gauche)
 void    draw_fps_on_screen(t_env *env)
 {
     char fps_text[32];
     
-    // Construire la chaîne "FPS: XXX"
+    // FPS: XXX
     snprintf(fps_text, sizeof(fps_text), "FPS: %d", env->fps);
-    
-    // Dessiner le texte en blanc
     draw_text(env, fps_text, 10, 10, 0xFFFFFFFF);
 }

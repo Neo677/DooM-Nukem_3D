@@ -1,6 +1,6 @@
 #include "env.h"
 
-// États du menu
+// etats du menu
 typedef enum {
     MENU_MAIN,
     MENU_IN_GAME
@@ -20,10 +20,10 @@ static void draw_button(t_env *env, t_button *btn)
 {
     // Couleurs avec meilleur contraste
     Uint32 text_color = btn->hovered ? 0xFFFFFFFF : 0xFFCCCCCC;  // Blanc ou gris clair
-    Uint32 border_color = btn->hovered ? 0xFF00FF00 : 0xFF666666;  // Vert si survolé, gris sinon
-    Uint32 bg = btn->hovered ? 0xFF2A2A2A : 0xFF1A1A1A;  // Gris foncé, plus clair si survolé
+    Uint32 border_color = btn->hovered ? 0xFF00FF00 : 0xFF666666;  // Vert si survole, gris sinon
+    Uint32 bg = btn->hovered ? 0xFF2A2A2A : 0xFF1A1A1A;  // Gris fonce, plus clair si survole
     
-    // Créer rectangle
+    // Creer rectangle
     t_rectangle r = new_rectangle(bg, border_color, 1, 2);
     
     // Dessiner
@@ -40,7 +40,7 @@ static void draw_button(t_env *env, t_button *btn)
     draw_text(env, btn->text, text_x, text_y, text_color);
 }
 
-// Vérifier si la souris est sur le bouton
+// Verifier si la souris est sur le bouton
 static int is_button_hovered(t_button *btn, int mouse_x, int mouse_y)
 {
     return (mouse_x >= btn->pos.x && mouse_x <= btn->pos.x + btn->size.x &&
@@ -50,7 +50,7 @@ static int is_button_hovered(t_button *btn, int mouse_x, int mouse_y)
 // Menu principal
 int show_menu(t_env *env)
 {
-    // Créer les boutons
+    // Creer les boutons
     t_button start_btn = {
         .pos = new_point(env->w / 2 - 100, env->h / 2 - 60),
         .size = new_point(200, 50),
@@ -78,7 +78,7 @@ int show_menu(t_env *env)
         while (SDL_PollEvent(&event))
         {
             if (event.type == SDL_QUIT)
-                return 0;  // Quitter complètement
+                return 0;  // Quitter completement
             
             if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_ESCAPE)
                 return 0;
@@ -100,7 +100,7 @@ int show_menu(t_env *env)
         quit_btn.hovered = is_button_hovered(&quit_btn, mouse_x, mouse_y);
         
         // Render
-        clear_image(env, 0xFF1A1A1A);  // Fond gris très foncé (au lieu de noir pur)
+        clear_image(env, 0xFF1A1A1A);  // Fond gris tres fonce (au lieu de noir pur)
         
         // Titre en rouge vif, plus grand visuellement avec espacement
         draw_text(env, "DOOM", env->w / 2 - 32, 80, 0xFFFF0000);

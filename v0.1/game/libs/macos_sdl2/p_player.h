@@ -21,8 +21,8 @@ typedef struct _player
     double pitch;        // Angle de vue vertical
     int health;         // Points de vie
     int armor;          // Points d'armure
-    bool is_jumping;    // État de saut
-    bool is_falling;    // État de chute
+    bool is_jumping;    // etat de saut
+    bool is_falling;    // etat de chute
     double ground_height; // Hauteur du sol sous le joueur
     struct _sector *current_sector; // Secteur actuel
 } player_t;

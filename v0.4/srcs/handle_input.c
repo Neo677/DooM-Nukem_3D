@@ -138,7 +138,7 @@ void handle_input(t_env *env)
         player_move(env, dx, dy);
     }
     
-    // Rotation (flèches gauche/droite)
+    // Rotation (fleches gauche/droite)
     if (keys[SDL_SCANCODE_LEFT])
         env->player.angle -= rot_speed;
     if (keys[SDL_SCANCODE_RIGHT])

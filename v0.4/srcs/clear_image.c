@@ -3,6 +3,7 @@
 void    clear_image(t_env *env, Uint32 color)
 {
     int i;
+    
     i = 0;
     while (i < env->w * env->h)
     {
