@@ -30,7 +30,9 @@ typedef struct s_sld {
 typedef struct {
     t_v2    pos;            // Position 2D (x, y)
     double  angle;          // Angle de vue (radians)
-    double  height;         // Hauteur des yeux (pour le rendu)
+    double  height;         // Hauteur des yeux (absolue, pour le rendu)
+    double  velocity_z;     // Vitesse verticale
+    int     is_falling;     // Flag chute
     int     current_sector; // Secteur actuel du joueur
 } t_player;
 
@@ -156,6 +158,8 @@ void    free_sectors(t_env *env);
 void    print_sector_info(t_sector *s);
 int     find_sector(t_env *env, double x, double y);
 void    player_move(t_env *env, double dx, double dy);
+void    update_player_physics(t_env *env); // NOUVEAU: Gravité
+double  get_sector_floor_height(t_env *env, int sector_id, double x, double y); // NOUVEAU: Pentes
 
 // Bitmap font
 void    draw_text(t_env *env, const char *text, int x, int y, Uint32 color);

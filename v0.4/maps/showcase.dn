@@ -1,0 +1,78 @@
+# Doom-Nukem Showcase Map v1
+
+Vertices 12
+0 0.0 0.0
+1 10.0 0.0
+2 10.0 10.0
+3 0.0 10.0
+4 20.0 0.0
+5 20.0 10.0
+6 10.0 20.0
+7 0.0 20.0
+8 -10.0 0.0
+9 -10.0 10.0
+10 0.0 -10.0
+11 10.0 -10.0
+
+# Sectors section
+# Format:
+# Sector [id]
+# num_vertices
+# v1 v2 v3 ... (vertex indices)
+# n1 n2 n3 ... (neighbor sector ids, -1 for wall)
+# floor_height ceiling_height
+# floor_slope ceiling_slope ref_wall_floor ref_wall_ceil (Optional)
+# floor_texture ceiling_texture
+# w1 w2 w3 ... (wall textures)
+
+Sectors 5
+
+# Sector 0: Central Hub
+Sector 0
+4
+0 1 2 3
+-1 1 2 3
+0.0 4.0
+0.0 0.0 0 0
+1 2
+0 0 0 0
+
+# Sector 1: Step Up (East) -> Crossable (H=0.5)
+Sector 1
+4
+1 4 5 2
+0 -1 -1 -1
+0.5 4.5
+0.0 0.0 0 0
+1 2
+0 0 0 0
+
+# Sector 2: High Step / Block (North) -> Uncrossable (H=1.5)
+Sector 2
+4
+3 2 6 7
+0 -1 -1 -1
+1.5 5.5
+0.0 0.0 0 0
+1 2
+0 0 0 0
+
+# Sector 3: Slope (West) -> Ramp up (Slope=0.2)
+Sector 3
+4
+8 0 3 9
+-1 0 -1 -1
+0.0 4.0
+0.2 0.0 1 0
+1 2
+0 0 0 0
+
+# Sector 4: Pit (South) -> Fall down (H=-2.0)
+Sector 4
+4
+10 11 1 0
+-1 -1 0 -1
+-2.0 4.0
+0.0 0.0 0 0
+1 2
+0 0 0 0

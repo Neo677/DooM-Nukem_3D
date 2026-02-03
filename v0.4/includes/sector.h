@@ -23,6 +23,12 @@ typedef struct s_sector {
     int     ceiling_texture;
     int     *wall_textures;     // Texture par mur
     
+    // Slopes (Phase 3)
+    double  floor_slope;        // Inclinaison sol (0.0 = plat)
+    double  ceiling_slope;      // Inclinaison plafond
+    int     floor_slope_ref_wall;   // Indice du mur de référence (pivot bas)
+    int     ceiling_slope_ref_wall; // Indice du mur de référence
+    
     // Rendering
     int     rendered;           // Flag pour portal rendering
 } t_sector;

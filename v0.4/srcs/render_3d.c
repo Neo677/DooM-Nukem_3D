@@ -48,7 +48,7 @@ static void render_3d_internal(t_env *env)
             }
             
             // Lancer le rendu récursif depuis le secteur du joueur
-            render_sectors_recursive(env, env->player.current_sector, 0, env->w - 1, ytop, ybottom);
+            render_sectors_recursive(env, env->player.current_sector, 0, env->w - 1, ytop, ybottom, 0);
             
             free(ytop);
             free(ybottom);

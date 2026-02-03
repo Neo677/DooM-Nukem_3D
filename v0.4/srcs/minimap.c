@@ -36,20 +36,7 @@ void draw_minimap(t_env *env)
     t_point bg_size = new_point(minimap_size, minimap_size);
     draw_rectangle(env, bg, bg_pos, bg_size);
     
-    // Dessiner les murs de la minimap (PHASE 2 GRID)
-    if (env->map.width > 0 && env->map.height > 0)
-    {
-        for (int y = 0; y < env->map.height; y++)
-        {
-            for (int x = 0; x < env->map.width; x++)
-            {
-                if (env->map.grid[y][x] != 0)
-                {
-                    // ... (existing grid drawing) ...
-                }
-            }
-        }
-    }
+
 
     // Dessiner les SECTEURS (PHASE 3)
     if (env->sector_map.nb_sectors > 0)

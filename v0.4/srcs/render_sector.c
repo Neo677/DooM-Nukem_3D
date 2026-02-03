@@ -1,6 +1,7 @@
 #include "render_sector.h"
 #include <math.h>
 #include <stdlib.h>
+#include <string.h>
 
 #define MAX_RECURSION_DEPTH 32
 #define MAX(a,b) ((a) > (b) ? (a) : (b))
@@ -81,96 +82,244 @@ static Uint32 apply_fog(Uint32 color, double dist)
     return (0xFF000000 | (r << 16) | (g << 8) | b);
 }
 
-// Dessiner une colonne de sol texturée (Raycasting vertical)
-static void draw_floor_vertical(t_env *env, int x, int y1, int y2, double ray_angle, double floor_height)
+// Dessiner une colonne de sol texturée (Raycasting vertical avec Pentes)
+static void draw_floor_vertical(t_env *env, int x, int y1, int y2, double ray_angle, t_sector *sect)
 {
     if (y2 < y1) return;
     
     t_texture *tex = &env->floor_texture;
-    if (!tex->pixels) {
-        // Fallback couleur simple + fog
-         for (int y = y1; y <= y2; y++)
-            env->sdl.texture_pixels[y * env->w + x] = 0xFF222222; 
-        return;
-    }
+    int has_texture = (tex->pixels != NULL);
+    Uint32 floor_color = 0xFF222222;
 
     double cam_z = env->player.height; 
-    double floor_z = floor_height;
-    double rel_h = cam_z - floor_z; 
-    if (rel_h <= 0.1) rel_h = 0.1;
+    
+    // Constants for flat floor
+    double floor_h_flat = sect->floor_height;
+    double rel_h_flat = cam_z - floor_h_flat; 
+    if (rel_h_flat <= 0.1 && fabs(sect->floor_slope) < 0.001) rel_h_flat = 0.1;
 
     double cos_a = cos(ray_angle);
     double sin_a = sin(ray_angle);
-    double beta = env->player.angle - ray_angle;
-    double cos_beta = cos(beta);
-    double screen_dist = (env->w / 2.0) / tan(30.0 * 3.14159 / 180.0);
+    double screen_dist_const = (env->w / 2.0) / tan(30.0 * 3.14159 / 180.0);
+
+    // Slope parameters
+    double slope = sect->floor_slope;
+    double num = 0, slope_term = 0;
+    int is_sloped = (fabs(slope) > 0.001);
+
+    if (is_sloped)
+    {
+        // Calculate K0, K1
+        int i = sect->floor_slope_ref_wall;
+        if (i < 0 || i >= sect->nb_vertices) i = 0;
+        
+        t_vertex v0 = env->sector_map.vertices[sect->vertices[i]];
+        t_vertex v1 = env->sector_map.vertices[sect->vertices[(i + 1) % sect->nb_vertices]];
+        
+        double wx = v1.x - v0.x;
+        double wy = v1.y - v0.y;
+        double len = sqrt(wx*wx + wy*wy);
+        
+        if (len > 0.0001) {
+            double nx = -wy / len;
+            double ny = wx / len;
+            
+            double dx = env->player.pos.x - v0.x;
+            double dy = env->player.pos.y - v0.y;
+            
+            double k0 = dx * nx + dy * ny;
+            double k1 = cos_a * nx + sin_a * ny;
+            
+            // Formula: dist = Num / ( (H/2 - y)/Scale - SlopeTerm )
+            // Num = BaseH + Slope*K0 - CamZ
+            // SlopeTerm = Slope * K1
+            // Note: H(dist) = BaseH + Slope*(K0 + dist*K1)
+            // y = H/2 - (H(dist) - CamZ)/dist * Scale
+            // ...
+            // Derivation check:
+            // y_screen = (H/2) - (Z_world / dist) * Scale
+            // Z_world = H(dist) - CamZ (reversed? No, Z is depth usually, here Z is height difference)
+            // Wait, standard projection: y = H/2 - (HeightDiff / Depth) * Scale
+            // HeightDiff = H(dist) - CamZ.
+            // So: (H/2 - y)/Scale = (H(dist) - CamZ) / dist
+            // LHS = (H(dist) - CamZ) / dist
+            // LHS = (Base + S*K0 + S*K1*dist - CamZ) / dist
+            // LHS = (Base + S*K0 - CamZ)/dist + S*K1
+            // LHS - S*K1 = (Base + S*K0 - CamZ)/dist
+            // dist = (Base + S*K0 - CamZ) / (LHS - S*K1)
+            
+            num = sect->floor_height + slope * k0 - cam_z;
+            slope_term = slope * k1;
+        } else {
+            is_sloped = 0; // Fallback
+        }
+    }
 
     for (int y = y1; y <= y2; y++)
     {
-        int p = y - env->h / 2;
-        if (p == 0) p = 1;
+        double dist;
         
-        double dist = (rel_h * screen_dist) / (double)p;
-        dist /= cos_beta; 
+        if (is_sloped)
+        {
+            double p_val = (double)((env->h / 2) - y) / screen_dist_const;
+            // Denom = p_val - slope_term
+            double denom = p_val - slope_term;
+            
+            if (fabs(denom) < 0.0001) dist = 1000.0; // Horizon/Singularity
+            else dist = num / denom;
+            
+            // Fix dist behind player
+            if (dist < 0.1) dist = 0.1; // Clamp or skip
+        }
+        else
+        {
+            int p = y - env->h / 2;
+            if (p == 0) p = 1;
+            dist = (rel_h_flat * screen_dist_const) / (double)p;
+        }
+
+        // double corrected_dist = dist * inv_cos_beta; // Correct fisheye for texture mapping? - Unused
+        
+        // However, for texture mapping we might want it?
+        // If dist calculated above is perpendicular distance, we need true distance for wX/wY.
+        // Actually, ray_angle is absolute. dist above is likely "distance along the ray" if derivation used RayDir.
+        // K1 uses cos_a (RayDir). So dist IS distance along ray.
+        // But for flat floor: dist = rel_h / pixel_y_ratio. This assumes dist is perpendicular?
+        // No, standard Doom: distance = (h * screen_dist) / (y - horiz) / cos(beta).
+        // My flat code has `dist /= cos_beta`.
+        // My slope code derived `dist` along the ray directly?
+        // y = ... (H(dist) - CamZ)/dist. Here dist is along the ray because K1/K0 are world space.
+        // So `dist` from slope formula is TRUE distance. No need to divide by cos_beta for geometry.
+        
+        // However, for texture mapping we might want it?
         
         double wx = env->player.pos.x + dist * cos_a;
         double wy = env->player.pos.y + dist * sin_a;
         
-        int tx = (int)(wx * tex->width) % tex->width;
-        int ty = (int)(wy * tex->height) % tex->height;
-        if (tx < 0) tx += tex->width;
-        if (ty < 0) ty += tex->height;
+        Uint32 color;
+        if (has_texture)
+        {
+            int tx = (int)(wx * tex->width) % tex->width;
+            int ty = (int)(wy * tex->height) % tex->height;
+            if (tx < 0) tx += tex->width;
+            if (ty < 0) ty += tex->height;
+            color = tex->pixels[ty * tex->width + tx];
+        }
+        else
+        {
+            color = floor_color;
+        }
         
-        Uint32 color = tex->pixels[ty * tex->width + tx];
         env->sdl.texture_pixels[y * env->w + x] = apply_fog(color, dist);
     }
 }
 
 // Dessiner une colonne de plafond texturée
-static void draw_ceiling_vertical(t_env *env, int x, int y1, int y2, double ray_angle, double ceiling_height)
+static void draw_ceiling_vertical(t_env *env, int x, int y1, int y2, double ray_angle, t_sector *sect)
 {
     if (y2 < y1) return;
     
+    // Skybox override
+    if (env->skybox.enabled && !sect->ceiling_texture) return; // Let skybox be visible
+
     t_texture *tex = &env->ceiling_texture;
-    if (!tex->pixels) {
-        // Si pas de texture plafond, on laisse le vide (skybox) ou gris
-        // Si skybox enabled, return.
-        if (env->skybox.enabled) return;
-        
-        for (int y = y1; y <= y2; y++)
-            env->sdl.texture_pixels[y * env->w + x] = 0xFF333333;
-        return;
-    }
+    int has_texture = (tex->pixels != NULL);
+    Uint32 ceiling_color = 0xFF333333;
 
     double cam_z = env->player.height; 
-    double ceil_z = ceiling_height;
-    double rel_h = ceil_z - cam_z; // Plafond au dessus
-    if (rel_h <= 0.1) rel_h = 0.1;
+    
+    // Constants for flat ceiling
+    double ceil_h_flat = sect->ceiling_height;
+    double rel_h_flat = ceil_h_flat - cam_z; 
+    if (rel_h_flat <= 0.1 && fabs(sect->ceiling_slope) < 0.001) rel_h_flat = 0.1;
 
     double cos_a = cos(ray_angle);
     double sin_a = sin(ray_angle);
     double beta = env->player.angle - ray_angle;
     double cos_beta = cos(beta);
-    double screen_dist = (env->w / 2.0) / tan(30.0 * 3.14159 / 180.0);
+    double screen_dist_const = (env->w / 2.0) / tan(30.0 * 3.14159 / 180.0);
+
+    // Slope parameters
+    double slope = sect->ceiling_slope;
+    double num = 0, slope_term = 0;
+    int is_sloped = (fabs(slope) > 0.001);
+
+    if (is_sloped)
+    {
+        int i = sect->ceiling_slope_ref_wall;
+        if (i < 0 || i >= sect->nb_vertices) i = 0;
+        
+        t_vertex v0 = env->sector_map.vertices[sect->vertices[i]];
+        t_vertex v1 = env->sector_map.vertices[sect->vertices[(i + 1) % sect->nb_vertices]];
+        
+        double wx = v1.x - v0.x;
+        double wy = v1.y - v0.y;
+        double len = sqrt(wx*wx + wy*wy);
+        
+        if (len > 0.0001) {
+            double nx = -wy / len;
+            double ny = wx / len;
+            
+            double dx = env->player.pos.x - v0.x;
+            double dy = env->player.pos.y - v0.y;
+            
+            double k0 = dx * nx + dy * ny;
+            double k1 = cos_a * nx + sin_a * ny;
+            
+            // Formula same as floor but H(dist) is ceiling:
+            // (Base + S*K0 + S*K1*dist - CamZ) / dist = (H/2 - y)/Scale
+            // Num / dist + SlopeTerm = (H/2 - y)/Scale
+            // Num / dist = (H/2 - y)/Scale - SlopeTerm
+            // dist = Num / ( (H/2 - y)/Scale - SlopeTerm )
+            
+            num = sect->ceiling_height + slope * k0 - cam_z;
+            slope_term = slope * k1;
+        } else {
+            is_sloped = 0;
+        }
+    }
 
     for (int y = y1; y <= y2; y++)
     {
-        // p est la distance au dessus de l'horizon
-        int p = (env->h / 2) - y;
-        if (p <= 0) p = 1;
+        double dist;
         
-        double dist = (rel_h * screen_dist) / (double)p;
-        dist /= cos_beta; 
-        
+        if (is_sloped)
+        {
+            // y is screen coordinate.
+            // (H/2 - y). For ceiling, y < H/2 usually. (H/2 - y) is positive.
+            double p_val = (double)((env->h / 2) - y) / screen_dist_const;
+            double denom = p_val - slope_term;
+            
+            if (fabs(denom) < 0.0001) dist = 1000.0; 
+            else dist = num / denom;
+            
+            if (dist < 0.1) dist = 0.1;
+        }
+        else
+        {
+            int p = (env->h / 2) - y;
+            if (p <= 0) p = 1;
+            dist = (rel_h_flat * screen_dist_const) / (double)p;
+            dist /= cos_beta; 
+        }
+
         double wx = env->player.pos.x + dist * cos_a;
         double wy = env->player.pos.y + dist * sin_a;
         
-        int tx = (int)(wx * tex->width) % tex->width;
-        int ty = (int)(wy * tex->height) % tex->height;
-        if (tx < 0) tx += tex->width;
-        if (ty < 0) ty += tex->height;
+        Uint32 color;
+        if (has_texture)
+        {
+            int tx = (int)(wx * tex->width) % tex->width;
+            int ty = (int)(wy * tex->height) % tex->height;
+            if (tx < 0) tx += tex->width;
+            if (ty < 0) ty += tex->height;
+            color = tex->pixels[ty * tex->width + tx];
+        }
+        else
+        {
+            color = ceiling_color;
+        }
         
-        Uint32 color = tex->pixels[ty * tex->width + tx];
         env->sdl.texture_pixels[y * env->w + x] = apply_fog(color, dist);
     }
 }
@@ -215,9 +364,10 @@ void init_portal_renderer(t_env *env)
 }
 
 // Cœur du rendu récursif
-void render_sectors_recursive(t_env *env, int sector_id, int xmin, int xmax, int *ytop, int *ybottom)
+void render_sectors_recursive(t_env *env, int sector_id, int xmin, int xmax, int *ytop, int *ybottom, int depth)
 {
     if (sector_id < 0 || sector_id >= env->sector_map.nb_sectors) return;
+    if (depth > MAX_RECURSION_DEPTH) return;
     
     // Limite recursion
     // Note: Utiliser un compteur global ou passer depth en argument serait mieux
@@ -343,11 +493,11 @@ void render_sectors_recursive(t_env *env, int sector_id, int xmin, int xmax, int
             
             // Plafond Texturé
             if (c_y_ceil > ytop[x])
-                draw_ceiling_vertical(env, x, ytop[x], c_y_ceil, ray_angle_col, sect->ceiling_height);
+                draw_ceiling_vertical(env, x, ytop[x], c_y_ceil, ray_angle_col, sect);
 
             // Sol Texturé
             if (c_y_floor < ybottom[x])
-                draw_floor_vertical(env, x, c_y_floor, ybottom[x], ray_angle_col, sect->floor_height);
+                draw_floor_vertical(env, x, c_y_floor, ybottom[x], ray_angle_col, sect);
             
             if (neighbor >= 0) // C'est un PORTAIL
             {
@@ -358,65 +508,82 @@ void render_sectors_recursive(t_env *env, int sector_id, int xmin, int xmax, int
                 int c_ny_ceil = clamp(ny_ceil, ytop[x], ybottom[x]);
                 int c_ny_floor = clamp(ny_floor, ytop[x], ybottom[x]);
                 
-                // Upper Wall (Texture ?)
+                // Dessin du mur du haut ("Upper Wall")
                 if (c_ny_ceil > c_y_ceil) {
-                    if (wall_tex) vline_textured(env, x, c_y_ceil, c_ny_ceil, y_ceil, y_floor, u_current, wall_tex, ytop, ybottom, z_current);
-                    else vline(env, x, c_y_ceil, c_ny_ceil, apply_fog(0xFF888888, z_current), ytop, ybottom);
+                     if (wall_tex) vline_textured(env, x, c_y_ceil, c_ny_ceil, y_ceil, y_floor, u_current, wall_tex, ytop, ybottom, z_current);
+                     else vline(env, x, c_y_ceil, c_ny_ceil, apply_fog(0xFF888888, z_current), ytop, ybottom);
                 }
                 
-                // Lower Wall (Texture ?)
+                // Dessin du mur du bas ("Lower Wall")
                 if (c_ny_floor < c_y_floor) {
                      if (wall_tex) vline_textured(env, x, c_ny_floor, c_y_floor, y_ceil, y_floor, u_current, wall_tex, ytop, ybottom, z_current);
                      else vline(env, x, c_ny_floor, c_y_floor, apply_fog(0xFF666666, z_current), ytop, ybottom);
                 }
                 
-                // Update clipping
-                ytop[x] = clamp(MAX(c_y_ceil, c_ny_ceil), ytop[x], env->h - 1);
-                ybottom[x] = clamp(MIN(c_y_floor, c_ny_floor), ytop[x], ybottom[x]);
+                // Ne PAS mettre à jour ytop/ybottom ici directement pour la suite de CE secteur
+                // car cela affecterait les murs suivants.
+                // Par contre, pour la RECURSION, on doit calculer la nouvelle fenêtre.
             }
             else // C'est un MUR SOLIDE
             {
                 if (wall_tex)
-                {
                     vline_textured(env, x, c_y_ceil, c_y_floor, y_ceil, y_floor, u_current, wall_tex, ytop, ybottom, z_current);
-                }
                 else
-                {
                     vline(env, x, c_y_ceil, c_y_floor, apply_fog(0xFFAAAAAA, z_current), ytop, ybottom);
-                }
             }
         }
         
-        // 8. Récursion (une fois la boucle X finie, si c'est efficace, ou faire schedule ?)
-        // Dans Doom engine pur, on fait la recursion après, en passant la fenêtre réduite.
-        // Ici, on a modifié ytop/ybottom en place. C'est destructif pour les autres murs du même secteur !
-        // -> ERREUR DE LOGIQUE: On ne peut pas modifier ytop/ybottom globalement pendant la boucle des murs d'un même secteur.
-        // Il faut sauver les nouvelles contraintes et appeler la récursion après.
-        // OU passer des copies de tableaux (trop lourd).
-        // Solution standard: Scheduler la récursion avec les fenêtres xmin' xmax'.
-        
-        if (neighbor >= 0 && end_x > begin_x)
+        // RECURSION SAFE
+        if (neighbor >= 0 && end_x > begin_x && depth < MAX_RECURSION_DEPTH)
         {
-             // TODO: Récursion immédiate n'est pas safe si on partage ytop/ybottom sans copie/restauration
-             // Hack simple pour v0.4:
-             // On va re-interpoler ytop/ybottom JUSTE pour l'appel récursif
-             // C'est moins performant mais plus simple sans gestion de queue
-             
-             // Créer copie locale des clips pour la récursion
-             // Attention stack overflow si tableaux trop gros (WIDTH * 4 bytes)
-             // Alloc dynamique ou static buffers
+            // Allocation de nouveaux buffers de clipping pour le secteur voisin
+            int *new_ytop = (int *)malloc(sizeof(int) * env->w);
+            int *new_ybottom = (int *)malloc(sizeof(int) * env->w);
+            
+            if (new_ytop && new_ybottom)
+            {
+                // Copie des contraintes actuelles
+                memcpy(new_ytop, ytop, sizeof(int) * env->w);
+                memcpy(new_ybottom, ybottom, sizeof(int) * env->w);
+                
+                // Application de la fenêtre du portail SUR LA COPIE
+                for (int x = begin_x; x < end_x; x++)
+                {
+                     // Recalcul nécessaire des hauteurs (on pourrait les stocker, mais recalculer 
+                     // est plus simple et moins gourmand en mémoire heap/stack arrays)
+                     double t = (double)(x - sx1) / (sx2 - sx1);
+                     
+                     int y_ceil = sy1_ceil + (sy2_ceil - sy1_ceil) * t;
+                     int y_floor = sy1_floor + (sy2_floor - sy1_floor) * t;
+                     
+                     int ny_ceil = n_sy1_ceil + (n_sy2_ceil - n_sy1_ceil) * t;
+                     int ny_floor = n_sy1_floor + (n_sy2_floor - n_sy1_floor) * t;
+                     
+                     // Clipping écran actuel
+                     int c_y_ceil = clamp(y_ceil, ytop[x], ybottom[x]);
+                     int c_y_floor = clamp(y_floor, ytop[x], ybottom[x]);
+                     int c_ny_ceil = clamp(ny_ceil, ytop[x], ybottom[x]);
+                     int c_ny_floor = clamp(ny_floor, ytop[x], ybottom[x]);
+
+                     // La fenêtre visible à travers le portail est l'intersection de :
+                     // 1. Fenêtre courante (new_ytop[x], new_ybottom[x])
+                     // 2. Le trou géométrique du portail (max des ceilings, min des floors)
+                     
+                     int portal_top = MAX(c_y_ceil, c_ny_ceil);
+                     int portal_bot = MIN(c_y_floor, c_ny_floor);
+                     
+                     new_ytop[x] = clamp(portal_top, new_ytop[x], env->h - 1);
+                     new_ybottom[x] = clamp(portal_bot, new_ytop[x], new_ybottom[x]);
+                }
+                
+                // Appel récursif
+                render_sectors_recursive(env, neighbor, begin_x, end_x, new_ytop, new_ybottom, depth + 1);
+                
+                free(new_ytop);
+                free(new_ybottom);
+            }
         }
-        
-        // CORRECTION IMMEDIATE:
-        // Pour ce prototype, on va dessiner les murs solides.
-        // La récursion demande une architecture un peu plus complexe (queue de portails).
-        // Je vais laisser la récursion en TODO ou faire une version simplifié (un seul voisin)
-        // Pour l'instant, je finalise le rendu MONO-SECTEUR solide avec clipping vertical correct.
     }
-    
-    // Pour supporter la récursion simplement sans queue complexe:
-    // On peut faire une passe "Scanline" qui enregistre les segments de portail, puis les traite.
-    // Mais pour l'instant, rendons juste le secteur courant correctement avec vline/clipping.
 }
 
 #undef MAX_RECURSION_DEPTH

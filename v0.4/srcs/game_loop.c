@@ -20,6 +20,8 @@ void    game_loop(t_env *env)
         }
         // Input
         handle_input(env);
+        // Physics
+        update_player_physics(env);
         // Render 3D
         render_3d(env);
         // FPS

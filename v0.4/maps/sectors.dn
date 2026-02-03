@@ -2,13 +2,15 @@
 
 # Vertices section
 # Format: id x y
-Vertices 6
+Vertices 8
 0 0.0 0.0
 1 10.0 0.0
 2 10.0 10.0
 3 0.0 10.0
 4 20.0 0.0
 5 20.0 10.0
+6 10.0 20.0
+7 0.0 20.0
 
 # Sectors section
 # Format:
@@ -20,12 +22,12 @@ Vertices 6
 # floor_texture ceiling_texture
 # w1 w2 w3 ... (wall textures)
 
-Sectors 2
+Sectors 3
 
 Sector 0
 4
 0 1 2 3
--1 1 -1 -1
+-1 1 2 -1
 0.0 3.0
 1 2
 0 0 0 0
@@ -35,5 +37,14 @@ Sector 1
 1 4 5 2
 0 -1 -1 -1
 0.5 4.0
+0.2 0.0 0 0
+1 2
+0 0 0 0
+
+Sector 2
+4
+3 2 6 7
+0 -1 -1 -1
+1.2 4.0
 1 2
 0 0 0 0

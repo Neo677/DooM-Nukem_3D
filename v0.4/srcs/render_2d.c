@@ -18,59 +18,15 @@ static void world_to_screen(t_env *env, double wx, double wy, int *sx, int *sy)
 
 // ============ GRILLE ============
 
-static void draw_grid(t_env *env)
-{
-    if (!env->view_2d.show_grid)
-        return;
-    
-    Uint32 grid_color = 0xFF333333;  // Gris très foncé
-    
-    // Lignes verticales
-    for (int x = 0; x <= env->map.width; x++)
-    {
-        int sx1, sy1, sx2, sy2;
-        world_to_screen(env, x, 0, &sx1, &sy1);
-        world_to_screen(env, x, env->map.height, &sx2, &sy2);
-        
-        t_point p1 = new_point(sx1, sy1);
-        t_point p2 = new_point(sx2, sy2);
-        draw_line(p1, p2, env, grid_color);
-    }
-    
-    // Lignes horizontales
-    for (int y = 0; y <= env->map.height; y++)
-    {
-        int sx1, sy1, sx2, sy2;
-        world_to_screen(env, 0, y, &sx1, &sy1);
-        world_to_screen(env, env->map.width, y, &sx2, &sy2);
-        
-        t_point p1 = new_point(sx1, sy1);
-        t_point p2 = new_point(sx2, sy2);
-        draw_line(p1, p2, env, grid_color);
-    }
-}
+// Grid drawing removed
+
 
 // ============ MURS ============
 
 static void draw_walls(t_env *env)
 {
-    // PHASE 2 GRID
-    if (env->map.width > 0 && env->map.height > 0) {
-        for (int y = 0; y < env->map.height; y++)
-        {
-             // ... Phase 2 logic skipped for brevity if needed inside checks ...
-             // Keeping original loop logic wrapped
-             for (int x = 0; x < env->map.width; x++) {
-                 if (env->map.grid[y][x] != 0) {
-                    Uint32 wall_color = (env->map.grid[y][x] == 1) ? 0xFF888888 : 0xFF666666;
-                    int sx1, sy1, sx2, sy2;
-                    world_to_screen(env, x, y, &sx1, &sy1);
-                    world_to_screen(env, x + 1, y + 1, &sx2, &sy2);
-                    draw_rectangle(env, new_rectangle(wall_color, 0xFF444444, 1, 1), new_point(sx1, sy1), new_point(sx2 - sx1, sy2 - sy1));
-                 }
-             }
-        }
-    }
+    // Grid walls removed
+
 
     // PHASE 3 SECTORS
     if (env->sector_map.nb_sectors > 0)
@@ -150,42 +106,84 @@ static void draw_player(t_env *env)
 
 // ============ RAYONS (DEBUG) ============
 
+// Helper Intersection Segment-Segment
+// Returns distance if hit, -1 if no hit (or backwards)
+static double intersect_ray_segment(double ox, double oy, double dx, double dy, 
+                                  double x1, double y1, double x2, double y2)
+{
+    // Ray: O + t*D
+    // Seg: A + u*(B-A)
+    // t*D = A - O + u*(B-A)
+    // t*dx - u*(x2-x1) = x1 - ox
+    // t*dy - u*(y2-y1) = y1 - oy
+    
+    double seg_dx = x2 - x1;
+    double seg_dy = y2 - y1;
+    
+    double det = dx * -seg_dy - dy * -seg_dx; // dx*(-dy') - dy*(-dx')
+    if (fabs(det) < 0.000001) return -1;
+    
+    double t = ((x1 - ox) * -seg_dy - (y1 - oy) * -seg_dx) / det;
+    double u = (dx * (y1 - oy) - dy * (x1 - ox)) / det;
+    
+    if (t > 0 && u >= 0 && u <= 1) return t;
+    return -1;
+}
+
 static void draw_rays(t_env *env)
 {
     if (!env->view_2d.show_rays)
         return;
     
-    double fov_rad = (FOV * PI) / 180.0;
-    int num_rays = 30;  // Moins de rayons pour lisibilité
+    double fov_rad = (60.0 * PI) / 180.0;
+    int num_rays = 50;
     
     for (int i = 0; i < num_rays; i++)
     {
         double ray_angle = env->player.angle - fov_rad / 2.0 + 
                           (i / (double)num_rays) * fov_rad;
         
-        // Lancer le rayon
-        t_ray_hit hit = cast_ray_dda(env, ray_angle);
+        double dx = cos(ray_angle);
+        double dy = sin(ray_angle);
         
-        // Calculer point de fin
-        double end_x = env->player.pos.x + cos(ray_angle) * hit.distance;
-        double end_y = env->player.pos.y + sin(ray_angle) * hit.distance;
+        double closest_dist = 1000.0; // Max draw dist
+        int hit_something = 0;
         
-        // Convertir en screen
+        // Check ALL sector walls (Simple brute force for debug view)
+        for (int s = 0; s < env->sector_map.nb_sectors; s++)
+        {
+             t_sector *sect = &env->sector_map.sectors[s];
+             for (int v = 0; v < sect->nb_vertices; v++)
+             {
+                 if (sect->neighbors[v] >= 0) continue; // Skip Portals (transparent for rays)
+                 
+                 int idx1 = sect->vertices[v];
+                 int idx2 = sect->vertices[(v + 1) % sect->nb_vertices];
+                 t_vertex v1 = env->sector_map.vertices[idx1];
+                 t_vertex v2 = env->sector_map.vertices[idx2];
+                 
+                 double dist = intersect_ray_segment(env->player.pos.x, env->player.pos.y, dx, dy, v1.x, v1.y, v2.x, v2.y);
+                 
+                 if (dist > 0 && dist < closest_dist) {
+                     closest_dist = dist;
+                     hit_something = 1;
+                 }
+             }
+        }
+        
+        // Draw Ray
+        double end_x = env->player.pos.x + dx * closest_dist;
+        double end_y = env->player.pos.y + dy * closest_dist;
+        
         int px, py, ex, ey;
         world_to_screen(env, env->player.pos.x, env->player.pos.y, &px, &py);
         world_to_screen(env, end_x, end_y, &ex, &ey);
         
-        // Rayon central plus visible
         Uint32 ray_color = (i == num_rays / 2) ? 0xFFFF0000 : 0xFF660000;
-        t_point p1 = new_point(px, py);
-        t_point p2 = new_point(ex, ey);
-        draw_line(p1, p2, env, ray_color);
+        draw_line(new_point(px, py), new_point(ex, ey), env, ray_color);
         
-        // Point de hit
-        if (hit.wall_type != 0)
-        {
-            t_circle hit_point = new_circle(0xFFAA0000, 0xFFFF0000, new_point(ex, ey), 3);
-            draw_circle(hit_point, env);
+        if (hit_something) {
+            draw_circle(new_circle(0xFFAA0000, 0xFFFF0000, new_point(ex, ey), 3), env);
         }
     }
 }
@@ -198,7 +196,8 @@ void render_2d(t_env *env)
     clear_image(env, 0xFF000000);
     
     // Ordre de rendu (du fond au premier plan)
-    draw_grid(env);
+    // draw_grid(env); // Removed
+
     draw_walls(env);
     draw_rays(env);      // Rayons en dessous du joueur
     draw_player(env);

@@ -110,10 +110,47 @@ static int parse_one_sector(int fd, t_sector *sector)
     sscanf(line, "%lf %lf", &sector->floor_height, &sector->ceiling_height);
     free(line);
     
-    // 5. Textures (floor ceiling)
-    if (get_next_line(fd, &line) <= 0) return (-1);
-    sscanf(line, "%d %d", &sector->floor_texture, &sector->ceiling_texture);
-    free(line);
+    /* 
+       Format attendu map v2 avec Slopes:
+       floor_height ceiling_height
+       slope_floor slope_ceil ref_wall_floor ref_wall_ceil
+    */
+    
+    // Initialisation par défaut
+    sector->floor_slope = 0.0;
+    sector->ceiling_slope = 0.0;
+    sector->floor_slope_ref_wall = 0;
+    sector->ceiling_slope_ref_wall = 0;
+
+    // Check si la ligne suivante contient 4 valeurs (Slopes) ou 2 valeurs (Textures)
+    // C'est un peu tricky sans peek.
+    // Hack: On assume que si on a modifi la map, on a ajout la ligne.
+    // Pour tre safe, on va regarder la ligne suivante.
+    
+    char *next_line;
+    if (get_next_line(fd, &next_line) <= 0) return (-1);
+    
+    // Essayer de lire 4 valeurs float/int
+    double sf, sc;
+    int rf, rc;
+    int items = sscanf(next_line, "%lf %lf %d %d", &sf, &sc, &rf, &rc);
+    
+    if (items == 4)
+    {
+        // C'est une ligne de PENTE !
+        sector->floor_slope = sf;
+        sector->ceiling_slope = sc;
+        sector->floor_slope_ref_wall = rf;
+        sector->ceiling_slope_ref_wall = rc;
+        free(next_line);
+        
+        // Lire la ligne suivante pour les textures
+        if (get_next_line(fd, &next_line) <= 0) return (-1);
+    }
+    
+    // Ici next_line contient les textures
+    sscanf(next_line, "%d %d", &sector->floor_texture, &sector->ceiling_texture);
+    free(next_line);
     
     // 6. Wall textures
     if (get_next_line(fd, &line) <= 0) return (-1);
