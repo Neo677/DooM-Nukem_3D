@@ -149,6 +149,46 @@ void handle_input(t_env *env)
         env->player.angle += 2 * PI;
     while (env->player.angle >= 2 * PI)
         env->player.angle -= 2 * PI;
+    
+    // ========== PITCH (regarder haut/bas) avec souris ==========
+    if (env->mouse_captured && env->render_mode == MODE_3D)
+    {
+        // Sensibilité du pitch (ajustable)
+        double pitch_sensitivity = 0.005;
+        
+        // Mettre à jour le pitch avec mouvement souris Y
+        env->player.pitch += env->sdl.mouse_y * pitch_sensitivity;
+        
+        // Limiter le pitch (éviter de regarder trop haut/bas)
+        // Limites en radians: -1.0 (bas) à +1.5 (haut)
+        if (env->player.pitch < -1.0)
+            env->player.pitch = -1.0;
+        if (env->player.pitch > 1.5)
+            env->player.pitch = 1.5;
+        
+        // Précalculer cos/sin pour optimisation
+        env->player.pitch_cos = cos(env->player.pitch);
+        env->player.pitch_sin = sin(env->player.pitch);
+        
+        // Calculer la position de l'horizon
+        // La valeur 'scale' correspond à env->h / 2 comme référence
+        double horizon_scale = env->h / 2.0;
+        env->player.horizon = (env->h / 2.0) - (env->player.pitch * horizon_scale);
+    }
+    
+    // Aussi gérer la rotation horizontale avec la souris (si capturée)
+    if (env->mouse_captured && env->render_mode == MODE_3D)
+    {
+        double mouse_sensitivity = 0.002;
+        env->player.angle += env->sdl.mouse_x * mouse_sensitivity;
+        
+        // Normaliser l'angle après rotation souris
+        while (env->player.angle < 0)
+            env->player.angle += 2 * PI;
+        while (env->player.angle >= 2 * PI)
+            env->player.angle -= 2 * PI;
+    }
+    
     // ========== CONTROLES SKYBOX (B, 1, 2, 3) ==========
     static int b_pressed = 0;
     if (keys[SDL_SCANCODE_B])

@@ -25,6 +25,8 @@ void free_sectors(t_env *env)
             if (s->vertices) free(s->vertices);
             if (s->neighbors) free(s->neighbors);
             if (s->wall_textures) free(s->wall_textures);
+            if (s->upper_textures) free(s->upper_textures);
+            if (s->lower_textures) free(s->lower_textures);
         }
         free(env->sector_map.sectors);
         env->sector_map.sectors = NULL;

@@ -10,6 +10,10 @@
 # include "debug.h"
 # include "defines.h"
 
+// Collision helpers
+double  norm_vector(double x, double y);
+t_v2    parallel_movement(t_v2 move, t_v2 p1, t_v2 p2);
+
 #define MAP_WIDTH 8
 #define MAP_HEIGHT 8
 #define FOV 60.0
@@ -30,6 +34,10 @@ typedef struct s_sld {
     SDL_Renderer    *renderer;
     SDL_Texture     *texture;
     Uint32          *texture_pixels;
+    
+    // NOUVEAU: Pour capturer le mouvement de la souris
+    int             mouse_x;
+    int             mouse_y;
 }           t_sdl;
 
 // Player/Camera
@@ -40,6 +48,17 @@ typedef struct {
     double  velocity_z;     // Vitesse verticale
     int     is_falling;     // Flag chute
     int     current_sector; // Secteur actuel du joueur
+    
+    // NOUVEAU: Support du pitch (regarder haut/bas)
+    double  pitch;          // Angle vertical (radians)
+    double  pitch_cos;      // cos(pitch) précalculé
+    double  pitch_sin;      // sin(pitch) précalculé
+    double  horizon;        // Position Y de l'horizon sur l'écran
+    
+    // NOUVEAU: Stats HUD
+    int     health;
+    int     armor;
+    int     ammo;
 } t_player;
 
 // Map dynamique
@@ -116,18 +135,11 @@ typedef struct {
     int draw;  // Ce segment est-il visible?
 } t_skybox_vertex;
 
-// NOUVEAU : Skybox
+// NOUVEAU : Skybox (cubemap with 6 faces per skybox)
+// Texture index mapping: [0]=bottom, [1]=top, [2]=back, [3]=left, [4]=front, [5]=right
 typedef struct {
-    t_texture       *textures;      // Array of loaded skybox textures
-    int             num_textures;   // Number of loaded textures
-    int             current_id;     // ID of the currently active skybox
-    int             enabled;        // 1 = skybox visible, 0 = black background
-    double          offset;         // Optional: rotation offset
-    
-    // NOUVEAU : Vertices pour la box 3D (4 coins + 1 wrap)
-    t_skybox_vertex vertices[5];    // [0-3] = 4 corners, [4] = wrap of [0]
-    double          box_size;       // Taille de la boîte (ex: 10.0)
-    int             computed;       // Flag: skybox precomputed this frame?
+    char            *name;          // Skybox name
+    t_texture       textures[6];    // Fixed array of 6 cubemap faces
 } t_skybox;
 
 typedef struct {
@@ -150,8 +162,14 @@ typedef struct {
     
     // Rendu 3D
     double      *zbuffer;       // Buffer de profondeur (largeur ecran)
-    int         *ytop_buffer;   // Buffer clipping top (pre-alloue)
-    int         *ybottom_buffer; // Buffer clipping bottom (pre-alloue)
+    int         *ytop_pool;      // Pool for recursion (W * MAX_RECURSION_DEPTH)
+    int         *ybottom_pool;   // Pool for recursion (W * MAX_RECURSION_DEPTH)
+    
+    // Pre-computed trig tables for the current frame
+    double      *angle_table; // Ray angle for each X
+    double      *cos_table;   // cos(ray_angle) for each X
+    double      *sin_table;   // sin(ray_angle) for each X
+
     t_v2        *collision_buffer; // Buffer collision polygone (pre-alloue)
     int         collision_buffer_size; // Taille du buffer collision
     
@@ -159,12 +177,24 @@ typedef struct {
     t_texture   *wall_textures;
     int         num_textures;
     
+    // NOUVEAU : Textures d'ennemis
+    t_texture   *enemy_textures;
+    int         num_enemy_textures;
+    
     // NOUVEAU : Textures de sol/plafond
     t_texture   floor_texture;      // Texture du sol
     t_texture   ceiling_texture;    // Texture du plafond
     
-    // NOUVEAU : Skybox system
-    t_skybox        skybox;
+    // NOUVEAU : Skybox system (cubemap)
+    t_skybox        skyboxes[MAX_SKYBOX];  // Array of skyboxes
+    int             num_skyboxes;          // Number of loaded skyboxes
+    int             current_skybox;        // Active skybox index
+    int             skybox_enabled;        // 1 = enabled, 0 = disabled
+    
+    // Skybox 3D box precomputation (kept for geometry)
+    t_skybox_vertex skybox_vertices[5];    // [0-3] = 4 corners, [4] = wrap
+    double          skybox_box_size;       // Box size (ex: 10.0)
+    int             skybox_computed;       // Precomputed this frame?
     
     // NOUVEAU : Mode 2D
     t_render_mode   render_mode;    // Mode actuel
@@ -220,13 +250,17 @@ double  get_sector_floor_height(t_env *env, int sector_id, double x, double y); 
 
 // Bitmap font
 void    draw_text(t_env *env, const char *text, int x, int y, Uint32 color);
+// Bitmap font
+void    draw_text(t_env *env, const char *text, int x, int y, Uint32 color);
 void    draw_fps_on_screen(t_env *env);
+void    draw_hud(t_env *env); // NOUVEAU
 
 // Skybox
 int     init_skybox(t_env *env);
 void    render_skybox(t_env *env);         // Legacy (cylindrique)
 void    precompute_skybox(t_env *env);     // NOUVEAU: Precompute 3D box
-void    draw_skybox_column(t_env *env, int x, int y1, int y2, double ray_angle); // NOUVEAU
+void    draw_skybox_column(t_env *env, int x, int y1, int y2, double ray_angle);
+void    draw_skybox_geometric(t_env *env, int x, int y1, int y2, double angle); // NOUVEAU
 void    switch_skybox(t_env *env, int id);
 void    toggle_skybox(t_env *env);
 void    free_skybox(t_env *env);

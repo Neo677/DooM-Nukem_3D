@@ -12,4 +12,7 @@ int     box_intersect(t_v2 min1, t_v2 max1, t_v2 min2, t_v2 max2);
 int     point_in_polygon(t_v2 p, t_v2 *vertices, int nb_vertices);
 int     is_convex(t_v2 *vertices, int nb_vertices);
 
+// Distance calculations
+double  distance_point_to_segment(t_v2 p, t_v2 a, t_v2 b);
+
 #endif

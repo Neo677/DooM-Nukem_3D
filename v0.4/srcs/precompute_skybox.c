@@ -2,7 +2,6 @@
 #include <math.h>
 
 #define PI 3.14159265358979323846
-#define Z_NEAR_PLANE 0.1
 
 // Helper: Définir les coordonnées des 4 coins de la box
 static t_v2 get_corner_position(int i)
@@ -47,8 +46,8 @@ static void rotate_vertex(t_env *env, int i)
     double ty = pos.y - 5.0;
     
     // Rotation (formule doom_expl)
-    env->skybox.vertices[i].vx = tx * sin(angle) - ty * cos(angle);
-    env->skybox.vertices[i].vz = tx * cos(angle) + ty * sin(angle);
+    env->skybox_vertices[i].vx = tx * sin(angle) - ty * cos(angle);
+    env->skybox_vertices[i].vz = tx * cos(angle) + ty * sin(angle);
 }
 
 // Helper: Calcul de l'intersection avec le plan Z-near
@@ -67,8 +66,8 @@ static t_v2 get_intersection_near_plane(t_v2 p1, t_v2 p2, double near_z)
 // Étape 2: Clipping contre le plan Z-near
 static void clip_vertex(t_env *env, int i)
 {
-    t_skybox_vertex *v1 = &env->skybox.vertices[i];
-    t_skybox_vertex *v2 = &env->skybox.vertices[i + 1];
+    t_skybox_vertex *v1 = &env->skybox_vertices[i];
+    t_skybox_vertex *v2 = &env->skybox_vertices[i + 1];
     
     double near_z = Z_NEAR_PLANE;
     
@@ -128,7 +127,7 @@ static void clip_vertex(t_env *env, int i)
 // Étape 3: Projection écran
 static void project_vertex(t_env *env, int i)
 {
-    t_skybox_vertex *v = &env->skybox.vertices[i];
+    t_skybox_vertex *v = &env->skybox_vertices[i];
     
     if (!v->draw) return;
     
@@ -161,8 +160,8 @@ static void project_vertex(t_env *env, int i)
 // Étape 4: Précalcul des ranges pour interpolation
 static void precompute_ranges(t_env *env, int i)
 {
-    t_skybox_vertex *v = &env->skybox.vertices[i];
-    t_skybox_vertex *next = &env->skybox.vertices[i + 1];
+    t_skybox_vertex *v = &env->skybox_vertices[i];
+    t_skybox_vertex *next = &env->skybox_vertices[i + 1];
     
     if (!v->draw) return;
     
@@ -189,36 +188,36 @@ static void precompute_ranges(t_env *env, int i)
 // Fonction principale: Precompute skybox
 void precompute_skybox(t_env *env)
 {
-    if (!env->skybox.enabled) return;
+    if (!env->skybox_enabled) return;
     
     // Étape 1: Rotation des 4 coins
     for (int i = 0; i < 4; i++)
         rotate_vertex(env, i);
     
     // Wrap: copier le premier vertex à la position 4
-    env->skybox.vertices[4] = env->skybox.vertices[0];
+    env->skybox_vertices[4] = env->skybox_vertices[0];
     
     // Étape 2: Clipping Z-near
     for (int i = 0; i < 4; i++)
         clip_vertex(env, i);
     
-    env->skybox.vertices[4] = env->skybox.vertices[0];
+    env->skybox_vertices[4] = env->skybox_vertices[0];
     
     // Étape 3: Projection écran
     for (int i = 0; i < 4; i++)
         project_vertex(env, i);
     
-    env->skybox.vertices[4] = env->skybox.vertices[0];
+    env->skybox_vertices[4] = env->skybox_vertices[0];
     
     // Étape 4: Precalcul ranges
     for (int i = 0; i < 4; i++)
     {
-        if (env->skybox.vertices[i].draw)
+        if (env->skybox_vertices[i].draw)
             precompute_ranges(env, i);
     }
     
-    env->skybox.vertices[4] = env->skybox.vertices[0];
+    env->skybox_vertices[4] = env->skybox_vertices[0];
     
     // Marquer comme precompute
-    env->skybox.computed = 1;
+    env->skybox_computed = 1;
 }

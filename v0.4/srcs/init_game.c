@@ -1,6 +1,7 @@
 #include "env.h"
 #include "loader_sectors.h"
 #include "entities.h"
+#include <string.h>
 
 static void free_all(t_env *env)
 {
@@ -21,15 +22,33 @@ static void free_all(t_env *env)
     
     // Liberer textures
     free_textures(env);
+    
+    // Libérer textures d'ennemis
+    if (env->enemy_textures)
+    {
+        for (int i = 0; i < env->num_enemy_textures; i++)
+        {
+            if (env->enemy_textures[i].pixels)
+                free(env->enemy_textures[i].pixels);
+        }
+        free(env->enemy_textures);
+    }
+    
     free_skybox(env);
     free_entities(&env->entity_mgr);
     
     if (env->zbuffer)
         free(env->zbuffer);
-    if (env->ytop_buffer)
-        free(env->ytop_buffer);
-    if (env->ybottom_buffer)
-        free(env->ybottom_buffer);
+    if (env->ytop_pool)
+        free(env->ytop_pool);
+    if (env->ybottom_pool)
+        free(env->ybottom_pool);
+    if (env->angle_table)
+        free(env->angle_table);
+    if (env->cos_table)
+        free(env->cos_table);
+    if (env->sin_table)
+        free(env->sin_table);
     if (env->collision_buffer)
         free(env->collision_buffer);
     if (env->sdl.texture_pixels)
@@ -46,6 +65,11 @@ static void free_all(t_env *env)
 int init_game(int ac, char **av)
 {
     t_env env;
+    
+    // Initialiser toute la mémoire à zéro par sécurité
+    memset(&env, 0, sizeof(t_env));
+    
+    printf("Debug: sizeof(t_env) = %lu bytes\n", sizeof(t_env));
     
     // VÉRIFICATION : Il faut un fichier de map en argument
     if (ac < 2)
@@ -65,9 +89,14 @@ int init_game(int ac, char **av)
     env.last_time = SDL_GetTicks();
     env.wall_textures = NULL;
     env.num_textures = 0;
+    env.enemy_textures = NULL;
+    env.num_enemy_textures = 0;
     env.zbuffer = NULL;
-    env.ytop_buffer = NULL;
-    env.ybottom_buffer = NULL;
+    env.ytop_pool = NULL;
+    env.ybottom_pool = NULL;
+    env.angle_table = NULL;
+    env.cos_table = NULL;
+    env.sin_table = NULL;
     env.collision_buffer = NULL;
     env.collision_buffer_size = MAX_COLLISION_BUFFER;
     env.map.grid = NULL;
@@ -92,6 +121,8 @@ int init_game(int ac, char **av)
     // NOUVEAU : Init capture souris
     env.mouse_captured = 0;       // Souris libre par defaut
     
+    printf("Debug: Calling init_sdl with w=%d, h=%d\n", env.w, env.h);
+    
     // Initialiser SDL
     if (init_sdl(&env))
     {
@@ -101,11 +132,14 @@ int init_game(int ac, char **av)
     
     // Allouer buffers
     env.zbuffer = (double *)malloc(sizeof(double) * env.w);
-    env.ytop_buffer = (int *)malloc(sizeof(int) * env.w);
-    env.ybottom_buffer = (int *)malloc(sizeof(int) * env.w);
+    env.ytop_pool = (int *)malloc(sizeof(int) * env.w * MAX_RECURSION_DEPTH);
+    env.ybottom_pool = (int *)malloc(sizeof(int) * env.w * MAX_RECURSION_DEPTH);
+    env.angle_table = (double *)malloc(sizeof(double) * env.w);
+    env.cos_table = (double *)malloc(sizeof(double) * env.w);
+    env.sin_table = (double *)malloc(sizeof(double) * env.w);
     env.collision_buffer = (t_v2 *)malloc(sizeof(t_v2) * MAX_COLLISION_BUFFER);
     
-    if (!env.zbuffer || !env.ytop_buffer || !env.ybottom_buffer || !env.collision_buffer)
+    if (!env.zbuffer || !env.ytop_pool || !env.ybottom_pool || !env.collision_buffer || !env.angle_table || !env.cos_table || !env.sin_table)
     {
         DEBUG_LOG("Erreur allocation buffers\n");
         free_all(&env);
@@ -126,7 +160,15 @@ int init_game(int ac, char **av)
     {
         DEBUG_LOG("Erreur initialisation skybox\n");
         // Non-fatal, on peut continuer sans skybox
-        env.skybox.enabled = 0;
+        env.skybox_enabled = 0;
+    }
+    
+    // NOUVEAU : Charger les sprites d'ennemis
+    VERBOSE_LOG("Chargement des sprites ennemis...\n");
+    if (load_enemy_sprites(&env) != 0)
+    {
+        DEBUG_LOG("Erreur lors du chargement des sprites ennemis\n");
+        // Non-fatal, on peut continuer
     }
     
     // Initialiser map et joueur

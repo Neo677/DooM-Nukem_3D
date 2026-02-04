@@ -60,7 +60,7 @@ static void render_horizontal_line(t_env *env, int y, int is_floor)
         // FENÊTRE SUR LE CIEL (SKYLIGHT)
         // Si c'est le plafond, que la skybox est active, et qu'on est au centre de la map (3.0-7.0)
         // On ne dessine pas le pixel -> la skybox (deja dessinee derriere) sera visible
-        if (!is_floor && env->skybox.enabled)
+        if (!is_floor && env->skybox_enabled)
         {
             if (world_x > 3.0 && world_x < 7.0 && world_z > 3.0 && world_z < 7.0)
                 continue;

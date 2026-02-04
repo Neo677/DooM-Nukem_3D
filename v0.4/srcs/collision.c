@@ -1,5 +1,41 @@
 #include "collision.h"
 
+#define EPSILON 1e-6
+
+double norm_vector(double x, double y)
+{
+    return (sqrt(x * x + y * y));
+}
+
+// Projette le vecteur move pour qu'il glisse le long du mur défini par p1 -> p2
+t_v2 parallel_movement(t_v2 move, t_v2 p1, t_v2 p2)
+{
+    double  norm_move;
+    double  norm_wall;
+    double  scalar;
+    double  wall_x;
+    double  wall_y;
+
+    wall_x = p2.x - p1.x;
+    wall_y = p2.y - p1.y;
+
+    norm_move = norm_vector(move.x, move.y);
+    norm_wall = norm_vector(wall_x, wall_y);
+
+    if (norm_wall < EPSILON || norm_move < EPSILON)
+        return ((t_v2){0, 0});
+
+    // Projection scalaire
+    scalar = (wall_x * move.x + wall_y * move.y) / (norm_wall * norm_wall);
+    
+    // Nouveau vecteur projeté
+    t_v2 slide;
+    slide.x = wall_x * scalar;
+    slide.y = wall_y * scalar;
+
+    return (slide);
+}
+
 // Intersection de segments [p1,p2] et [p3,p4]
 // Retourne 1 si intersection, et remplit *intersection si non NULL
 int intersect_segments(t_v2 p1, t_v2 p2, t_v2 p3, t_v2 p4, t_v2 *intersection)
@@ -14,10 +50,10 @@ int intersect_segments(t_v2 p1, t_v2 p2, t_v2 p3, t_v2 p4, t_v2 *intersection)
     double qp_cross_r = v2_cross(q_minus_p, r);
     
     // Si r x s = 0, lignes paralleles
-    if (fabs(r_cross_s) < 1e-6)
+    if (fabs(r_cross_s) < EPSILON)
     {
         // Colineaires si (q-p) x r = 0
-        if (fabs(qp_cross_r) < 1e-6)
+        if (fabs(qp_cross_r) < EPSILON)
         {
             // Verifier chevauchement (plus complexe, ignore pour l'instant)
             return (0); 
@@ -55,11 +91,18 @@ int box_intersect(t_v2 min1, t_v2 max1, t_v2 min2, t_v2 max2)
 int point_in_polygon(t_v2 p, t_v2 *vertices, int nb_vertices)
 {
     int i, j, c = 0;
+    double y_diff;
+    
+    if (!vertices || nb_vertices < 3)
+        return (0);
+    
     for (i = 0, j = nb_vertices - 1; i < nb_vertices; j = i++)
     {
+        y_diff = vertices[j].y - vertices[i].y;
         if (((vertices[i].y > p.y) != (vertices[j].y > p.y)) &&
+            fabs(y_diff) > EPSILON &&
             (p.x < (vertices[j].x - vertices[i].x) * (p.y - vertices[i].y) / 
-            (vertices[j].y - vertices[i].y) + vertices[i].x))
+            y_diff + vertices[i].x))
             c = !c;
     }
     return c;
@@ -68,7 +111,8 @@ int point_in_polygon(t_v2 p, t_v2 *vertices, int nb_vertices)
 // Verifie si un polygone est convexe (tous les cross products de même signe)
 int is_convex(t_v2 *vertices, int nb_vertices)
 {
-    if (nb_vertices < 3) return (0);
+    if (!vertices || nb_vertices < 3)
+        return (0);
     
     int neg = 0;
     int pos = 0;
@@ -84,10 +128,34 @@ int is_convex(t_v2 *vertices, int nb_vertices)
         
         double cross = v2_cross(ab, bc);
         
-        if (cross < 0) neg++;
-        else if (cross > 0) pos++;
+        if (cross < -EPSILON) neg++;
+        else if (cross > EPSILON) pos++;
         
         if (neg && pos) return (0); // Signes mixtes => concave
     }
     return (1);
+}
+
+// Calculate minimum distance from point p to line segment [a, b]
+double distance_point_to_segment(t_v2 p, t_v2 a, t_v2 b)
+{
+    t_v2 ab = v2_sub(b, a);
+    t_v2 ap = v2_sub(p, a);
+    
+    double ab_len_sq = v2_dot(ab, ab);
+    
+    // Degenerate case: segment is a point
+    if (ab_len_sq < EPSILON)
+        return sqrt(v2_dot(ap, ap));
+    
+    // Project point onto line, clamped to segment
+    double t = v2_dot(ap, ab) / ab_len_sq;
+    if (t < 0.0) t = 0.0;
+    if (t > 1.0) t = 1.0;
+    
+    // Find closest point on segment
+    t_v2 closest = v2_add(a, v2_mul(ab, t));
+    t_v2 diff = v2_sub(p, closest);
+    
+    return sqrt(v2_dot(diff, diff));
 }

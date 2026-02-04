@@ -4,7 +4,7 @@
 // ============ ENGINE CONSTANTS ============
 
 // Rendering
-#define Z_NEAR_PLANE 0.1
+#define Z_NEAR_PLANE 0.2
 #define FOG_MAX_DISTANCE 20.0
 #define FOG_MIN_INTENSITY 0.1
 
@@ -22,6 +22,10 @@
 // Rendering limits
 #define MAX_RECURSION_DEPTH 32
 #define MAX_RENDER_DISTANCE 100.0
+
+// Skybox
+#define MAX_SKYBOX 8
+#define SKYBOX_FACES 6
 
 // Debug
 #ifdef DEBUG_MODE

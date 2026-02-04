@@ -88,12 +88,16 @@ static int parse_one_sector(int fd, t_sector *sector)
     sector->vertices = malloc(sizeof(int) * sector->nb_vertices);
     sector->neighbors = malloc(sizeof(int) * sector->nb_vertices);
     sector->wall_textures = malloc(sizeof(int) * sector->nb_vertices);
+    sector->upper_textures = malloc(sizeof(int) * sector->nb_vertices);
+    sector->lower_textures = malloc(sizeof(int) * sector->nb_vertices);
     
     if (!sector->vertices || !sector->neighbors || !sector->wall_textures)
     {
         if (sector->vertices) free(sector->vertices);
         if (sector->neighbors) free(sector->neighbors);
         if (sector->wall_textures) free(sector->wall_textures);
+        if (sector->upper_textures) free(sector->upper_textures);
+        if (sector->lower_textures) free(sector->lower_textures);
         return (-1);
     }
     
@@ -170,6 +174,25 @@ static int parse_one_sector(int fd, t_sector *sector)
         sector->wall_textures[i] = strtod(ptr, &ptr);
     }
     free(line);
+    
+    // Initialize upper/lower with main texture by default
+    for (int i=0; i<sector->nb_vertices; i++) {
+        sector->upper_textures[i] = sector->wall_textures[i];
+        sector->lower_textures[i] = sector->wall_textures[i];
+    }
+    
+    // 7. Optional: Upper/Lower Textures
+    // Check if next line starts with 'Upper' or just numbers (Optional)
+    // Caveat: We don't have peek. But we can assume if there's data, it's for this sector.
+    // However, the function returns if it reads the next 'Sector' line.
+    // The main loop reads 'Sector N'.
+    // So we assume extra lines are consumed here if they exist.
+    // BUT getting a line might consume 'Sector N+1'.
+    // Since we don't have a peek/unget, this is risky.
+    // SAFE APPROACH: Only parse if we have a specific tag, but we can't unget.
+    
+    // FOR NOW: Stick to default initialization (copies of wall_textures).
+    // Future improvement: Add explicit format versioning or robust parsing.
     
     return (0);
 }

@@ -1,0 +1,81 @@
+# Doom-Nukem Demo Map
+# Showcases portals, height variations, slopes, and textures
+
+Vertices 20
+# Main Hall (0-3)
+0 0.0 0.0
+1 15.0 0.0
+2 15.0 8.0
+3 0.0 8.0
+
+# Left Room (4-7)
+4 0.0 8.0
+5 8.0 8.0
+6 8.0 15.0
+7 0.0 15.0
+
+# Right Room (8-11)
+8 15.0 8.0
+9 23.0 8.0
+10 23.0 15.0
+11 15.0 15.0
+
+# Upper Corridor (12-15)
+12 5.0 15.0
+13 10.0 15.0
+14 10.0 20.0
+15 5.0 20.0
+
+# Secret Room (16-19)
+16 10.0 0.0
+17 15.0 0.0
+18 15.0 5.0
+19 10.0 5.0
+
+Sectors 5
+
+# Sector 0: Main Hall (normal height)
+Sector 0
+4
+0 1 2 3
+-1 4 1 2
+0.0 4.0
+0 1
+0 0 0 0
+
+# Sector 1: Right Room (elevated platform)
+Sector 1
+4
+8 9 10 11
+0 -1 -1 3
+1.0 5.0
+0 1
+1 1 1 1
+
+# Sector 2: Left Room (sunken area)
+Sector 2
+4
+4 5 6 7
+0 -1 3 -1
+-0.5 3.5
+0 1
+0 0 0 0
+
+# Sector 3: Upper Corridor (sloped floor)
+Sector 3
+4
+12 13 14 15
+2 1 -1 -1
+0.0 4.0
+0.5 0.0 0 0
+0 1
+1 0 1 1
+
+# Sector 4: Secret Room (low ceiling)
+Sector 4
+4
+16 17 18 19
+-1 0 -1 -1
+0.0 3.0
+0 1
+0 1 0 0

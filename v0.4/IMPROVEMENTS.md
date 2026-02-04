@@ -131,7 +131,7 @@ make  # Default (no debug)
 
 ### Performance Optimizations
 1. ✅ ~~Fix memory leaks~~ (DONE)
-2. ⏳ Pre-calculate trigonometry tables (cos/sin for each screen column)
+2. ✅ ~~Pre-calculate trigonometry tables (cos/sin for each screen column)~~ (DONE)
 3. ⏳ Implement frustum culling (skip sectors outside FOV)
 4. ⏳ Add distance culling (skip far sectors)
 5. ⏳ Optimize `point_in_polygon()` with SIMD
@@ -139,7 +139,7 @@ make  # Default (no debug)
 ### Code Quality
 1. ✅ ~~Remove magic numbers~~ (DONE)
 2. ✅ ~~Debug logging system~~ (DONE)
-3. ⏳ Split render_sector.c (590 lines → multiple files)
+3. ✅ ~~Split render_sector.c (590 lines → multiple files)~~ (DONE)
 4. ⏳ Add unit tests for collision
 5. ⏳ Document all functions (Doxygen style)
 

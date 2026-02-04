@@ -22,6 +22,8 @@ typedef struct s_sector {
     int     floor_texture;
     int     ceiling_texture;
     int     *wall_textures;     // Texture par mur
+    int     *upper_textures;    // Texture mur haut (portal)
+    int     *lower_textures;    // Texture mur bas (portal)
     
     // Slopes (Phase 3)
     double  floor_slope;        // Inclinaison sol (0.0 = plat)

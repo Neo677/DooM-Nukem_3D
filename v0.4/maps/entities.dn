@@ -1,16 +1,18 @@
-# Doom Nukem - Entity Placement
-# Format: TYPE subtype x y sector
+# Entity Definitions
+# Format: type x y sector_id
 
-# Ennemis
-ENEMY zombie 5.0 5.0 0
-ENEMY zombie 8.0 3.0 0
-ENEMY imp 12.0 7.0 1
+Entities 8
 
-# Objets
-PICKUP health_small 3.0 2.0 0
-PICKUP ammo_bullets 6.0 4.0 0
-PICKUP health_large 15.0 10.0 2
-PICKUP ammo_shells 10.0 8.0 1
+# Enemies in demo map
+enemy 7.5 4.0 0
+enemy 18.0 11.5 1
+enemy 4.0 11.5 2
 
-# Armes
-PICKUP weapon_shotgun 7.0 7.0 1
+# Enemies in arena
+enemy 7.5 7.5 1
+enemy 12.0 7.5 0
+
+# Items
+item 12.5 2.5 4
+item 16.5 11.5 0
+item 7.5 17.5 3

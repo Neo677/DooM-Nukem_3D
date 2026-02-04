@@ -42,6 +42,7 @@ static t_entity *parse_enemy(char *line, int id)
     char type_str[32];
     double x, y;
     int sector;
+    e_enemy_type enemy_type;
     
     if (sscanf(line, "ENEMY %s %lf %lf %d", type_str, &x, &y, &sector) != 4)
         return (NULL);
@@ -49,41 +50,75 @@ static t_entity *parse_enemy(char *line, int id)
     entity = malloc(sizeof(t_entity));
     if (!entity) return (NULL);
     
+    // Déterminer le type d'ennemi par son nom
+    enemy_type = ENEMY_ZOMBIEMAN; // Par défaut
+    
+    if (strcmp(type_str, "zombieman") == 0)
+        enemy_type = ENEMY_ZOMBIEMAN;
+    else if (strcmp(type_str, "shotgun_guy") == 0 || strcmp(type_str, "shotgunguy") == 0)
+        enemy_type = ENEMY_SHOTGUN_GUY;
+    else if (strcmp(type_str, "imp") == 0 || strcmp(type_str, "doom_imp") == 0)
+        enemy_type = ENEMY_DOOM_IMP;
+    else if (strcmp(type_str, "demon") == 0 || strcmp(type_str, "pinky") == 0)
+        enemy_type = ENEMY_DEMON;
+    else if (strcmp(type_str, "lost_soul") == 0 || strcmp(type_str, "lostsoul") == 0)
+        enemy_type = ENEMY_LOST_SOUL;
+    else if (strcmp(type_str, "cacodemon") == 0)
+        enemy_type = ENEMY_CACODEMON;
+    else if (strcmp(type_str, "baron") == 0 || strcmp(type_str, "baron_of_hell") == 0)
+        enemy_type = ENEMY_BARON_OF_HELL;
+    else if (strcmp(type_str, "hell_razer") == 0 || strcmp(type_str, "hellrazer") == 0)
+        enemy_type = ENEMY_HELL_RAZER;
+    else if (strcmp(type_str, "mancubus") == 0)
+        enemy_type = ENEMY_MANCUBUS;
+    else if (strcmp(type_str, "revenant") == 0)
+        enemy_type = ENEMY_REVENANT;
+    else if (strcmp(type_str, "pain_elemental") == 0 || strcmp(type_str, "painelemental") == 0)
+        enemy_type = ENEMY_PAIN_ELEMENTAL;
+    else if (strcmp(type_str, "cyberdemon") == 0)
+        enemy_type = ENEMY_CYBERDEMON;
+    else if (strcmp(type_str, "tyrant") == 0)
+        enemy_type = ENEMY_TYRANT;
+    else if (strcmp(type_str, "harvester") == 0)
+        enemy_type = ENEMY_HARVESTER;
+    else if (strcmp(type_str, "whiplash") == 0)
+        enemy_type = ENEMY_WHIPLASH;
+    else if (strcmp(type_str, "gargoyle") == 0)
+        enemy_type = ENEMY_GARGOYLE;
+    else if (strcmp(type_str, "cuiball") == 0)
+        enemy_type = ENEMY_CUIBALL;
+    else if (strcmp(type_str, "nazi") == 0)
+        enemy_type = ENEMY_NAZI;
+    else if (strcmp(type_str, "scientist") == 0 || strcmp(type_str, "scientist_zombie") == 0)
+        enemy_type = ENEMY_SCIENTIST_ZOMBIE;
+    else if (strcmp(type_str, "zombie_earth") == 0)
+        enemy_type = ENEMY_ZOMBIE_EARTH;
+    else if (strcmp(type_str, "zombie_hell") == 0)
+        enemy_type = ENEMY_ZOMBIE_HELL;
+    else if (strcmp(type_str, "mecha_zombie") == 0 || strcmp(type_str, "mechazombie") == 0)
+        enemy_type = ENEMY_MECHA_ZOMBIE;
+    else
+    {
+        DEBUG_LOG("Warning: Unknown enemy type '%s', using zombieman\n", type_str);
+    }
+    
+    // Initialiser les données de base
     entity->type = ENTITY_ENEMY;
     entity->id = id;
     entity->x = x;
     entity->y = y;
     entity->z = 0.0;
     entity->sector = sector;
-    entity->sprite_id = 0;
-    entity->scale = 1.0;
     entity->active = 1;
     entity->next = NULL;
     
-    if (strcmp(type_str, "zombie") == 0)
-    {
-        entity->data.enemy.enemy_type = ENEMY_ZOMBIE;
-        entity->data.enemy.health = 100;
-        entity->sprite_id = 10;
-    }
-    else if (strcmp(type_str, "imp") == 0)
-    {
-        entity->data.enemy.enemy_type = ENEMY_IMP;
-        entity->data.enemy.health = 60;
-        entity->sprite_id = 11;
-    }
-    else if (strcmp(type_str, "demon") == 0)
-    {
-        entity->data.enemy.enemy_type = ENEMY_DEMON;
-        entity->data.enemy.health = 150;
-        entity->sprite_id = 12;
-    }
+    // Initialiser les données de l'ennemi avec la fonction dédiée
+    init_enemy_data(entity, enemy_type);
     
-    entity->data.enemy.angle = 0.0;
-    entity->data.enemy.state = 0;
+    // Le sprite_id a été configuré par init_enemy_data
     
-    VERBOSE_LOG("  Loaded enemy: %s at (%.1f, %.1f) sector %d\n", 
-           type_str, x, y, sector);
+    VERBOSE_LOG("  Loaded enemy: %s (%s) at (%.1f, %.1f) sector %d, sprite_id=%d\n", 
+           type_str, get_enemy_name(enemy_type), x, y, sector, entity->sprite_id);
     
     return (entity);
 }
