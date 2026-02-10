@@ -5,7 +5,7 @@
 
 static void free_all(t_env *env)
 {
-    // Liberer map grid
+    
     if (env->map.grid)
     {
         for (int i = 0; i < env->map.height; i++)
@@ -17,48 +17,41 @@ static void free_all(t_env *env)
         env->map.grid = NULL;
     }
     
-    // Liberer sectors
+    
     free_sectors(env);
     
-    // Liberer textures
+    
     free_textures(env);
     
-    // Libérer textures d'ennemis
+    
     if (env->enemy_textures)
     {
         for (int i = 0; i < env->num_enemy_textures; i++)
         {
             if (env->enemy_textures[i].pixels)
+            {
                 free(env->enemy_textures[i].pixels);
+                env->enemy_textures[i].pixels = NULL;
+            }
         }
         free(env->enemy_textures);
+        env->enemy_textures = NULL;
     }
     
     free_skybox(env);
-    free_entities(&env->entity_mgr);
+    free_entities(&env->entity_mgr); 
     
-    if (env->zbuffer)
-        free(env->zbuffer);
-    if (env->ytop_pool)
-        free(env->ytop_pool);
-    if (env->ybottom_pool)
-        free(env->ybottom_pool);
-    if (env->angle_table)
-        free(env->angle_table);
-    if (env->cos_table)
-        free(env->cos_table);
-    if (env->sin_table)
-        free(env->sin_table);
-    if (env->collision_buffer)
-        free(env->collision_buffer);
-    if (env->sdl.texture_pixels)
-        free(env->sdl.texture_pixels);
-    if (env->sdl.texture)
-        SDL_DestroyTexture(env->sdl.texture);
-    if (env->sdl.renderer)
-        SDL_DestroyRenderer(env->sdl.renderer);
-    if (env->sdl.window)
-        SDL_DestroyWindow(env->sdl.window);
+    if (env->zbuffer) { free(env->zbuffer); env->zbuffer = NULL; }
+    if (env->ytop_pool) { free(env->ytop_pool); env->ytop_pool = NULL; }
+    if (env->ybottom_pool) { free(env->ybottom_pool); env->ybottom_pool = NULL; }
+    if (env->angle_table) { free(env->angle_table); env->angle_table = NULL; }
+    if (env->cos_table) { free(env->cos_table); env->cos_table = NULL; }
+    if (env->sin_table) { free(env->sin_table); env->sin_table = NULL; }
+    if (env->collision_buffer) { free(env->collision_buffer); env->collision_buffer = NULL; }
+    if (env->sdl.texture_pixels) { free(env->sdl.texture_pixels); env->sdl.texture_pixels = NULL; }
+    if (env->sdl.texture) { SDL_DestroyTexture(env->sdl.texture); env->sdl.texture = NULL; }
+    if (env->sdl.renderer) { SDL_DestroyRenderer(env->sdl.renderer); env->sdl.renderer = NULL; }
+    if (env->sdl.window) { SDL_DestroyWindow(env->sdl.window); env->sdl.window = NULL; }
     SDL_Quit();
 }
 
@@ -66,12 +59,12 @@ int init_game(int ac, char **av)
 {
     t_env env;
     
-    // Initialiser toute la mémoire à zéro par sécurité
+    
     memset(&env, 0, sizeof(t_env));
     
     printf("Debug: sizeof(t_env) = %lu bytes\n", sizeof(t_env));
     
-    // VÉRIFICATION : Il faut un fichier de map en argument
+    
     if (ac < 2)
     {
         printf("Usage: %s <map_file.dn>\n", av[0]);
@@ -79,7 +72,7 @@ int init_game(int ac, char **av)
         return (1);
     }
     
-    // Initialiser valeurs
+    
     env.w = 800;
     env.h = 600;
     env.running = 0;
@@ -109,28 +102,28 @@ int init_game(int ac, char **av)
     env.entity_mgr.entities = NULL;
     env.entity_mgr.count = 0;
     
-    // NOUVEAU : Init vue 2D
-    env.render_mode = MODE_3D;  // Demarrer en 3D
-    env.view_2d.zoom = 50.0;    // 1 unite = 50 pixels
+    
+    env.render_mode = MODE_3D;  
+    env.view_2d.zoom = 50.0;    
     env.view_2d.offset.x = 0.0;
     env.view_2d.offset.y = 0.0;
-    env.view_2d.show_rays = 1;   // Rayons visibles par defaut
-    env.view_2d.show_grid = 1;   // Grille visible par defaut
-    env.view_2d.show_minimap = 0; // Minimap desactivee par defaut
+    env.view_2d.show_rays = 1;   
+    env.view_2d.show_grid = 1;   
+    env.view_2d.show_minimap = 0; 
     
-    // NOUVEAU : Init capture souris
-    env.mouse_captured = 0;       // Souris libre par defaut
+    
+    env.mouse_captured = 0;       
     
     printf("Debug: Calling init_sdl with w=%d, h=%d\n", env.w, env.h);
     
-    // Initialiser SDL
+    
     if (init_sdl(&env))
     {
         free_all(&env);
         return (1);
     }
     
-    // Allouer buffers
+    
     env.zbuffer = (double *)malloc(sizeof(double) * env.w);
     env.ytop_pool = (int *)malloc(sizeof(int) * env.w * MAX_RECURSION_DEPTH);
     env.ybottom_pool = (int *)malloc(sizeof(int) * env.w * MAX_RECURSION_DEPTH);
@@ -146,7 +139,7 @@ int init_game(int ac, char **av)
         return (1);
     }
     
-    // Initialiser systeme de textures
+    
     VERBOSE_LOG("Initialisation systeme de textures\n");
     if (init_textures(&env) != 0)
     {
@@ -155,27 +148,27 @@ int init_game(int ac, char **av)
         return (1);
     }
     
-    // NOUVEAU : Init Skybox
+    
     if (init_skybox(&env) != 0)
     {
         DEBUG_LOG("Erreur initialisation skybox\n");
-        // Non-fatal, on peut continuer sans skybox
+        
         env.skybox_enabled = 0;
     }
     
-    // NOUVEAU : Charger les sprites d'ennemis
+    
     VERBOSE_LOG("Chargement des sprites ennemis...\n");
     if (load_enemy_sprites(&env) != 0)
     {
         DEBUG_LOG("Erreur lors du chargement des sprites ennemis\n");
-        // Non-fatal, on peut continuer
+        
     }
     
-    // Initialiser map et joueur
+    
     init_map(&env);
     init_player(&env);
     
-    // Charger la map depuis l'argument (av[1])
+    
     VERBOSE_LOG("Loading Sectors from: %s\n", av[1]);
     if (load_sectors(&env, av[1]) == 0)
     {
@@ -198,31 +191,49 @@ int init_game(int ac, char **av)
         return (1);
     }
     
-    // Charger les entités (construire le chemin depuis le nom de la map)
-    // Ex: maps/sectors.dn -> maps/entities.dn
+    
+    if (env.sector_map.nb_sectors == 4 && strstr(av[1], "stairs.dn"))
+    {
+        t_sector *elevator = &env.sector_map.sectors[3];
+        elevator->target_floor = 3.0;
+        elevator->target_ceil = 4.0; 
+        elevator->speed = 0.02;
+        elevator->state = 1; 
+        elevator->trigger_id = 999; 
+        printf("✅ DEMO: Elevator activated in Sector 3 (Stairs Map)!\n");
+        
+        
+        env.player.pos.x = 2.0;
+        env.player.pos.y = 2.0;
+        env.player.angle = 0.0;
+        env.player.current_sector = 0;
+    }
+    
+    
+    
     char entities_path[256];
     snprintf(entities_path, sizeof(entities_path), "maps/entities.dn");
     
     if (load_entities(&env, entities_path) != 0)
     {
         DEBUG_LOG("Failed to load entities from: %s\n", entities_path);
-        // Non-fatal, on peut continuer sans entités
+        
     }
     
-    // Afficher le menu de demarrage
+    
     int menu_result = show_menu(&env);
     
     if (menu_result == 0)
     {
-        // L'utilisateur a quitte depuis le menu
+        
         free_all(&env);
         return (0);
     }
     
-    // Lancer jeu
+    
     game_loop(&env);
     
-    // Cleanup
+    
     free_all(&env);
     
     return (0);

@@ -4,25 +4,25 @@
 #define PI 3.14159265358979323846
 #define EPSILON 1e-6
 
-// ============ TRANSFORMATION MONDE → eCRAN ============
+
 
 static void world_to_screen(t_env *env, double wx, double wy, int *sx, int *sy)
 {
-    // Centrer sur le joueur
+    
     double rel_x = wx - env->player.pos.x;
     double rel_y = wy - env->player.pos.y;
     
-    // zoom et offset
+    
     *sx = (int)(rel_x * env->view_2d.zoom + env->w / 2 + env->view_2d.offset.x);
     *sy = (int)(rel_y * env->view_2d.zoom + env->h / 2 + env->view_2d.offset.y);
 }
 
-// ============ MURS ============
+
 static void draw_walls(t_env *env)
 {
-    // Grid walls removed
+    
 
-    // PHASE 3 SECTORS
+    
     if (env->sector_map.nb_sectors <= 0 || !env->sector_map.sectors || !env->sector_map.vertices)
         return;
     
@@ -40,7 +40,7 @@ static void draw_walls(t_env *env)
             int idx1 = sect->vertices[v];
             int idx2 = sect->vertices[(v + 1) % sect->nb_vertices];
             
-            // Vérifier que les indices sont valides
+            
             if (idx1 < 0 || idx1 >= env->sector_map.nb_vertices ||
                 idx2 < 0 || idx2 >= env->sector_map.nb_vertices)
                 continue;
@@ -54,16 +54,16 @@ static void draw_walls(t_env *env)
             
             Uint32 color = wall_color;
             if (sect->neighbors && sect->neighbors[v] >= 0)
-                color = 0xFFFF0000; // Portail rouge
+                color = 0xFFFF0000; 
             
             draw_line(new_point(sx1, sy1), new_point(sx2, sy2), env, color);
             
-            // Draw vertex
+            
             draw_circle(new_circle(0xFFFFFFFF, 0xFFFFFFFF, new_point(sx1, sy1), 2), env);
         }
         
-        // Draw Sector ID center (approx)
-        // Calculer centroid seulement si nb_vertices > 0
+        
+        
         if (sect->nb_vertices > 0)
         {
             double cx = 0, cy = 0;
@@ -94,21 +94,21 @@ static void draw_walls(t_env *env)
     }
 }
 
-// ============ JOUEUR ============
+
 
 static void draw_player(t_env *env)
 {
     int px, py;
     world_to_screen(env, env->player.pos.x, env->player.pos.y, &px, &py);
     
-    // Cercle pour le joueur
+    
     int radius = (int)(0.3 * env->view_2d.zoom);
     if (radius < 4) radius = 4;
     
     t_circle player_circle = new_circle(0xFF00AA00, 0xFF00FF00, new_point(px, py), radius);
     draw_circle(player_circle, env);
     
-    // Direction (ligne jaune)
+    
     double dir_x = cos(env->player.angle);
     double dir_y = sin(env->player.angle);
     
@@ -123,18 +123,18 @@ static void draw_player(t_env *env)
     draw_line(p1, p2, env, 0xFFFFFF00);
 }
 
-// ============ RAYONS (DEBUG) ============
+
 
 static double intersect_ray_segment(double ox, double oy, double dx, double dy, 
                                   double x1, double y1, double x2, double y2)
 {
-    // Ray: O + t*D
-    // Seg: A + u*(B-A)
+    
+    
     
     double seg_dx = x2 - x1;
     double seg_dy = y2 - y1;
     
-    // Produit vectoriel simplifié: dx * seg_dy - dy * seg_dx
+    
     double det = dx * seg_dy - dy * seg_dx;
     if (fabs(det) < EPSILON)
         return -1;
@@ -167,10 +167,10 @@ static void draw_rays(t_env *env)
         double dx = cos(ray_angle);
         double dy = sin(ray_angle);
         
-        double closest_dist = 1000.0; // Max draw dist
+        double closest_dist = 1000.0; 
         int hit_something = 0;
         
-        // Check ALL sector walls (Simple brute force for debug view)
+        
         for (int s = 0; s < env->sector_map.nb_sectors; s++)
         {
             t_sector *sect = &env->sector_map.sectors[s];
@@ -181,12 +181,12 @@ static void draw_rays(t_env *env)
             for (int v = 0; v < sect->nb_vertices; v++)
             {
                 if (sect->neighbors && sect->neighbors[v] >= 0)
-                    continue; // Skip Portals (transparent for rays)
+                    continue; 
                 
                 int idx1 = sect->vertices[v];
                 int idx2 = sect->vertices[(v + 1) % sect->nb_vertices];
                 
-                // Vérifier validité des indices
+                
                 if (idx1 < 0 || idx1 >= env->sector_map.nb_vertices ||
                     idx2 < 0 || idx2 >= env->sector_map.nb_vertices)
                     continue;
@@ -205,7 +205,7 @@ static void draw_rays(t_env *env)
             }
         }
         
-        // Draw Ray
+        
         double end_x = env->player.pos.x + dx * closest_dist;
         double end_y = env->player.pos.y + dy * closest_dist;
         
@@ -223,30 +223,30 @@ static void draw_rays(t_env *env)
     }
 }
 
-// ============ FONCTION PRINCIPALE ============
+
 void render_2d(t_env *env)
 {
-    // Fond noir
+    
     clear_image(env, 0xFF000000);
     
-    // Ordre de rendu (du fond au premier plan)
-    // draw_grid(env); // Removed
+    
+    
 
     draw_walls(env);
-    draw_rays(env);      // Rayons en dessous du joueur
+    draw_rays(env);      
     draw_player(env);
     
-    // FPS (en haut a gauche)
+    
     draw_fps_on_screen(env);
     
-    // Texte debug
+    
     char zoom_text[64];
     snprintf(zoom_text, sizeof(zoom_text), "Zoom: %.0fx", env->view_2d.zoom);
     draw_text(env, zoom_text, 10, 30, 0xFFAAAAAA);
     
     draw_text(env, "Mode: 2D Top-Down", 10, 50, 0xFFFFFFFF);
     
-    // Contrôles
+    
     draw_text(env, "TAB: Switch to 3D", 10, 80, 0xFF888888);
     draw_text(env, "+/-: Zoom", 10, 100, 0xFF888888);
     draw_text(env, "R: Toggle Rays", 10, 120, 0xFF888888);

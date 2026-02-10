@@ -55,7 +55,3 @@ double  v2_dist_sq(t_v2 a, t_v2 b)
     t_v2 diff = v2_sub(b, a);
     return (v2_dot(diff, diff));
 }
-
-// Returns 1 if intersection, 0 otherwise. Stores intersection in `out`
-// MOVED TO COLLISION.C to avoid duplicate
-

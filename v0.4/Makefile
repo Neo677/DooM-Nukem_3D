@@ -10,7 +10,7 @@ SRC = main_game.c init_game.c init_sdl.c clear_image.c \
       bmp_parser.c texture.c init_textures.c raycasting_dda.c \
       draw_textured_wall.c skybox.c precompute_skybox.c draw_skybox_column.c render_skybox_geometric.c map_loader.c sector_utils.c \
       geometry.c collision.c debug.c loader_sectors.c render_sector_utils.c render_sector_draw.c render_sector_core.c \
-      player_movement.c loader_entities.c \
+      player_movement.c sector_physics.c loader_entities.c \
       init_enemy_data.c load_enemy_sprites.c render_enemies.c enemy_ai.c hud.c 
 
 OBJ = $(addprefix $(OBJ_DIR)/, $(SRC:.c=.o))

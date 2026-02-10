@@ -10,7 +10,7 @@ void handle_input(t_env *env)
     double speed = 0.05;
     double rot_speed = 0.05;
     
-    // ========== TOGGLE 2D/3D avec TAB ==========
+    
     static int tab_pressed = 0;
     if (keys[SDL_SCANCODE_TAB])
     {
@@ -29,24 +29,24 @@ void handle_input(t_env *env)
         tab_pressed = 0;
     }
     
-    // ========== CONTRÔLES MODE 2D ==========
+    
     if (env->render_mode == MODE_2D)
     {
-        // Zoom +/- 
+        
         if (keys[SDL_SCANCODE_KP_PLUS] || keys[SDL_SCANCODE_EQUALS])
         {
-            env->view_2d.zoom *= 1.05;  // +5%
+            env->view_2d.zoom *= 1.05;  
             if (env->view_2d.zoom > 200.0)
                 env->view_2d.zoom = 200.0;
         }
         if (keys[SDL_SCANCODE_KP_MINUS] || keys[SDL_SCANCODE_MINUS])
         {
-            env->view_2d.zoom *= 0.95;  // -5%
+            env->view_2d.zoom *= 0.95;  
             if (env->view_2d.zoom < 10.0)
                 env->view_2d.zoom = 10.0;
         }
         
-        // Toggle rayons avec R
+        
         static int r_pressed = 0;
         if (keys[SDL_SCANCODE_R])
         {
@@ -61,7 +61,7 @@ void handle_input(t_env *env)
             r_pressed = 0;
         }
         
-        // Toggle grille avec G
+        
         static int g_pressed = 0;
         if (keys[SDL_SCANCODE_G])
         {
@@ -77,7 +77,7 @@ void handle_input(t_env *env)
         }
     }
     
-    // ========== TOGGLE MINIMAP avec M (fonctionne en mode 3D) ==========
+    
     static int m_pressed = 0;
     if (keys[SDL_SCANCODE_M])
     {
@@ -92,7 +92,7 @@ void handle_input(t_env *env)
         m_pressed = 0;
     }
     
-    // ========== TOGGLE CAPTURE SOURIS avec C ==========
+    
     static int c_pressed = 0;
     if (keys[SDL_SCANCODE_C])
     {
@@ -108,23 +108,24 @@ void handle_input(t_env *env)
         c_pressed = 0;
     }
     
-    // ========== MOUVEMENT JOUEUR (fonctionne dans les 2 modes) ==========
     
-    // Avancer/reculer
-    if (keys[SDL_SCANCODE_W] || keys[SDL_SCANCODE_UP])
+    
+    
+    
+    if (keys[SDL_SCANCODE_W])
     {
         double dx = cos(env->player.angle) * speed;
         double dy = sin(env->player.angle) * speed;
         player_move(env, dx, dy);
     }
-    if (keys[SDL_SCANCODE_S] || keys[SDL_SCANCODE_DOWN])
+    if (keys[SDL_SCANCODE_S])
     {
         double dx = -cos(env->player.angle) * speed;
         double dy = -sin(env->player.angle) * speed;
         player_move(env, dx, dy);
     }
     
-    // Strafe gauche/droite
+    
     if (keys[SDL_SCANCODE_A])
     {
         double dx = cos(env->player.angle - PI / 2) * speed;
@@ -138,58 +139,72 @@ void handle_input(t_env *env)
         player_move(env, dx, dy);
     }
     
-    // Rotation (fleches gauche/droite)
+    
     if (keys[SDL_SCANCODE_LEFT])
         env->player.angle -= rot_speed;
     if (keys[SDL_SCANCODE_RIGHT])
         env->player.angle += rot_speed;
     
-    // Normaliser l'angle
+    
     while (env->player.angle < 0)
         env->player.angle += 2 * PI;
     while (env->player.angle >= 2 * PI)
         env->player.angle -= 2 * PI;
     
-    // ========== PITCH (regarder haut/bas) avec souris ==========
+    
+    
     if (env->mouse_captured && env->render_mode == MODE_3D)
     {
-        // Sensibilité du pitch (ajustable)
         double pitch_sensitivity = 0.005;
-        
-        // Mettre à jour le pitch avec mouvement souris Y
         env->player.pitch += env->sdl.mouse_y * pitch_sensitivity;
-        
-        // Limiter le pitch (éviter de regarder trop haut/bas)
-        // Limites en radians: -1.0 (bas) à +1.5 (haut)
-        if (env->player.pitch < -1.0)
-            env->player.pitch = -1.0;
-        if (env->player.pitch > 1.5)
-            env->player.pitch = 1.5;
-        
-        // Précalculer cos/sin pour optimisation
-        env->player.pitch_cos = cos(env->player.pitch);
-        env->player.pitch_sin = sin(env->player.pitch);
-        
-        // Calculer la position de l'horizon
-        // La valeur 'scale' correspond à env->h / 2 comme référence
-        double horizon_scale = env->h / 2.0;
-        env->player.horizon = (env->h / 2.0) - (env->player.pitch * horizon_scale);
     }
     
-    // Aussi gérer la rotation horizontale avec la souris (si capturée)
+    
+    if (keys[SDL_SCANCODE_UP])
+        env->player.pitch += PITCH_SPEED;
+    if (keys[SDL_SCANCODE_DOWN])
+        env->player.pitch -= PITCH_SPEED;
+
+    
+    if (env->player.pitch < -0.8) env->player.pitch = -0.8;
+    if (env->player.pitch > 0.8) env->player.pitch = 0.8;
+    
+    
+    env->player.pitch_cos = cos(env->player.pitch);
+    env->player.pitch_sin = sin(env->player.pitch);
+    
+    
+    env->player.horizon = (env->h / 2.0) + (env->player.pitch * PITCH_FACTOR);
+
+    
+    if (keys[SDL_SCANCODE_SPACE])
+    {
+        if (!env->player.is_falling)
+        {
+            env->player.velocity_z = JUMP_VELOCITY;
+            env->player.is_falling = 1;
+            DEBUG_LOG("JUMP! vz=%.2f\n", env->player.velocity_z);
+        }
+    }
+    
+    
+    if (keys[SDL_SCANCODE_LSHIFT]) env->player.height += 0.05;
+    if (keys[SDL_SCANCODE_LCTRL]) env->player.height -= 0.05;
+    
+    
     if (env->mouse_captured && env->render_mode == MODE_3D)
     {
         double mouse_sensitivity = 0.002;
         env->player.angle += env->sdl.mouse_x * mouse_sensitivity;
         
-        // Normaliser l'angle après rotation souris
+        
         while (env->player.angle < 0)
             env->player.angle += 2 * PI;
         while (env->player.angle >= 2 * PI)
             env->player.angle -= 2 * PI;
     }
     
-    // ========== CONTROLES SKYBOX (B, 1, 2, 3) ==========
+    
     static int b_pressed = 0;
     if (keys[SDL_SCANCODE_B])
     {
@@ -207,4 +222,24 @@ void handle_input(t_env *env)
     if (keys[SDL_SCANCODE_1]) switch_skybox(env, 0);
     if (keys[SDL_SCANCODE_2]) switch_skybox(env, 1);
     if (keys[SDL_SCANCODE_3]) switch_skybox(env, 2);
+    
+    
+    static int f8_pressed = 0;
+    if (keys[SDL_SCANCODE_F8]) {
+        if (!f8_pressed) { env->debug_physics = !env->debug_physics; f8_pressed = 1; }
+    } else f8_pressed = 0;
+
+    static int f9_pressed = 0;
+    if (keys[SDL_SCANCODE_F9]) {
+        if (!f9_pressed) { env->slow_motion = !env->slow_motion; f9_pressed = 1; }
+    } else f9_pressed = 0;
+
+    static int f10_pressed = 0;
+    if (keys[SDL_SCANCODE_F10]) {
+        if (!f10_pressed) { 
+            if (!env->single_step_mode) env->single_step_mode = 1;
+            else env->step_trigger = 1; 
+            f10_pressed = 1; 
+        }
+    } else f10_pressed = 0;
 }

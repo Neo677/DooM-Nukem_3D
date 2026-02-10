@@ -3,20 +3,20 @@
 #include "defines.h"
 #include <stdlib.h>
 
-// Initialisation des données pour tous les types d'ennemis
-// Baseé sur les sprites disponibles dans assets/sprites_organized/monsters/
 
-// Baron of Hell
+
+
+
 void init_baron_of_hell(t_entity *entity)
 {
-    entity->sprite_id = 100; // ID sprite à ajuster
+    entity->sprite_id = 100; 
     entity->scale = 1.5;
     entity->data.enemy.health = 1000;
     entity->data.enemy.angle = 0.0;
-    entity->data.enemy.state = 0; // IDLE
+    entity->data.enemy.state = 0; 
 }
 
-// Cacodemon
+
 void init_cacodemon(t_entity *entity)
 {
     entity->sprite_id = 101;
@@ -26,7 +26,7 @@ void init_cacodemon(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Cuiball (Cube Ball)
+
 void init_cuiball(t_entity *entity)
 {
     entity->sprite_id = 102;
@@ -36,7 +36,7 @@ void init_cuiball(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Cyberdemon
+
 void init_cyberdemon(t_entity *entity)
 {
     entity->sprite_id = 103;
@@ -46,7 +46,7 @@ void init_cyberdemon(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Demon (Pinky)
+
 void init_demon(t_entity *entity)
 {
     entity->sprite_id = 104;
@@ -56,7 +56,7 @@ void init_demon(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Doom Imp
+
 void init_doom_imp(t_entity *entity)
 {
     entity->sprite_id = 105;
@@ -66,7 +66,7 @@ void init_doom_imp(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Gargoyle
+
 void init_gargoyle(t_entity *entity)
 {
     entity->sprite_id = 106;
@@ -76,7 +76,7 @@ void init_gargoyle(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Harvester
+
 void init_harvester(t_entity *entity)
 {
     entity->sprite_id = 107;
@@ -86,7 +86,7 @@ void init_harvester(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Hell Razer
+
 void init_hell_razer(t_entity *entity)
 {
     entity->sprite_id = 108;
@@ -96,7 +96,7 @@ void init_hell_razer(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Lost Soul
+
 void init_lost_soul(t_entity *entity)
 {
     entity->sprite_id = 109;
@@ -106,7 +106,7 @@ void init_lost_soul(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Mancubus
+
 void init_mancubus(t_entity *entity)
 {
     entity->sprite_id = 110;
@@ -116,7 +116,7 @@ void init_mancubus(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Mecha Zombie
+
 void init_mecha_zombie(t_entity *entity)
 {
     entity->sprite_id = 111;
@@ -126,7 +126,7 @@ void init_mecha_zombie(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Nazi
+
 void init_nazi(t_entity *entity)
 {
     entity->sprite_id = 112;
@@ -136,7 +136,7 @@ void init_nazi(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Pain Elemental
+
 void init_pain_elemental(t_entity *entity)
 {
     entity->sprite_id = 113;
@@ -146,7 +146,7 @@ void init_pain_elemental(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Revenant
+
 void init_revenant(t_entity *entity)
 {
     entity->sprite_id = 114;
@@ -156,7 +156,7 @@ void init_revenant(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Scientist Zombie
+
 void init_scientist_zombie(t_entity *entity)
 {
     entity->sprite_id = 115;
@@ -166,7 +166,7 @@ void init_scientist_zombie(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Shotgun Guy
+
 void init_shotgun_guy(t_entity *entity)
 {
     entity->sprite_id = 116;
@@ -176,7 +176,7 @@ void init_shotgun_guy(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Tyrant
+
 void init_tyrant(t_entity *entity)
 {
     entity->sprite_id = 117;
@@ -186,7 +186,7 @@ void init_tyrant(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Whiplash
+
 void init_whiplash(t_entity *entity)
 {
     entity->sprite_id = 118;
@@ -196,7 +196,7 @@ void init_whiplash(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Zombie Earth
+
 void init_zombie_earth(t_entity *entity)
 {
     entity->sprite_id = 119;
@@ -206,7 +206,7 @@ void init_zombie_earth(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Zombie Hell
+
 void init_zombie_hell(t_entity *entity)
 {
     entity->sprite_id = 120;
@@ -216,7 +216,7 @@ void init_zombie_hell(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Zombieman (classic)
+
 void init_zombieman(t_entity *entity)
 {
     entity->sprite_id = 121;
@@ -226,7 +226,7 @@ void init_zombieman(t_entity *entity)
     entity->data.enemy.state = 0;
 }
 
-// Fonction principale d'initialisation des données ennemies
+
 void init_enemy_data(t_entity *entity, e_enemy_type type)
 {
     if (!entity)
@@ -305,7 +305,7 @@ void init_enemy_data(t_entity *entity, e_enemy_type type)
             init_zombieman(entity);
             break;
         default:
-            // Type par défaut (Zombieman)
+            
             init_zombieman(entity);
             break;
     }

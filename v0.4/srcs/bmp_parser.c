@@ -16,13 +16,13 @@ int load_bmp_texture(const char *filename, t_texture *tex)
     if (header[0] != 'B' || header[1] != 'M')
         return (printf("Erreur: pas un fichier BMP valide\n"), fclose(f), -1);
     
-    int offset = *(int*)&header[10];           // Debut des pixels
-    tex->width = *(int*)&header[18];            // Largeur
-    tex->height = *(int*)&header[22];           // Hauteur
-    int bpp = *(short*)&header[28];             // Bits per pixel
+    int offset = *(int*)&header[10];           
+    tex->width = *(int*)&header[18];            
+    tex->height = *(int*)&header[22];           
+    int bpp = *(short*)&header[28];             
     
-    // printf("[DEBUG] Chargement BMP: %s (%dx%d, %dbpp)\n", filename, tex->width, tex->height, bpp);
-    // Verifier format supporte
+    
+    
     if (bpp != 24 && bpp != 32)
         return (printf("Erreur: seulement 24bpp et 32bpp\n"), fclose(f), -1);
     tex->pixels = (Uint32*)malloc(tex->width * tex->height * sizeof(Uint32));
@@ -33,20 +33,20 @@ int load_bmp_texture(const char *filename, t_texture *tex)
     unsigned char *row = (unsigned char*)malloc(row_size);
     if (!row)
         return (printf("Erreur: allocation row failed\n"), free(tex->pixels), fclose(f), -1);
-    fseek(f, offset, SEEK_SET); // Positionner au debut des pixels
-    for (int y = tex->height - 1; y >= 0; y--) // Lire les pixels (BMP est stocke de bas en haut)
+    fseek(f, offset, SEEK_SET); 
+    for (int y = tex->height - 1; y >= 0; y--) 
     {
         if (fread(row, 1, row_size, f) != (size_t)row_size)
             return (printf("Erreur: lecture pixels failed\n"), free(row), free(tex->pixels), fclose(f), -1);
         for (int x = 0; x < tex->width; x++) {
             int pixel_idx = y * tex->width + x;
-            if (bpp == 24) {  // Format BGR
+            if (bpp == 24) {  
                 unsigned char b = row[x * 3 + 0];
                 unsigned char g = row[x * 3 + 1];
                 unsigned char r = row[x * 3 + 2];
-                tex->pixels[pixel_idx] = 0xFF000000 | (r << 16) | (g << 8) | b; // Convertir en ARGB8888
-            } else { // 32 bpp 
-                unsigned char b = row[x * 4 + 0]; // Format BGRA
+                tex->pixels[pixel_idx] = 0xFF000000 | (r << 16) | (g << 8) | b; 
+            } else { 
+                unsigned char b = row[x * 4 + 0]; 
                 unsigned char g = row[x * 4 + 1];
                 unsigned char r = row[x * 4 + 2];
                 unsigned char a = row[x * 4 + 3];

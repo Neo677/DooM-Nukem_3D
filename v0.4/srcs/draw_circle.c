@@ -1,6 +1,6 @@
 #include "env.h"
 
-// Helper pour remplir une ligne horizontale
+
 static void fill_hline(Uint32 color, t_point p1, t_point p2, t_env *env)
 {
     while (p1.x <= p2.x)
@@ -11,10 +11,10 @@ static void fill_hline(Uint32 color, t_point p1, t_point p2, t_env *env)
     }
 }
 
-// Dessiner le contour (Bresenham circle midpoint algorithm)
+
 static void draw_outline(t_circle circle, int x, int y, t_env *env)
 {
-    // 8 points de symetrie
+    
     int points[8][2] = {
         {circle.center.x + x, circle.center.y + y},
         {circle.center.x - x, circle.center.y + y},
@@ -35,7 +35,7 @@ static void draw_outline(t_circle circle, int x, int y, t_env *env)
     }
 }
 
-// Algorithme de Bresenham pour cercle rempli
+
 void    draw_circle(t_circle circle, t_env *env)
 {
     int x = 0;
@@ -44,7 +44,7 @@ void    draw_circle(t_circle circle, t_env *env)
     
     while (x <= y)
     {
-        // Remplir 4 lignes horizontales (symetrie)
+        
         fill_hline(circle.color, 
                    new_point(circle.center.x - x, circle.center.y + y), 
                    new_point(circle.center.x + x, circle.center.y + y), env);
@@ -58,10 +58,10 @@ void    draw_circle(t_circle circle, t_env *env)
                    new_point(circle.center.x - y, circle.center.y + x), 
                    new_point(circle.center.x + y, circle.center.y + x), env);
         
-        // Dessiner le contour
+        
         draw_outline(circle, x, y, env);
         
-        // Prochaine iteration
+        
         if (p < 0)
             p += 4 * x++ + 6;
         else

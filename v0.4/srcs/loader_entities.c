@@ -7,7 +7,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// Réutiliser get_next_line
+
 static int get_next_line(int fd, char **line)
 {
     char    buf[1];
@@ -35,7 +35,7 @@ static int get_next_line(int fd, char **line)
     return (1);
 }
 
-// Parse une ligne d'ennemi
+
 static t_entity *parse_enemy(char *line, int id)
 {
     t_entity *entity;
@@ -50,8 +50,8 @@ static t_entity *parse_enemy(char *line, int id)
     entity = malloc(sizeof(t_entity));
     if (!entity) return (NULL);
     
-    // Déterminer le type d'ennemi par son nom
-    enemy_type = ENEMY_ZOMBIEMAN; // Par défaut
+    
+    enemy_type = ENEMY_ZOMBIEMAN; 
     
     if (strcmp(type_str, "zombieman") == 0)
         enemy_type = ENEMY_ZOMBIEMAN;
@@ -102,7 +102,7 @@ static t_entity *parse_enemy(char *line, int id)
         DEBUG_LOG("Warning: Unknown enemy type '%s', using zombieman\n", type_str);
     }
     
-    // Initialiser les données de base
+    
     entity->type = ENTITY_ENEMY;
     entity->id = id;
     entity->x = x;
@@ -112,10 +112,10 @@ static t_entity *parse_enemy(char *line, int id)
     entity->active = 1;
     entity->next = NULL;
     
-    // Initialiser les données de l'ennemi avec la fonction dédiée
+    
     init_enemy_data(entity, enemy_type);
     
-    // Le sprite_id a été configuré par init_enemy_data
+    
     
     VERBOSE_LOG("  Loaded enemy: %s (%s) at (%.1f, %.1f) sector %d, sprite_id=%d\n", 
            type_str, get_enemy_name(enemy_type), x, y, sector, entity->sprite_id);
@@ -123,7 +123,7 @@ static t_entity *parse_enemy(char *line, int id)
     return (entity);
 }
 
-// Parse une ligne d'objet
+
 static t_entity *parse_pickup(char *line, int id)
 {
     t_entity *entity;

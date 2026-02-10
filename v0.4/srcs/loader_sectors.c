@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// Helper pour lire ligne par ligne (simplifie)
+
 static int get_next_line(int fd, char **line)
 {
     char    buf[1];
@@ -36,7 +36,7 @@ static int parse_vertices(int fd, t_env *env)
     char *line;
     int count = 0;
     
-    // Lire jusqu'a trouver "Vertices N"
+    
     while (get_next_line(fd, &line) > 0)
     {
         if (strncmp(line, "Vertices", 8) == 0)
@@ -51,7 +51,7 @@ static int parse_vertices(int fd, t_env *env)
     if (count <= 0) return (-1);
     
     env->sector_map.nb_vertices = count;
-    env->sector_map.vertices = malloc(sizeof(t_vertex) * count);
+    env->sector_map.vertices = calloc(count, sizeof(t_vertex));
     if (!env->sector_map.vertices)
         return (-1);
     
@@ -59,11 +59,12 @@ static int parse_vertices(int fd, t_env *env)
     {
         if (get_next_line(fd, &line) <= 0) return (-1);
         
-        int id;
-        double x, y;
-        sscanf(line, "%d %lf %lf", &id, &x, &y);
+        int id = 0;
+        double x = 0.0;
+        double y = 0.0;
+        int ret_scan = sscanf(line, "%d %lf %lf", &id, &x, &y);
         
-        if (id >= 0 && id < count)
+        if (ret_scan == 3 && id >= 0 && id < count)
         {
             env->sector_map.vertices[id].num = id;
             env->sector_map.vertices[id].x = x;
@@ -79,17 +80,18 @@ static int parse_one_sector(int fd, t_sector *sector)
 {
     char *line;
     
-    // 1. Nb vertices
+    
     if (get_next_line(fd, &line) <= 0) return (-1);
     sector->nb_vertices = atoi(line);
     free(line);
     
-    // Allocations
-    sector->vertices = malloc(sizeof(int) * sector->nb_vertices);
-    sector->neighbors = malloc(sizeof(int) * sector->nb_vertices);
-    sector->wall_textures = malloc(sizeof(int) * sector->nb_vertices);
-    sector->upper_textures = malloc(sizeof(int) * sector->nb_vertices);
-    sector->lower_textures = malloc(sizeof(int) * sector->nb_vertices);
+    
+    
+    sector->vertices = calloc(sector->nb_vertices, sizeof(int));
+    sector->neighbors = calloc(sector->nb_vertices, sizeof(int));
+    sector->wall_textures = calloc(sector->nb_vertices, sizeof(int));
+    sector->upper_textures = calloc(sector->nb_vertices, sizeof(int));
+    sector->lower_textures = calloc(sector->nb_vertices, sizeof(int));
     
     if (!sector->vertices || !sector->neighbors || !sector->wall_textures)
     {
@@ -100,100 +102,74 @@ static int parse_one_sector(int fd, t_sector *sector)
         if (sector->lower_textures) free(sector->lower_textures);
         return (-1);
     }
+
+    
+    for (int i = 0; i < sector->nb_vertices; i++) {
+        sector->neighbors[i] = -1;
+    }
     
     sector->rendered = 0;
     
-    // 2. Vertex indices
-    if (get_next_line(fd, &line) <= 0) return (-1);
-    // Parse line manually or using strtok
+    
+    if (get_next_line(fd, &line) <= 0) 
+        return (-1);
+    
     char *ptr = line;
     for(int i=0; i<sector->nb_vertices; i++) {
         sector->vertices[i] = strtod(ptr, &ptr);
     }
-    free(line);
-
-    // 3. Neighbors
-    if (get_next_line(fd, &line) <= 0) return (-1);
+    free(line);    
+    if (get_next_line(fd, &line) <= 0) 
+        return (-1);
     ptr = line;
     for(int i=0; i<sector->nb_vertices; i++) {
         sector->neighbors[i] = strtod(ptr, &ptr);
     }
     free(line);
-    
-    // 4. Heights
-    if (get_next_line(fd, &line) <= 0) return (-1);
+    if (get_next_line(fd, &line) <= 0) 
+        return (-1);
     sscanf(line, "%lf %lf", &sector->floor_height, &sector->ceiling_height);
     free(line);
-    
     /* 
        Format attendu map v2 avec Slopes:
        floor_height ceiling_height
        slope_floor slope_ceil ref_wall_floor ref_wall_ceil
     */
-    
-    // Initialisation par defaut
     sector->floor_slope = 0.0;
     sector->ceiling_slope = 0.0;
     sector->floor_slope_ref_wall = 0;
     sector->ceiling_slope_ref_wall = 0;
-
-    // Check si la ligne suivante contient 4 valeurs (Slopes) ou 2 valeurs (Textures)
-    // C'est un peu tricky sans peek.
-    // Hack: On assume que si on a modifi la map, on a ajout la ligne.
-    // Pour tre safe, on va regarder la ligne suivante.
-    
     char *next_line;
-    if (get_next_line(fd, &next_line) <= 0) return (-1);
-    
-    // Essayer de lire 4 valeurs float/int
-    double sf, sc;
-    int rf, rc;
+    if (get_next_line(fd, &next_line) <= 0) 
+        return (-1);
+    double sf = 0.0;
+    double sc = 0.0;
+    int rf = 0;
+    int rc = 0;
     int items = sscanf(next_line, "%lf %lf %d %d", &sf, &sc, &rf, &rc);
-    
     if (items == 4)
-    {
-        // C'est une ligne de PENTE !
+    {  
         sector->floor_slope = sf;
         sector->ceiling_slope = sc;
         sector->floor_slope_ref_wall = rf;
         sector->ceiling_slope_ref_wall = rc;
-        free(next_line);
-        
-        // Lire la ligne suivante pour les textures
-        if (get_next_line(fd, &next_line) <= 0) return (-1);
+        free(next_line);   
+        if (get_next_line(fd, &next_line) <= 0) 
+            return (-1);
     }
-    
-    // Ici next_line contient les textures
     sscanf(next_line, "%d %d", &sector->floor_texture, &sector->ceiling_texture);
     free(next_line);
-    
-    // 6. Wall textures
-    if (get_next_line(fd, &line) <= 0) return (-1);
+    if (get_next_line(fd, &line) <= 0) 
+        return (-1);
     ptr = line;
     for(int i=0; i<sector->nb_vertices; i++) {
         sector->wall_textures[i] = strtod(ptr, &ptr);
     }
     free(line);
-    
-    // Initialize upper/lower with main texture by default
     for (int i=0; i<sector->nb_vertices; i++) {
         sector->upper_textures[i] = sector->wall_textures[i];
         sector->lower_textures[i] = sector->wall_textures[i];
-    }
-    
-    // 7. Optional: Upper/Lower Textures
-    // Check if next line starts with 'Upper' or just numbers (Optional)
-    // Caveat: We don't have peek. But we can assume if there's data, it's for this sector.
-    // However, the function returns if it reads the next 'Sector' line.
-    // The main loop reads 'Sector N'.
-    // So we assume extra lines are consumed here if they exist.
-    // BUT getting a line might consume 'Sector N+1'.
-    // Since we don't have a peek/unget, this is risky.
-    // SAFE APPROACH: Only parse if we have a specific tag, but we can't unget.
-    
-    // FOR NOW: Stick to default initialization (copies of wall_textures).
-    // Future improvement: Add explicit format versioning or robust parsing.
-    
+    } 
     return (0);
 }
 
@@ -216,14 +192,14 @@ static int parse_sectors(int fd, t_env *env)
     if (count <= 0) return (-1);
     
     env->sector_map.nb_sectors = count;
-    env->sector_map.sectors = malloc(sizeof(t_sector) * count);
+    env->sector_map.sectors = calloc(count, sizeof(t_sector));
     
     int loaded = 0;
     while (loaded < count && get_next_line(fd, &line) > 0)
     {
         if (strncmp(line, "Sector", 6) == 0)
         {
-            // int id = atoi(line + 7); // unused for now
+            
             if (parse_one_sector(fd, &env->sector_map.sectors[loaded]) == 0)
             {
                 loaded++;
@@ -255,9 +231,9 @@ int load_sectors(t_env *env, const char *filename)
         return (-1);
     }
     
-    // Reset fd or reopen? Basic implementation assumes efficient sequential read
-    // But parse_vertices stops at end of vertices section? 
-    // No, it stops at count.
+    
+    
+    
     
     if (parse_sectors(fd, env) != 0)
     {

@@ -33,6 +33,13 @@ typedef struct s_sector {
     
     // Rendering
     int     rendered;           // Flag pour portal rendering
+
+    // Dynamic Verticality
+    double  target_floor;
+    double  target_ceil;
+    double  speed;
+    int     state;          // 0=STATIC, 1=MOVING
+    int     trigger_id;     // For interactions
 } t_sector;
 
 // Map avec secteurs

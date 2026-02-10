@@ -160,6 +160,12 @@ typedef struct {
     int         fps;
     int         fps_count;
     
+    // DEBUG PHYSICS
+    int         debug_physics;      // Toggle overlay/logs
+    int         single_step_mode;   // Pause physics
+    int         step_trigger;       // Advance 1 frame
+    int         slow_motion;        // Slow down physics
+    
     // Rendu 3D
     double      *zbuffer;       // Buffer de profondeur (largeur ecran)
     int         *ytop_pool;      // Pool for recursion (W * MAX_RECURSION_DEPTH)
@@ -246,6 +252,7 @@ void    print_sector_info(t_sector *s);
 int     find_sector(t_env *env, double x, double y);
 void    player_move(t_env *env, double dx, double dy);
 void    update_player_physics(t_env *env); // NOUVEAU: Gravite
+void    update_sectors(t_env *env);        // NOUVEAU: Verticalite dynamique
 double  get_sector_floor_height(t_env *env, int sector_id, double x, double y); // NOUVEAU: Pentes
 
 // Bitmap font

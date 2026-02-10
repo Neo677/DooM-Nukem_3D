@@ -5,7 +5,7 @@
 #include <stdio.h>
 #include <string.h>
 
-// Réutiliser votre fonction get_next_line
+
 static int get_next_line(int fd, char **line)
 {
     char    buf[1];
@@ -31,7 +31,7 @@ static int get_next_line(int fd, char **line)
     return (1);
 }
 
-// Parse une ligne d'ennemi
+
 static t_entity *parse_enemy(char *line, int id)
 {
     t_entity *entity;
@@ -39,7 +39,7 @@ static t_entity *parse_enemy(char *line, int id)
     double x, y;
     int sector;
     
-    // Format: ENEMY zombie 5.0 3.0 0
+    
     if (sscanf(line, "ENEMY %s %lf %lf %d", type_str, &x, &y, &sector) != 4)
         return (NULL);
     
@@ -52,17 +52,17 @@ static t_entity *parse_enemy(char *line, int id)
     entity->y = y;
     entity->z = 0.0;
     entity->sector = sector;
-    entity->sprite_id = 0;  // À définir selon type
+    entity->sprite_id = 0;  
     entity->scale = 1.0;
     entity->active = 1;
     entity->next = NULL;
     
-    // Déterminer type d'ennemi
+    
     if (strcmp(type_str, "zombie") == 0)
     {
         entity->data.enemy.enemy_type = ENEMY_ZOMBIE;
         entity->data.enemy.health = 100;
-        entity->sprite_id = 10; // Index texture zombie
+        entity->sprite_id = 10; 
     }
     else if (strcmp(type_str, "imp") == 0)
     {
@@ -72,7 +72,7 @@ static t_entity *parse_enemy(char *line, int id)
     }
     
     entity->data.enemy.angle = 0.0;
-    entity->data.enemy.state = 0; // idle
+    entity->data.enemy.state = 0; 
     
     printf("  Loaded enemy: %s at (%.1f, %.1f) sector %d\n", 
            type_str, x, y, sector);
@@ -80,7 +80,7 @@ static t_entity *parse_enemy(char *line, int id)
     return (entity);
 }
 
-// Parse une ligne d'objet
+
 static t_entity *parse_pickup(char *line, int id)
 {
     t_entity *entity;
@@ -88,7 +88,7 @@ static t_entity *parse_pickup(char *line, int id)
     double x, y;
     int sector;
     
-    // Format: PICKUP health_small 5.0 3.0 0
+    
     if (sscanf(line, "PICKUP %s %lf %lf %d", type_str, &x, &y, &sector) != 4)
         return (NULL);
     
@@ -105,7 +105,7 @@ static t_entity *parse_pickup(char *line, int id)
     entity->active = 1;
     entity->next = NULL;
     
-    // Déterminer type d'objet
+    
     if (strcmp(type_str, "health_small") == 0)
     {
         entity->data.pickup.pickup_type = PICKUP_HEALTH_SMALL;
@@ -125,7 +125,7 @@ static t_entity *parse_pickup(char *line, int id)
     return (entity);
 }
 
-// Charge le fichier d'entités
+
 int load_entities(t_env *env, const char *filename)
 {
     int fd;
@@ -142,7 +142,7 @@ int load_entities(t_env *env, const char *filename)
         printf("Warning: No entity file found (optional)\n");
         env->entity_mgr.entities = NULL;
         env->entity_mgr.count = 0;
-        return (0); // Pas une erreur critique
+        return (0); 
     }
     
     env->entity_mgr.entities = NULL;
@@ -155,7 +155,7 @@ int load_entities(t_env *env, const char *filename)
         if (line[0] == '#' || line[0] == '\0')
         {
             free(line);
-            continue; // Commentaire ou ligne vide
+            continue; 
         }
         
         entity = NULL;
@@ -169,7 +169,7 @@ int load_entities(t_env *env, const char *filename)
         
         if (entity)
         {
-            // Ajouter à la liste chaînée
+            
             if (!env->entity_mgr.entities)
                 env->entity_mgr.entities = entity;
             else
@@ -187,7 +187,7 @@ int load_entities(t_env *env, const char *filename)
     return (0);
 }
 
-// Libérer les entités
+
 void free_entities(t_entity_manager *mgr)
 {
     t_entity *current;
@@ -205,7 +205,7 @@ void free_entities(t_entity_manager *mgr)
     mgr->count = 0;
 }
 
-// Spawn une entité dynamiquement (pour gameplay)
+
 t_entity *spawn_entity(t_entity_manager *mgr, e_entity_type type, 
                        double x, double y, int sector)
 {
@@ -224,7 +224,7 @@ t_entity *spawn_entity(t_entity_manager *mgr, e_entity_type type,
     entity->active = 1;
     entity->next = NULL;
     
-    // Ajouter à la liste
+    
     if (!mgr->entities)
         mgr->entities = entity;
     else

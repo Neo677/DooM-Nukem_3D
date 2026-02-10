@@ -11,8 +11,13 @@
 // Physics
 #define MAX_STEP_HEIGHT 0.6
 #define PLAYER_RADIUS 0.3
+#define PLAYER_RADIUS 0.3
 #define PLAYER_EYE_HEIGHT 0.5
-#define GRAVITY_CONSTANT 0.002
+#define HEAD_MARGIN 0.2
+#define JUMP_VELOCITY 0.12
+#define GRAVITY_CONSTANT 0.005
+#define PITCH_SPEED 0.02
+#define PITCH_FACTOR 400.0
 #define GRAVITY_FRAME_SCALE 0.05
 
 // Collision

@@ -2,7 +2,7 @@
 #include <math.h>
 #include <string.h>
 
-// Helper function to load a single cubemap face
+
 static int load_cubemap_face(const char *path, t_texture *texture)
 {
     if (!path || !texture)
@@ -17,7 +17,7 @@ static int load_cubemap_face(const char *path, t_texture *texture)
     return (0);
 }
 
-// Free partially loaded skybox faces
+
 static void free_skybox_faces(t_skybox *sb, int up_to_face)
 {
     if (!sb)
@@ -35,7 +35,7 @@ static void free_skybox_faces(t_skybox *sb, int up_to_face)
     }
 }
 
-// Load all 6 faces of a skybox
+
 static int load_skybox_set(t_env *env, int skybox_id,
     const char *bottom, const char *top, const char *back,
     const char *left, const char *front, const char *right)
@@ -45,7 +45,7 @@ static int load_skybox_set(t_env *env, int skybox_id,
     
     t_skybox *sb = &env->skyboxes[skybox_id];
     
-    // Load all 6 faces avec cleanup en cas d'échec
+    
     if (load_cubemap_face(bottom, &sb->textures[0]) != 0)
     {
         free_skybox_faces(sb, 0);
@@ -81,7 +81,7 @@ static int load_skybox_set(t_env *env, int skybox_id,
     return (0);
 }
 
-// Free a single skybox
+
 static void free_single_skybox(t_skybox *sb)
 {
     if (!sb)
@@ -103,16 +103,16 @@ int init_skybox(t_env *env)
     
     printf("\n=== Initializing Cubemap Skybox System ===\n");
     
-    // Initialize skybox tracking
+    
     env->num_skyboxes = 0;
     env->current_skybox = 0;
     env->skybox_enabled = 1;
     
-    // Initialize 3D box geometry parameters
+    
     env->skybox_box_size = 10.0;
     env->skybox_computed = 0;
     
-    // Zero out all skybox structures
+    
     for (int i = 0; i < MAX_SKYBOX; i++)
     {
         env->skyboxes[i].name = NULL;
@@ -124,7 +124,7 @@ int init_skybox(t_env *env)
         }
     }
     
-    // Load Skybox 0: Sentinel Sky
+    
     printf("\n--- Loading Skybox 0: Sentinel Sky ---\n");
     env->skyboxes[0].name = strdup("Sentinel Sky");
     if (!env->skyboxes[0].name)
@@ -134,12 +134,12 @@ int init_skybox(t_env *env)
     }
     
     if (load_skybox_set(env, 0,
-        "assets/skybox/sentinel_sky.bmp",  // bottom
-        "assets/skybox/sentinel_sky.bmp",  // top
-        "assets/skybox/sentinel_sky.bmp",  // back
-        "assets/skybox/sentinel_sky.bmp",  // left
-        "assets/skybox/sentinel_sky.bmp",  // front
-        "assets/skybox/sentinel_sky.bmp") != 0)  // right
+        "assets/skybox/sentinel_sky.bmp",  
+        "assets/skybox/sentinel_sky.bmp",  
+        "assets/skybox/sentinel_sky.bmp",  
+        "assets/skybox/sentinel_sky.bmp",  
+        "assets/skybox/sentinel_sky.bmp",  
+        "assets/skybox/sentinel_sky.bmp") != 0)  
     {
         printf("❌ Failed to load Skybox 0\n");
         free_single_skybox(&env->skyboxes[0]);
@@ -147,7 +147,7 @@ int init_skybox(t_env *env)
     }
     env->num_skyboxes++;
     
-    // Load Skybox 1: City Sky
+    
     printf("\n--- Loading Skybox 1: City Sky ---\n");
     env->skyboxes[1].name = strdup("City Sky");
     if (!env->skyboxes[1].name)
@@ -158,12 +158,12 @@ int init_skybox(t_env *env)
     }
     
     if (load_skybox_set(env, 1,
-        "assets/skybox/CTYSKY01.bmp",  // bottom
-        "assets/skybox/CTYSKY01.bmp",  // top
-        "assets/skybox/CTYSKY01.bmp",  // back
-        "assets/skybox/CTYSKY01.bmp",  // left
-        "assets/skybox/CTYSKY01.bmp",  // front
-        "assets/skybox/CTYSKY01.bmp") != 0)  // right
+        "assets/skybox/CTYSKY01.bmp",  
+        "assets/skybox/CTYSKY01.bmp",  
+        "assets/skybox/CTYSKY01.bmp",  
+        "assets/skybox/CTYSKY01.bmp",  
+        "assets/skybox/CTYSKY01.bmp",  
+        "assets/skybox/CTYSKY01.bmp") != 0)  
     {
         printf("❌ Failed to load Skybox 1\n");
         free_single_skybox(&env->skyboxes[1]);
@@ -172,7 +172,7 @@ int init_skybox(t_env *env)
     }
     env->num_skyboxes++;
     
-    // Load Skybox 2: Orange Cloud Mountain
+    
     printf("\n--- Loading Skybox 2: Orange Cloud Mountain ---\n");
     env->skyboxes[2].name = strdup("Orange Cloud");
     if (!env->skyboxes[2].name)
@@ -183,12 +183,12 @@ int init_skybox(t_env *env)
     }
     
     if (load_skybox_set(env, 2,
-        "assets/skybox/Orangecloudmtn.bmp",  // bottom
-        "assets/skybox/Orangecloudmtn.bmp",  // top
-        "assets/skybox/Orangecloudmtn.bmp",  // back
-        "assets/skybox/Orangecloudmtn.bmp",  // left
-        "assets/skybox/Orangecloudmtn.bmp",  // front
-        "assets/skybox/Orangecloudmtn.bmp") != 0)  // right
+        "assets/skybox/Orangecloudmtn.bmp",  
+        "assets/skybox/Orangecloudmtn.bmp",  
+        "assets/skybox/Orangecloudmtn.bmp",  
+        "assets/skybox/Orangecloudmtn.bmp",  
+        "assets/skybox/Orangecloudmtn.bmp",  
+        "assets/skybox/Orangecloudmtn.bmp") != 0)  
     {
         printf("❌ Failed to load Skybox 2\n");
         free_single_skybox(&env->skyboxes[2]);
@@ -210,7 +210,7 @@ void free_skybox(t_env *env)
     
     printf("Freeing skybox resources...\n");
     
-    // Free all allocated skyboxes (use MAX_SKYBOX for safety)
+    
     for (int i = 0; i < MAX_SKYBOX; i++)
     {
         free_single_skybox(&env->skyboxes[i]);
@@ -244,7 +244,7 @@ void toggle_skybox(t_env *env)
     printf("Skybox %s\n", env->skybox_enabled ? "ENABLED" : "DISABLED");
 }
 
-// Legacy cylindrical render - will be replaced by cubemap render in Phase 3
+
 void render_skybox(t_env *env)
 {
     (void)env;

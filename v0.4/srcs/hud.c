@@ -1,36 +1,57 @@
 #include "env.h"
-#include <stdio.h> // snprintf
+#include <stdio.h> 
 
 void draw_hud(t_env *env)
 {
-    // 1. Draw Background Bar
-    // Bar height: 100 pixels at the bottom
+    
+    
     int bar_height = 80;
     int y_start = env->h - bar_height;
     
-    // Gray background with dark gray border
+    
     t_rectangle rect = new_rectangle(0xFF333333, 0xFF555555, 1, 2);
     t_point pos = new_point(0, y_start);
     t_point size = new_point(env->w, bar_height);
     
     draw_rectangle(env, rect, pos, size);
     
-    // 2. Draw Stats
+    
     char text[64];
-    int text_y = y_start + 30; // Centered vertically in the bar approx
+    int text_y = y_start + 30; 
     
-    // Health
+    
     snprintf(text, sizeof(text), "HEALTH: %d", env->player.health);
-    draw_text(env, text, 50, text_y, 0xFFFF0000); // Red
+    draw_text(env, text, 50, text_y, 0xFFFF0000); 
     
-    // Armor
+    
     snprintf(text, sizeof(text), "ARMOR: %d", env->player.armor);
-    draw_text(env, text, 300, text_y, 0xFF00FF00); // Green
+    draw_text(env, text, 300, text_y, 0xFF00FF00); 
     
-    // Ammo
+    
     snprintf(text, sizeof(text), "AMMO: %d", env->player.ammo);
-    draw_text(env, text, 550, text_y, 0xFFFFFF00); // Yellow
+    draw_text(env, text, 550, text_y, 0xFFFFFF00); 
     
-    // Optional: Face placeholder (just text for now or simple rect)
-    // draw_text(env, "(^_^)", 800, text_y, 0xFFFFFFFF);
+    
+    
+    
+    
+    if (env->debug_physics)
+    {
+        char debug_text[128];
+        int dy = 20;
+        int col = 0xFF00FFFF; 
+        
+        snprintf(debug_text, sizeof(debug_text), "Sect: %d  Pos: %.2f, %.2f", 
+            env->player.current_sector, env->player.pos.x, env->player.pos.y);
+        draw_text(env, debug_text, 10, dy, col);
+        
+        snprintf(debug_text, sizeof(debug_text), "Z: %.3f  VZ: %.3f  Fall: %d", 
+            env->player.height, env->player.velocity_z, env->player.is_falling);
+        draw_text(env, debug_text, 10, dy + 20, col);
+        
+        
+        
+        if (env->slow_motion) draw_text(env, "[SLOW MO]", 10, dy + 40, 0xFFFFAA00);
+        if (env->single_step_mode) draw_text(env, "[PAUSED] (F10 Step)", 100, dy + 40, 0xFFFFAA00);
+    }
 }

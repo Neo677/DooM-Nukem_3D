@@ -7,7 +7,7 @@ double norm_vector(double x, double y)
     return (sqrt(x * x + y * y));
 }
 
-// Projette le vecteur move pour qu'il glisse le long du mur défini par p1 -> p2
+
 t_v2 parallel_movement(t_v2 move, t_v2 p1, t_v2 p2)
 {
     double  norm_move;
@@ -25,10 +25,10 @@ t_v2 parallel_movement(t_v2 move, t_v2 p1, t_v2 p2)
     if (norm_wall < EPSILON || norm_move < EPSILON)
         return ((t_v2){0, 0});
 
-    // Projection scalaire
+    
     scalar = (wall_x * move.x + wall_y * move.y) / (norm_wall * norm_wall);
     
-    // Nouveau vecteur projeté
+    
     t_v2 slide;
     slide.x = wall_x * scalar;
     slide.y = wall_y * scalar;
@@ -36,8 +36,8 @@ t_v2 parallel_movement(t_v2 move, t_v2 p1, t_v2 p2)
     return (slide);
 }
 
-// Intersection de segments [p1,p2] et [p3,p4]
-// Retourne 1 si intersection, et remplit *intersection si non NULL
+
+
 int intersect_segments(t_v2 p1, t_v2 p2, t_v2 p3, t_v2 p4, t_v2 *intersection)
 {
     t_v2    p = p1;
@@ -49,16 +49,16 @@ int intersect_segments(t_v2 p1, t_v2 p2, t_v2 p3, t_v2 p4, t_v2 *intersection)
     t_v2 q_minus_p = v2_sub(q, p);
     double qp_cross_r = v2_cross(q_minus_p, r);
     
-    // Si r x s = 0, lignes paralleles
+    
     if (fabs(r_cross_s) < EPSILON)
     {
-        // Colineaires si (q-p) x r = 0
+        
         if (fabs(qp_cross_r) < EPSILON)
         {
-            // Verifier chevauchement (plus complexe, ignore pour l'instant)
+            
             return (0); 
         }
-        return (0); // Paralleles non colineaires
+        return (0); 
     }
     
     double t = v2_cross(q_minus_p, s) / r_cross_s;
@@ -85,9 +85,9 @@ int box_intersect(t_v2 min1, t_v2 max1, t_v2 min2, t_v2 max2)
             min1.y <= max2.y && max1.y >= min2.y);
 }
 
-// Algorithme Ray-Casting (Even-Odd rule) ou Winding Number
-// Pour polygones simples, Check cross product sides si convexe
-// Ici : methode generique pour tout polygone simple
+
+
+
 int point_in_polygon(t_v2 p, t_v2 *vertices, int nb_vertices)
 {
     int i, j, c = 0;
@@ -108,7 +108,7 @@ int point_in_polygon(t_v2 p, t_v2 *vertices, int nb_vertices)
     return c;
 }
 
-// Verifie si un polygone est convexe (tous les cross products de même signe)
+
 int is_convex(t_v2 *vertices, int nb_vertices)
 {
     if (!vertices || nb_vertices < 3)
@@ -131,12 +131,12 @@ int is_convex(t_v2 *vertices, int nb_vertices)
         if (cross < -EPSILON) neg++;
         else if (cross > EPSILON) pos++;
         
-        if (neg && pos) return (0); // Signes mixtes => concave
+        if (neg && pos) return (0); 
     }
     return (1);
 }
 
-// Calculate minimum distance from point p to line segment [a, b]
+
 double distance_point_to_segment(t_v2 p, t_v2 a, t_v2 b)
 {
     t_v2 ab = v2_sub(b, a);
@@ -144,16 +144,16 @@ double distance_point_to_segment(t_v2 p, t_v2 a, t_v2 b)
     
     double ab_len_sq = v2_dot(ab, ab);
     
-    // Degenerate case: segment is a point
+    
     if (ab_len_sq < EPSILON)
         return sqrt(v2_dot(ap, ap));
     
-    // Project point onto line, clamped to segment
+    
     double t = v2_dot(ap, ab) / ab_len_sq;
     if (t < 0.0) t = 0.0;
     if (t > 1.0) t = 1.0;
     
-    // Find closest point on segment
+    
     t_v2 closest = v2_add(a, v2_mul(ab, t));
     t_v2 diff = v2_sub(p, closest);
     

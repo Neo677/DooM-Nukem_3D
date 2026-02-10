@@ -9,7 +9,7 @@
 # define MIN(a,b) ((a) < (b) ? (a) : (b))
 #endif
 
-// Helper: Clip value
+
 int clamp(int val, int min, int max)
 {
     if (val < min) return min;
@@ -17,8 +17,8 @@ int clamp(int val, int min, int max)
     return val;
 }
 
-// Projection simple et robuste (avec gestion Z near)
-// Returns 0 if fully behind, 1 if visible
+
+
 int transform_vertex(t_env *env, t_vertex v, double *rx, double *rz)
 {
     double tx = v.x - env->player.pos.x;
@@ -30,6 +30,6 @@ int transform_vertex(t_env *env, t_vertex v, double *rx, double *rz)
     *rz = tx * cs + ty * sn;
     *rx = tx * sn - ty * cs;
     
-    // Z-Near clipping tolerance
+    
     return (*rz > Z_NEAR_PLANE);
 }
